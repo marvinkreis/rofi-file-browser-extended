@@ -1,0 +1,24 @@
+pkgname=rofi-dict
+pkgver=0.0.1
+pkgrel=1
+pkgdesc="Plugin to use rofi as a dictionary"
+url="https://github.com/marvinkreis/${pkgname}"
+arch=("i686" "x86_64")
+license=("MIT")
+depends=("rofi")
+makedepends=("git")
+
+source=("git://github.com/marvinkreis/rofi-plugins.git")
+md5sums=("SKIP")
+
+build() {
+    cd "$srcdir/rofi-plugins/${pkgname}"
+    autoreconf -i
+    ./configure
+    make
+}
+
+package() {
+    cd "$srcdir/rofi-plugins/${pkgname}"
+    make DESTDIR="$pkgdir" PREFIX=/usr install
+}
