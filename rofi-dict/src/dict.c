@@ -163,8 +163,10 @@ typedef struct {
  *
  * Sets all json file names of dictionaries.
  * Initializes pd->dict_names and sets pd->num_dicts.
+ *
+ * @return true on success, false otherwise.
  */
-void set_dict_files ( const char* dir_name, Mode* sw );
+bool set_dict_files ( const char* dir_name, Mode* sw );
 
 /**
  * @param dir_name The directory of the dictionaries.
@@ -231,7 +233,9 @@ static int dict_init ( Mode* sw )
         }
 
         /* Get dictionary names and number. */
-        set_dict_files ( dir_name, sw );
+        if ( !set_dict_files ( dir_name, sw ) ) {
+            return false;
+        }
 
         /* Parse the dictionary json files. */
         set_json_dicts ( dir_name, sw );
@@ -394,7 +398,7 @@ static char* dict_get_message ( const Mode *sw )
 
 // ================================================================================================================= //
 
-void set_dict_files ( const char* dir_name, Mode* sw )
+bool set_dict_files ( const char* dir_name, Mode* sw )
 {
     DictModePrivateData* pd = ( DictModePrivateData * ) mode_get_private_data ( sw );
 
@@ -404,6 +408,7 @@ void set_dict_files ( const char* dir_name, Mode* sw )
     dir = opendir ( dir_name );
     if ( dir == NULL ) {
         fprintf ( stderr, "[dict] Could not open directory: %s\n", dir_name );
+        return false;
     }
 
     /* Gather all regular .json-files. */
@@ -416,6 +421,8 @@ void set_dict_files ( const char* dir_name, Mode* sw )
     }
 
     closedir ( dir );
+
+    return true;
 }
 
 void set_json_dicts ( const char* dir_name, Mode* sw )
