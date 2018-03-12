@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/env python
 
 # Used to convert dictionaries from https://github.com/freedict/fd-dictionaries
 # from .tei to .json format.
