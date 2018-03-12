@@ -164,12 +164,17 @@ static int prompt_init ( Mode* sw )
 
         /* Set the entries_file. */
         char* entries_file = NULL;
-        if ( find_arg_str ( "-prompt_file", &entries_file ) && g_file_test ( entries_file, G_FILE_TEST_IS_REGULAR ) ){
-            entries_file = g_strdup ( entries_file );
+        if ( find_arg_str ( "-prompt_file", &entries_file ) ) {
+            if ( g_file_test ( entries_file, G_FILE_TEST_IS_REGULAR ) ) {
+                entries_file = g_strdup ( entries_file );
+            } else {
+                fprintf ( stderr, "[prompt] Could not find entries file: %s\n", entries_file );
+                return false;
+            }
         } else {
             entries_file = ENTRIES_FILE;
             if ( !g_file_test ( entries_file, G_FILE_TEST_IS_REGULAR ) ) {
-                fprintf ( stderr, "[prompt] Could not open entries file: %s\n", entries_file );
+                fprintf ( stderr, "[prompt] Could not find entries file: %s\n", entries_file );
                 return false;
             }
         }
@@ -217,8 +222,12 @@ static void prompt_destroy ( Mode* sw )
         g_free ( pd->entries );
 
         /* Free icon themes and icons. */
-        g_hash_table_destroy ( pd->icons );
-        nk_xdg_theme_context_free ( pd->xdg_context );
+        if ( pd->icons != NULL ) {
+            g_hash_table_destroy ( pd->icons );
+        }
+        if ( pd->xdg_context != NULL ) {
+            nk_xdg_theme_context_free ( pd->xdg_context );
+        }
         g_strfreev ( pd->icon_themes );
 
         g_free ( pd->input );
