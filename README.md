@@ -12,10 +12,12 @@ Use the `PKGBUILD`s with `makepkg` to generate packages for the plugins.
 
 Go into the plugin's directory and execute the following commands:
 
-1. `autoreconf -i`
-2. `./configure`
-3. `make`
-4. to install: `sudo make install`
+1. `git submodule init`
+2. `git submodule update`
+3. `autoreconf -i`
+4. `./configure`
+5. `make`
+6. to install: `sudo make install`
 
 <br/>
 <br/>
