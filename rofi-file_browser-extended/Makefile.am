@@ -5,7 +5,6 @@ noinst_LIBRARIES =
 EXTRA_DIST=
 check_PROGRAMS=
 TESTS=
-include $(top_srcdir)/../submodules/libnkutils/libnkutils-nolibtool.mk
 
 plugin_LTLIBRARIES = file_browser.la
 
