@@ -67,7 +67,7 @@
 #define ICON_THEMES "Numix-Circle"
 
 /* Fallback icon themes. */
-#define FALLBACK_THEMES "Adwaita", "gnome"
+#define FALLBACK_ICON_THEMES "Adwaita", "gnome"
 
 /* Display a message showing the current mode (show hidden files or not) and the current path. */
 #define USE_MESSAGE true
@@ -240,24 +240,24 @@ static int file_browser_init ( Mode* sw )
             pd->current_dir = g_file_new_for_path ( START_DIR );
         }
 
-        const gchar * const fallback_themes[] = {
-            FALLBACK_THEMES,
+        static const gchar * const fallback_icon_themes[] = {
+            FALLBACK_ICON_THEMES,
             NULL
         };
 
-        const gchar *default_themes[] = {
+        const gchar *default_icon_themes[] = {
             ICON_THEMES,
             NULL
         };
 
         pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-fb_theme" ) );
         if ( pd->icon_themes == NULL ) {
-            pd->icon_themes = g_strdupv ( ( char ** ) default_themes );
+            pd->icon_themes = g_strdupv ( ( char ** ) default_icon_themes );
         }
 
-        pd->xdg_context = nk_xdg_theme_context_new ( ( const gchar* const* ) fallback_themes, NULL );
-        nk_xdg_theme_preload_themes_icon ( pd->xdg_context, ( const char ** ) pd->icon_themes );
-        pd->icons = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, ( void (*) ( void * ) ) cairo_surface_destroy );
+        pd->xdg_context = nk_xdg_theme_context_new ( fallback_icon_themes, NULL );
+        nk_xdg_theme_preload_themes_icon ( pd->xdg_context, ( const gchar * const * ) pd->icon_themes );
+        pd->icons = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, ( void ( * ) ( void * ) ) cairo_surface_destroy );
 
         /* Load content. */
         get_file_browser ( sw );

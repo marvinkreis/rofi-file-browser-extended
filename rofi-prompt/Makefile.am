@@ -2,6 +2,7 @@ ACLOCAL_AMFLAGS=-I m4 -I ../submodules/libnkutils
 plugindir=@rofi_PLUGIN_INSTALL_DIR@
 
 noinst_LTLIBRARIES =
+noinst_PROGRAMS=
 EXTRA_DIST=
 check_PROGRAMS=
 TESTS=
