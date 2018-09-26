@@ -39,15 +39,19 @@ Hidden files can be shown or hidden by changing the mode with `MENU_PREVIOUS` an
 
 #### Opening files with custom programs / commands
 
-Simply type `:cmd`. The chosen file will then be opened with `cmd`. `cmd` can either be a normal program name (with or without arguments) or a string containing `%s`. `%s`will then be replaced by the file name.
+Simply enter `:<cmd>` where `<cmd>` is the program / command you want to open the file with.
+If `<cmd>` contains `%s`, then `%s` will be replaced by the file name, otherwise the filename is passed as the last argument.
+
+For example, entering `:gimp` will open the next selected file with `gimp`, or entering `:mv "%s" "newname"` will rename the next selected file.
 
 ### Command line options / Configuration
 
-Option       | Arguments          | Description
------------- | ------------------ | --------------------------------------------------------------------------
-`-fb_cmd`    | command            | Sets the command used to open the file with
-`-fb_dir`    | /path/to/directory | Sets the starting directory
-`-fb_theme`  | theme name         | Sets the icon theme, use this option multiple times to set fallback themes
+Option              | Arguments          | Description
+------------------- | ------------------ | --------------------------------------------------------------------------
+`-fb_cmd`           | command            | Sets the command used to open the file with.
+`-fb_dir`           | /path/to/directory | Sets the starting directory.
+`-fb_disable_icons` |                    | Disables icons.
+`-fb_theme`         | theme name         | Sets the icon theme, use this option multiple times to set fallback themes.
 
 The source file contains more configuration via `#define`.
 
@@ -61,7 +65,7 @@ The source file contains more configuration via `#define`.
 
 # rofi-dict
 
-Reads all json-files in a directory as dictionaries and lets the user query values by keys.
+Reads all json-files in a directory as dictionaries and lets the user query translations.
 
 ### Dictionaries
 
@@ -81,11 +85,11 @@ The plugin will only read json files with the .json file extension.
 
 ### Matching modes
 
-This plugin Supports three matching modes:
+This plugin supports three matching modes:
 
 * `exact matching (0)`: only match if the key is matches the search string exactly
 * `substring matching (1)`: match if the key containts the search string
-* `Levenshtein distance matching (2)`: match if the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) is below a certain thresholf
+* `Levenshtein distance matching (2)`: match if the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) is below a certain threshold
 
 Matching modes can be switched by switching modes with `MENU_PREVIOUS` and `MENU_NEXT`.
 
@@ -93,8 +97,8 @@ Matching modes can be switched by switching modes with `MENU_PREVIOUS` and `MENU
 
 Option       | Arguments          | Description
 ------------ | ------------------ | -----------------------------
-`-dict_path` | /path/to/directory | Sets the dictionary directory
-`-dict_mode` | 0 \| 1 \| 2        | Sets the matching mode
+`-dict_path` | /path/to/directory | Sets the dictionary directory.
+`-dict_mode` | 0 \| 1 \| 2        | Sets the matching mode.
 
 The source file contains more configuration via `#define`.
 
@@ -108,13 +112,13 @@ The source file contains more configuration via `#define`.
 
 # rofi-prompt
 
-Read entries from a json file and execute the entries with or without arguments.
+Read prompt entries from a json file and execute them with or without arguments.
 The json file can specify a name, desription, command and icon for each entry.
 
 ### Purpose
 
-This plugin can be used to quickly open entries from a, list of frequently used programs or scripts with
-abbreviated names, and open them with arguments.
+This plugin can be used to quickly open prompt entries from a list of frequently used programs or scripts with
+abbreviated names.
 
 The plugin uses custom matching, which should make this easier:
 * e.g. with default matching:
@@ -157,10 +161,11 @@ icon        | entry name    | The name of the icon to display with the entry
 
 ### Command line options / Configuration
 
-Option          | Arguments     | Description
---------------- | ------------- | --------------------------------------------------------------------------
-`-prompt_file`  | /path/to/file | Sets the json file containing the entries.
-`-prompt_theme` | theme name    | Sets the icon theme, use this option multiple times to set fallback themes
+Option                  | Arguments     | Description
+----------------------- | ------------- | --------------------------------------------------------------------------
+`-prompt_file`          | /path/to/file | Sets the json file containing the entries.
+`-prompt_disable_icons` |               | Disables icons.
+`-prompt_theme`         | theme name    | Sets the icon theme, use this option multiple times to set fallback themes.
 
 The source file contains more configuration via `#define`.
 

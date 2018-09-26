@@ -64,8 +64,9 @@
  *     icon:        The name of the icon to display with the entry.     (default: name of the entry)
  *
  * Command line options:
- *      -prompt_file    Sets the json file containing the entries.
- *      -prompt_theme   Sets the icon theme, can be used multiple times to set fallback themes.
+ *      -prompt_file            Sets the json file containing the entries.
+ *      -prompt_disable_icons   Disables icons.
+ *      -prompt_theme           Sets the icon theme, can be used multiple times to set fallback themes.
  */
 
 // ================================================================================================================= //
@@ -121,6 +122,7 @@ typedef struct {
     /* The number of entries. */
     unsigned int num_entries;
 
+    bool enable_icons;
     /* Loaded icons by their names */
     GHashTable* icons;
     /* Icon theme context */
@@ -179,24 +181,28 @@ static int prompt_init ( Mode* sw )
             }
         }
 
-        static const gchar * const fallback_icon_themes[] = {
-            FALLBACK_ICON_THEMES,
-            NULL
-        };
+        pd->enable_icons = ( find_arg ( "-prompt_disable_icons" ) == -1 );
 
-        const gchar *default_icon_themes[] = {
-            ICON_THEMES,
-            NULL
-        };
+        if ( pd->enable_icons ) {
+            static const gchar * const fallback_icon_themes[] = {
+                FALLBACK_ICON_THEMES,
+                NULL
+            };
 
-        pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-fb_theme" ) );
-        if ( pd->icon_themes == NULL ) {
-            pd->icon_themes = g_strdupv ( ( char ** ) default_icon_themes );
+            const gchar *default_icon_themes[] = {
+                ICON_THEMES,
+                NULL
+            };
+
+            pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-fb_theme" ) );
+            if ( pd->icon_themes == NULL ) {
+                pd->icon_themes = g_strdupv ( ( char ** ) default_icon_themes );
+            }
+
+            pd->xdg_context = nk_xdg_theme_context_new ( fallback_icon_themes, NULL );
+            nk_xdg_theme_preload_themes_icon ( pd->xdg_context, ( const gchar * const * ) pd->icon_themes );
+            pd->icons = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, ( void ( * ) ( void * ) ) cairo_surface_destroy );
         }
-
-        pd->xdg_context = nk_xdg_theme_context_new ( fallback_icon_themes, NULL );
-        nk_xdg_theme_preload_themes_icon ( pd->xdg_context, ( const gchar * const * ) pd->icon_themes );
-        pd->icons = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, ( void ( * ) ( void * ) ) cairo_surface_destroy );
 
         bool success = set_entries ( entries_file, sw );
         g_free ( entries_file );
@@ -223,13 +229,15 @@ static void prompt_destroy ( Mode* sw )
         g_free ( pd->entries );
 
         /* Free icon themes and icons. */
-        if ( pd->icons != NULL ) {
-            g_hash_table_destroy ( pd->icons );
+        if ( pd->enable_icons ) {
+            if ( pd->icons != NULL ) {
+                g_hash_table_destroy ( pd->icons );
+            }
+            if ( pd->xdg_context != NULL ) {
+                nk_xdg_theme_context_free ( pd->xdg_context );
+            }
+            g_strfreev ( pd->icon_themes );
         }
-        if ( pd->xdg_context != NULL ) {
-            nk_xdg_theme_context_free ( pd->xdg_context );
-        }
-        g_strfreev ( pd->icon_themes );
 
         g_free ( pd->input );
 
@@ -340,7 +348,7 @@ static cairo_surface_t* prompt_get_icon ( const Mode* sw, unsigned int selected_
 {
     PromptModePrivateData* pd = ( PromptModePrivateData * ) mode_get_private_data ( sw );
 
-    if ( pd->entries[selected_line].icon_name != NULL ) {
+    if ( pd->enable_icons && pd->entries[selected_line].icon_name != NULL ) {
         return get_icon_surf ( pd->entries[selected_line].icon_name, height, sw );
     } else {
         return NULL;

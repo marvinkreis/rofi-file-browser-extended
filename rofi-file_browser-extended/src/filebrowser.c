@@ -37,9 +37,10 @@
  * %s will then be replaced with the file name.
  *
  * Command line options:
- *      -fb_cmd     Sets the command used to open the file with.
- *      -fb_dir     Sets the starting directory.
- *      -fb_theme   Sets the icon theme, can be used multiple times to set fallback themes.
+ *      -fb_cmd             Sets the command used to open the file with.
+ *      -fb_dir             Sets the starting directory.
+ *      -fb_disable_icons   Disables icons.
+ *      -fb_theme           Sets the icon theme, can be used multiple times to set fallback themes.
  */
 
 // ================================================================================================================= //
@@ -115,6 +116,7 @@ typedef struct {
     /* Number of displayed files */
     unsigned int num_files;
 
+    bool enable_icons;
     /* Loaded icons by their names */
     GHashTable* icons;
     /* Icon theme context */
@@ -240,24 +242,28 @@ static int file_browser_init ( Mode* sw )
             pd->current_dir = g_file_new_for_path ( START_DIR );
         }
 
-        static const gchar * const fallback_icon_themes[] = {
-            FALLBACK_ICON_THEMES,
-            NULL
-        };
+        pd->enable_icons = ( find_arg ( "-fb_disable_icons" ) == -1 );
 
-        const gchar *default_icon_themes[] = {
-            ICON_THEMES,
-            NULL
-        };
+        if ( pd->enable_icons ) {
+            static const gchar * const fallback_icon_themes[] = {
+                FALLBACK_ICON_THEMES,
+                NULL
+            };
 
-        pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-fb_theme" ) );
-        if ( pd->icon_themes == NULL ) {
-            pd->icon_themes = g_strdupv ( ( char ** ) default_icon_themes );
+            const gchar *default_icon_themes[] = {
+                ICON_THEMES,
+                NULL
+            };
+
+            pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-fb_theme" ) );
+            if ( pd->icon_themes == NULL ) {
+                pd->icon_themes = g_strdupv ( ( char ** ) default_icon_themes );
+            }
+
+            pd->xdg_context = nk_xdg_theme_context_new ( fallback_icon_themes, NULL );
+            nk_xdg_theme_preload_themes_icon ( pd->xdg_context, ( const gchar * const * ) pd->icon_themes );
+            pd->icons = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, ( void ( * ) ( void * ) ) cairo_surface_destroy );
         }
-
-        pd->xdg_context = nk_xdg_theme_context_new ( fallback_icon_themes, NULL );
-        nk_xdg_theme_preload_themes_icon ( pd->xdg_context, ( const gchar * const * ) pd->icon_themes );
-        pd->icons = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, ( void ( * ) ( void * ) ) cairo_surface_destroy );
 
         /* Load content. */
         get_file_browser ( sw );
@@ -277,9 +283,11 @@ static void file_browser_destroy ( Mode* sw )
         free_list ( pd );
 
         /* Free icon themes and icons. */
-        g_hash_table_destroy ( pd->icons );
-        nk_xdg_theme_context_free ( pd->xdg_context );
-        g_strfreev ( pd->icon_themes );
+        if ( pd->enable_icons ) {
+            g_hash_table_destroy ( pd->icons );
+            nk_xdg_theme_context_free ( pd->xdg_context );
+            g_strfreev ( pd->icon_themes );
+        }
 
         g_free ( pd->cmd );
 
@@ -387,11 +395,15 @@ static cairo_surface_t* file_browser_get_icon ( const Mode* sw, unsigned int sel
 {
     FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
-    char** icon_names = get_icon_names ( pd->files[selected_line] );
-    cairo_surface_t* icon =  get_icon_surf ( icon_names, height, sw );
-    g_strfreev ( icon_names );
+    if ( pd->enable_icons ) {
+        char** icon_names = get_icon_names ( pd->files[selected_line] );
+        cairo_surface_t* icon =  get_icon_surf ( icon_names, height, sw );
+        g_strfreev ( icon_names );
 
-    return icon;
+        return icon;
+    } else {
+        return NULL;
+    }
 }
 
 static char* file_browser_get_message (const Mode* sw)
