@@ -28,19 +28,30 @@
 // ================================================================================================================= //
 
 /*
- * Displays a file browser.
- * Can display icons for individual file and folder types.
+ * Displays a file browser with icons.
  *
- * MENU_NEXT and MENU_PREVIOUS can be used to toggle hidden files on or off.
- *
- * Type :<cmd> to set the command to open files with, cmd can be a plain program name or a string containing %s.
- * %s will then be replaced with the file name.
+ * Key Bindings:
+ * -------------
+ * kb-mode-next     (default: Shift+Right):     Show hidden files. Switch to the next rofi-mode if hidden files are already shown.
+ * kb-mode-previous (default: Shift+Left):      Hide hidden files. Switch to the previous rofi-mode if hidden files are already hidden.
+ * kb-accept-custom (default: Control+Return):  Toggle hidden files (only if input is empty)
+ * kb-accpet-alt    (default: Shift+Return):    Open the selected file with a custom command. You will be prompted to enter the command with which to open the file.
  *
  * Command line options:
- *      -fb_cmd             Sets the command used to open the file with.
- *      -fb_dir             Sets the starting directory.
- *      -fb_disable_icons   Disables icons.
- *      -fb_theme           Sets the icon theme, can be used multiple times to set fallback themes.
+ * ---------------------
+ * -fb_cmd <arg>              Sets the command used to open the selected file with.
+ * -fb_dir <arg>              Sets the starting directory.
+ * -fb_show_hidden            Shows hidden files.
+ * -fb_dmenu                  Print the absolute path of the selected file instead of opening it.
+ * -fb_disable_mode_keys      Disables toggling hidden files with kb-mode-next and kb-mode-previous.
+ *
+ * -fb_theme <arg>            Sets the icon theme, can be used multiple times to set fallback themes.
+ * -fb_disable_icons          Disables icons.
+ *
+ * -fb_disable_status         Disables the status bar that shows the current path and if hidden files are shown.
+ * -fb_hidden_symbol <arg>    Set the status bar symbol that indicates that hidden files are shown.
+ * -fb_no_hidden_symbol <arg> Set the status bar symbol that indicates that hidden files are not shown.
+ * -fb_path_sep <arg>         Set the path separator for the current path in the status bar.
  */
 
 // ================================================================================================================= //
@@ -61,24 +72,19 @@
 
 // ================================================================================================================= //
 
-/* The default starting directory. */
-#define START_DIR g_get_home_dir()
+/* The starting directory. */
+#define START_DIR g_get_current_dir()
 
-/* The default icon themes. */
-#define ICON_THEMES "Numix-Circle"
+/* The icon theme. */
+#define ICON_THEMES "Numix-Circle", "Numix"
 
-/* Fallback icon themes. */
+/* The fallback icon themes. */
 #define FALLBACK_ICON_THEMES "Adwaita", "gnome"
 
-/* Display a message showing the current mode (show hidden files or not) and the current path. */
-#define USE_MESSAGE true
-
-/* Format of the message. Arguments are: "current mode" - "current path" */
-#define MESSAGE_FORMAT " %s%s"
-
-/* Symbols for displaying the mode in the message. */
-#define NO_HIDDEN_SYMBOL "-"
-#define SHOW_HIDDEN_SYMBOL "+"
+/* The message format. */
+#define NO_HIDDEN_SYMBOL "[-]"
+#define HIDDEN_SYMBOL "[+]"
+#define PATH_SEP " / "
 
 /* The name to display for the parent directory. */
 #define PARENT_NAME ".."
@@ -89,6 +95,10 @@
 
 /* The default command to use to open files. */
 #define CMD "xdg-open '%s'"
+
+/* The message to display when prompting the user to enter the program to open a file with.
+   If the message contains %s, it will be replaced with the file name. */
+#define OPEN_CUSTOM_MESSAGE_FORMAT "Enter command to open '%s' with, or cancel to go back."
 
 // ================================================================================================================= //
 
@@ -115,8 +125,11 @@ typedef struct {
     FBFile* files;
     /* Number of displayed files */
     unsigned int num_files;
+    /* Show hidden files */
+    bool show_hidden;
 
-    bool enable_icons;
+    /* Show icons in the file browser. */
+    bool use_icons;
     /* Loaded icons by their names */
     GHashTable* icons;
     /* Icon theme context */
@@ -124,13 +137,35 @@ typedef struct {
     /* Used icon themes with fallbacks */
     char** icon_themes;
 
-    /* Show hidden files */
-    bool show_hidden;
+    /* Is the user currently opening a file with a custom program.
+       This prompts the user for a program to open the file with. */
+    bool open_custom;
+    /* The selected file index to be opened with a custom program. */
+    int open_custom_index;
+
+    /* ---- Only command line options ---- */
     /* Command to open files with */
     char* cmd;
+    /* Show the status bar.. */
+    bool show_status;
+    /* Print the absolute file path of selected file instead of opening it. */
+    bool dmenu;
+    /* Use kb-mode-previous and kb-mode-next to toggle hidden files. */
+    bool use_mode_keys;
+    /* Status bar format. */
+    char* hidden_symbol;
+    char* no_hidden_symbol;
+    char* path_sep;
 } FileBrowserModePrivateData;
 
 // ================================================================================================================= //
+
+/**
+ * @param Mode The current mode.
+ *
+ * Sets command line options in the private data.
+ */
+static void set_command_line_options ( Mode* sw );
 
 /**
  * @param Mode The current mode.
@@ -171,19 +206,17 @@ static void change_dir ( char* path, Mode* sw );
 
 /**
  * @param path The absolute path of the file to open.
- * @param current_dir The current directory.
- * @param cmd The command to execute, as a formatted string with %s to be replaced with the file name or the plain
- *            command name.
+ * @param sw The current mode.
  *
- * Opens the file at the given path in the current directory with the given command.
+ * Opens the file at the given path or prints it's absolute path to stdout if the dmenu option is set.
  */
-static void open_file ( char* path, GFile* current_dir, const char* cmd );
+static void open_or_print_file ( char* path, Mode* sw );
 
 /**
- * @param fbfile The file to get the icon names of.
+ * @param file The file to get the icon names of.
  *
  * Gets a list of icon names for the file. The first icon name is the most specific, the following are fallback
- * icons.
+ * icon names.
  *
  * @return The list of icon names. The list should be free'd with g_strfreev() afterwards.
  */
@@ -202,7 +235,7 @@ static cairo_surface_t* get_icon_surf ( char** icon_names, int icon_size, const 
 
 /**
  * @param a The first file.
- * @param b The first file.
+ * @param b The second file.
  * @param data unused
  *
  * Comparison function for sorting the file list.
@@ -219,53 +252,30 @@ static int file_browser_init ( Mode* sw )
         FileBrowserModePrivateData* pd = g_malloc0 ( sizeof ( *pd ) );
         mode_set_private_data ( sw, ( void * ) pd );
 
-        pd->show_hidden = false;
+        /* Command line options */
+        set_command_line_options ( sw );
 
-        /* Set the command used to open the file with. */
-        char* cmd = NULL;
-        if ( find_arg_str ( "-fb_cmd", &cmd ) ) {
-            pd->cmd = g_strdup ( cmd );
-        } else {
-            pd->cmd = g_strdup ( CMD );
-        }
+        /* Other values */
+        pd->open_custom = false;
+        pd->open_custom_index = -1;
+        pd->files = NULL;
+        pd->num_files = 0;
+        pd->icons = NULL;
+        pd->xdg_context = NULL;
 
-        /* Set the start directory. */
-        char* start_dir = NULL;
-        if ( find_arg_str ( "-fb_dir", &start_dir ) ) {
-            pd->current_dir = g_file_new_for_path ( start_dir );
-            if ( !g_file_query_exists ( pd->current_dir, NULL ) ) {
-                g_object_unref ( pd->current_dir );
-                fprintf ( stderr, "[file_browser] Start directory does not exist: %s\n", start_dir );
-                pd->current_dir = g_file_new_for_path ( START_DIR );
-            }
-        } else {
-            pd->current_dir = g_file_new_for_path ( START_DIR );
-        }
-
-        pd->enable_icons = ( find_arg ( "-fb_disable_icons" ) == -1 );
-
-        if ( pd->enable_icons ) {
+        /* Set up icons if enabled. */
+        if ( pd->use_icons ) {
             static const gchar * const fallback_icon_themes[] = {
                 FALLBACK_ICON_THEMES,
                 NULL
             };
-
-            const gchar *default_icon_themes[] = {
-                ICON_THEMES,
-                NULL
-            };
-
-            pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-fb_theme" ) );
-            if ( pd->icon_themes == NULL ) {
-                pd->icon_themes = g_strdupv ( ( char ** ) default_icon_themes );
-            }
 
             pd->xdg_context = nk_xdg_theme_context_new ( fallback_icon_themes, NULL );
             nk_xdg_theme_preload_themes_icon ( pd->xdg_context, ( const gchar * const * ) pd->icon_themes );
             pd->icons = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, ( void ( * ) ( void * ) ) cairo_surface_destroy );
         }
 
-        /* Load content. */
+        /* Load the files. */
         get_file_browser ( sw );
     }
 
@@ -283,13 +293,17 @@ static void file_browser_destroy ( Mode* sw )
         free_list ( pd );
 
         /* Free icon themes and icons. */
-        if ( pd->enable_icons ) {
+        if ( pd->use_icons ) {
             g_hash_table_destroy ( pd->icons );
             nk_xdg_theme_context_free ( pd->xdg_context );
-            g_strfreev ( pd->icon_themes );
         }
+        g_strfreev ( pd->icon_themes );
 
+        /* Free the rest. */
         g_free ( pd->cmd );
+        g_free ( pd->hidden_symbol );
+        g_free ( pd->no_hidden_symbol );
+        g_free ( pd->path_sep );
 
         /* Fill with zeros, just in case. */
         memset ( ( void* ) pd , 0, sizeof ( pd ) );
@@ -303,7 +317,11 @@ static unsigned int file_browser_get_num_entries ( const Mode* sw )
     const FileBrowserModePrivateData* pd = ( const FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
     if ( pd != NULL ) {
-        return pd->num_files;
+        if ( pd->open_custom ) {
+            return 1;
+        } else {
+            return pd->num_files;
+        }
     } else {
         return 0;
     }
@@ -312,52 +330,97 @@ static unsigned int file_browser_get_num_entries ( const Mode* sw )
 static ModeMode file_browser_result ( Mode* sw, int mretv, char **input, unsigned int selected_line )
 {
     FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
+    ModeMode retv = RELOAD_DIALOG;
 
-    ModeMode retv = RESET_DIALOG;
+    /* Handle prompt for program to open file with. */
+    if ( pd->open_custom ) {
+        if ( mretv & ( MENU_OK | MENU_CUSTOM_INPUT | MENU_CUSTOM_ACTION ) ) {
+            if ( strlen ( *input ) == 0 ) {
+                char* file_path = pd->files[pd->open_custom_index].path;
+                open_or_print_file ( file_path, sw );
+                retv = MODE_EXIT;
+            } else {
+                char* file_path = pd->files[pd->open_custom_index].path;
+                g_free ( pd->cmd );
+                pd->cmd = g_strdup ( *input );
+                open_or_print_file ( file_path, sw );
+                retv = MODE_EXIT;
+            }
+        } else if ( mretv & MENU_CANCEL ) {
+            pd->open_custom = false;
+            pd->open_custom_index = -1;
+            retv = RESET_DIALOG;
+        }
 
-    if ( mretv & MENU_CANCEL ) {
-        return MODE_EXIT;
-    } else if ( ( mretv & MENU_NEXT ) || ( mretv & MENU_PREVIOUS ) ) {
-        pd->show_hidden = !pd->show_hidden;
-        get_file_browser ( sw );
-        return RELOAD_DIALOG;
-    } else if ( ( mretv & MENU_OK ) ) {
+    /* Handle Shift+Return. */
+    } else if ( ( mretv & MENU_CUSTOM_ACTION ) && ( selected_line != -1 ) ) {
+        pd->open_custom = true;
+        pd->open_custom_index = selected_line;
+        retv = RESET_DIALOG;
 
+    /* Handle Return. */
+    } else if ( mretv & MENU_OK ) {
         FBFile* entry = &( pd->files[selected_line] );
         if ( entry->type == UP || entry->type == DIRECTORY ) {
             change_dir ( entry->path, sw );
-            return RESET_DIALOG;
-        } else {
-            open_file ( entry->path, pd->current_dir, pd->cmd );
-            return MODE_EXIT;
-        }
-
-    } else if ( ( mretv & MENU_CUSTOM_INPUT ) && *input != NULL ) {
-
-        char *expanded_input = rofi_expand_path ( *input );
-        char *file = g_filename_from_utf8 ( expanded_input, -1, NULL, NULL, NULL );
-        g_free ( expanded_input );
-
-        char* abs_path = get_absolute_path ( file, pd->current_dir );
-        g_free ( file );
-
-        if ( abs_path == NULL ) {
-            if ( ( *input )[0] == ':' ) {
-                pd->cmd = g_strdup ( ( *input ) + 1 );
-                retv = RESET_DIALOG;
-            } else {
-                retv = RELOAD_DIALOG;
-            }
-        } else if ( g_file_test ( abs_path, G_FILE_TEST_IS_DIR ) ){
-            change_dir ( abs_path, sw );
             retv = RESET_DIALOG;
-        } else if ( g_file_test ( abs_path, G_FILE_TEST_IS_REGULAR ) ) {
-            open_file ( abs_path, pd->current_dir, pd->cmd );
+        } else {
+            open_or_print_file ( entry->path, sw );
             retv = MODE_EXIT;
         }
 
-        g_free ( abs_path );
+    /* Handle custom input or Control+Return. */
+    } else if ( mretv & MENU_CUSTOM_INPUT ) {
 
+        /* Toggle hidden files with Control+Return. */
+        if ( strlen ( *input ) == 0 ) {
+            pd->show_hidden = !pd->show_hidden;
+            get_file_browser ( sw );
+            retv = RELOAD_DIALOG;
+
+        /* Handle custom input. */
+        } else {
+            char *expanded_input = rofi_expand_path ( *input );
+            char *file = g_filename_from_utf8 ( expanded_input, -1, NULL, NULL, NULL );
+            g_free ( expanded_input );
+
+            char* abs_path = get_absolute_path ( file, pd->current_dir );
+            g_free ( file );
+
+            if ( abs_path == NULL ) {
+                retv = RELOAD_DIALOG;
+            } else if ( g_file_test ( abs_path, G_FILE_TEST_IS_DIR ) ){
+                change_dir ( abs_path, sw );
+                retv = RESET_DIALOG;
+            } else if ( g_file_test ( abs_path, G_FILE_TEST_IS_REGULAR ) ) {
+                open_or_print_file ( abs_path, sw );
+                retv = MODE_EXIT;
+            }
+
+            g_free ( abs_path );
+        }
+
+    /* Enable hidden files with Shift+Right. */
+    } else if ( pd->use_mode_keys && ( mretv & MENU_NEXT ) && !pd->show_hidden ) {
+        pd->show_hidden = true;
+        get_file_browser ( sw );
+        retv = RELOAD_DIALOG;
+
+    /* Disable hidden files with Shift+Left. */
+    } else if ( pd->use_mode_keys && ( mretv & MENU_PREVIOUS ) && pd->show_hidden ) {
+        pd->show_hidden = false;
+        get_file_browser ( sw );
+        retv = RELOAD_DIALOG;
+
+    /* Default actions */
+    } else if ( mretv & MENU_CANCEL ) {
+        retv = MODE_EXIT;
+    } else if ( mretv & MENU_NEXT ) {
+        retv = NEXT_DIALOG;
+    } else if ( mretv & MENU_PREVIOUS ) {
+        retv = PREVIOUS_DIALOG;
+    } else if ( mretv & MENU_QUICK_SWITCH ) {
+        retv = ( mretv & MENU_LOWER_MASK );
     }
 
     return retv;
@@ -367,7 +430,11 @@ static int file_browser_token_match ( const Mode* sw, rofi_int_matcher **tokens,
 {
     FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
-    return helper_token_match ( tokens, pd->files[index].name);
+    if ( pd->open_custom ) {
+        return true;
+    } else {
+        return helper_token_match ( tokens, pd->files[index].name);
+    }
 }
 
 static char* file_browser_get_display_value ( const Mode* sw, unsigned int selected_line, G_GNUC_UNUSED int *state, G_GNUC_UNUSED GList **attr_list, int get_entry )
@@ -376,16 +443,23 @@ static char* file_browser_get_display_value ( const Mode* sw, unsigned int selec
 
     if ( !get_entry ) return NULL;
 
+    int index;
+    if ( pd->open_custom ) {
+        index = pd->open_custom_index;
+    } else {
+        index = selected_line;
+    }
+
     // MARKUP flag, not defined in accessible headers
     *state |= 8;
 
-    switch ( pd->files[selected_line].type ) {
+    switch ( pd->files[index].type ) {
     case UP:
         return g_strdup ( PARENT_NAME );
     case RFILE:
-        return g_strdup_printf ( FILE_FORMAT, pd->files[selected_line].name );
+        return g_strdup_printf ( FILE_FORMAT, pd->files[index].name );
     case DIRECTORY:
-        return g_strdup_printf ( DIRECTORY_FORMAT, pd->files[selected_line].name );
+        return g_strdup_printf ( DIRECTORY_FORMAT, pd->files[index].name );
     default:
         return g_strdup ( "error" );
     }
@@ -395,8 +469,15 @@ static cairo_surface_t* file_browser_get_icon ( const Mode* sw, unsigned int sel
 {
     FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
-    if ( pd->enable_icons ) {
-        char** icon_names = get_icon_names ( pd->files[selected_line] );
+    int index;
+    if ( pd->open_custom ) {
+        index = pd->open_custom_index;
+    } else {
+        index = selected_line;
+    }
+
+    if ( pd->use_icons ) {
+        char** icon_names = get_icon_names ( pd->files[index] );
         cairo_surface_t* icon =  get_icon_surf ( icon_names, height, sw );
         g_strfreev ( icon_names );
 
@@ -410,21 +491,90 @@ static char* file_browser_get_message (const Mode* sw)
 {
     FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
-    static char* mode_symbols[2] = { NO_HIDDEN_SYMBOL, SHOW_HIDDEN_SYMBOL };
+    if ( pd->open_custom ) {
+        char* file_name = pd->files[pd->open_custom_index].name;
+        char* message = g_strdup_printf ( OPEN_CUSTOM_MESSAGE_FORMAT,  file_name );
+        return message;
 
-    char* path = g_file_get_path ( pd->current_dir );
-    char** split = g_strsplit ( g_file_get_path(pd->current_dir), "/", -1 );
-    char* join = g_strjoinv ( " / ", split );
-    char* result = g_strdup_printf ( MESSAGE_FORMAT, mode_symbols[pd->show_hidden], join );
+    } else if ( pd->show_status ) {
+        char* path = g_file_get_path ( pd->current_dir );
+        char** split = g_strsplit ( g_file_get_path(pd->current_dir), "/", -1 );
+        char* join = g_strjoinv ( pd->path_sep, split );
+        char* message = g_strconcat ( pd->show_hidden ? pd->hidden_symbol : pd->no_hidden_symbol, join, NULL );
 
-    g_free ( path );
-    g_strfreev ( split );
-    g_free ( join );
+        g_free ( path );
+        g_strfreev ( split );
+        g_free ( join );
 
-    return result;
+        return message;
+    } else {
+        return NULL;
+    }
 }
 
 // ================================================================================================================= //
+
+static void set_command_line_options ( Mode* sw )
+{
+    FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
+
+    pd->show_hidden = ( find_arg ( "-fb_show_hidden" ) != -1 );
+    pd->use_icons = ( find_arg ( "-fb_disable_icons" ) == -1 );
+    pd->dmenu = ( find_arg ( "-fb_dmenu" ) != -1 );
+    pd->use_mode_keys = ( find_arg ( "-fb_disable_mode_keys" ) == -1 ); 
+    pd->show_status = ( find_arg ( "-fb_disable_status" ) == -1 );
+
+    char* cmd = NULL;
+    if ( find_arg_str ( "-fb_cmd", &cmd ) ) {
+        pd->cmd = g_strdup ( cmd );
+    } else {
+        pd->cmd = g_strdup ( CMD );
+    }
+
+    char* hidden_symbol = NULL;
+    if ( find_arg_str ( "-fb_hidden_symbol", &hidden_symbol ) ) {
+        pd->hidden_symbol = g_strdup ( hidden_symbol );
+    } else {
+        pd->hidden_symbol = g_strdup ( HIDDEN_SYMBOL );
+    }
+
+    char* no_hidden_symbol = NULL;
+    if ( find_arg_str ( "-fb_no_hidden_symbol", &no_hidden_symbol ) ) {
+        pd->no_hidden_symbol = g_strdup ( no_hidden_symbol );
+    } else {
+        pd->no_hidden_symbol = g_strdup ( NO_HIDDEN_SYMBOL );
+    }
+
+    char* path_sep = NULL;
+    if ( find_arg_str ( "-fb_path_sep", &path_sep ) ) {
+        pd->path_sep = g_strdup ( path_sep );
+    } else {
+        pd->path_sep = g_strdup ( PATH_SEP );
+    }
+
+    /* Set the start directory. */
+    char* start_dir = NULL;
+    if ( find_arg_str ( "-fb_dir", &start_dir ) ) {
+        pd->current_dir = g_file_new_for_path ( start_dir );
+        if ( !g_file_query_exists ( pd->current_dir, NULL ) ) {
+            g_object_unref ( pd->current_dir );
+            fprintf ( stderr, "[file_browser] Start directory does not exist: %s\n", start_dir );
+            pd->current_dir = g_file_new_for_path ( START_DIR );
+        }
+    } else {
+        pd->current_dir = g_file_new_for_path ( START_DIR );
+    }
+
+    /* Set the icon themes. */
+    const gchar *default_icon_themes[] = {
+        ICON_THEMES,
+        NULL
+    };
+    pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-fb_theme" ) );
+    if ( pd->icon_themes == NULL ) {
+        pd->icon_themes = g_strdupv ( ( char ** ) default_icon_themes );
+    }
+}
 
 static void get_file_browser ( Mode* sw )
 {
@@ -519,21 +669,28 @@ static void change_dir ( char* path, Mode* sw )
     get_file_browser ( sw );
 }
 
-static void open_file ( char* path, GFile* current_dir, const char* cmd )
+static void open_or_print_file ( char* path, Mode* sw )
 {
-    char* current_path = g_file_get_path ( current_dir );
-    char* complete_cmd = NULL;
+    FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
-    if ( g_strrstr ( cmd, "%s" ) != NULL ) {
-        complete_cmd = g_strdup_printf ( cmd, path );
+    if ( pd->dmenu ) {
+        printf("%s\n", path);
+
     } else {
-        complete_cmd = g_strconcat ( cmd, " ", path, NULL );
+        char* current_path = g_file_get_path ( pd->current_dir );
+        char* complete_cmd = NULL;
+
+        if ( g_strrstr ( pd->cmd, "%s" ) != NULL ) {
+            complete_cmd = g_strdup_printf ( pd->cmd, path );
+        } else {
+            complete_cmd = g_strconcat ( pd->cmd, " ", "'", path, "'", NULL );
+        }
+
+        helper_execute_command ( current_path, complete_cmd, false, NULL );
+
+        g_free ( current_path );
+        g_free ( complete_cmd );
     }
-
-    helper_execute_command ( current_path, complete_cmd, FALSE, NULL );
-
-    g_free ( current_path );
-    g_free ( complete_cmd );
 }
 
 static char** get_icon_names ( FBFile fbfile )
@@ -556,7 +713,6 @@ static char** get_icon_names ( FBFile fbfile )
     GFileInfo *file_info = g_file_query_info ( file, "standard::icon", G_FILE_QUERY_INFO_NONE, NULL, &error );
 
     if ( error == NULL ) {
-
         GIcon *icon = g_file_info_get_icon ( file_info );
 
         if ( G_IS_THEMED_ICON ( icon ) ) {
@@ -640,12 +796,7 @@ Mode mode =
     ._token_match       = file_browser_token_match,
     ._get_display_value = file_browser_get_display_value,
     ._get_icon          = file_browser_get_icon,
-
-#if USE_MESSAGE
     ._get_message       = file_browser_get_message,
-#else
-    ._get_message       = NULL,
-#endif
 
     ._get_completion    = NULL,
     ._preprocess_input  = NULL,

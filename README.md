@@ -32,26 +32,32 @@ An extension of the example file browser plugin presented in [Qball's Webblog](h
 * Icons depending on file types
 * Showing / hiding hidden files
 * Opening files with custom programs / commands
+* A dmenu mode that outputs the absolute file-path to stdout instead of opening the file
 
-#### Showing / hiding hidden files
+### Key-Bindings
 
-Hidden files can be shown or hidden by changing the mode with `MENU_PREVIOUS` and `MENU_NEXT`.
-
-#### Opening files with custom programs / commands
-
-Simply enter `:<cmd>` where `<cmd>` is the program / command you want to open the file with.
-If `<cmd>` contains `%s`, then `%s` will be replaced by the file name, otherwise the filename is passed as the last argument.
-
-For example, entering `:gimp` will open the next selected file with `gimp`, or entering `:mv "%s" "newname"` will rename the next selected file.
+Key                                                  | Action
+---------------------------------------------------- | ----------------------------------------------------------------------------------
+`kb-mode-next` <br/> (default: `Shift+Right`)        | Show hidden files. <br/> Switch to the next rofi-mode if hidden files are already shown. <br/> (See the `-fb_disable_mode_keys` option)
+`kb-mode-previous` <br/> (default: `Shift+Left`)     | Hide hidden files. <br/> Switch to the previous rofi-mode if hidden files are a already hidden. <br/> (See the `-fb_disable_mode_keys` option)
+`kb-accept-custom` <br/> (default: `Control+Return`) | Toggle hidden files (only if the input is empty).
+`kb-accpet-alt` <br/> (default: `Shift+Return`)      | Open the selected file with custom a command. <br/> You will be prompted to enter the command with which to open the file.
 
 ### Command line options / Configuration
 
-Option              | Arguments          | Description
-------------------- | ------------------ | --------------------------------------------------------------------------
-`-fb_cmd`           | command            | Sets the command used to open the file with.
-`-fb_dir`           | /path/to/directory | Sets the starting directory.
-`-fb_disable_icons` |                    | Disables icons.
-`-fb_theme`         | theme name         | Sets the icon theme, use this option multiple times to set fallback themes.
+Option                       | Description
+---------------------------- | ----------------------------------------------------------------------------------
+`-fb_cmd <arg>`              | Sets the command used to open the selected file with.
+`-fb_dir <string>`           | Sets the starting directory.
+`-fb_show_hidden`            | Shows hidden files.
+`-fb_dmenu`                  | Print the absolute path of the selected file instead of opening it.
+`-fb_disable_mode_keys`      | Disables toggling hidden files with kb-mode-next and kb-mode-previous.
+`-fb_theme <arg>`            | Sets the icon theme, can be used multiple times to set fallback themes.
+`-fb_disable_icons`          | Disables icons.
+`-fb_disable_status`         | Disables the status bar that shows the current path and if hidden files are shown.
+`-fb_hidden_symbol <arg>`    | Set the status bar symbol that indicates that hidden files are shown.
+`-fb_no_hidden_symbol <arg>` | Set the status bar symbol that indicates that hidden files are not shown.
+`-fb_path_sep <arg>`         | Set the path separator for the current path in the status bar.
 
 The source file contains more configuration via `#define`.
 
@@ -91,7 +97,13 @@ This plugin supports three matching modes:
 * `substring matching (1)`: match if the key containts the search string
 * `Levenshtein distance matching (2)`: match if the [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) is below a certain threshold
 
-Matching modes can be switched by switching modes with `MENU_PREVIOUS` and `MENU_NEXT`.
+### Key-Bindings
+
+Key                                                  | Action
+---------------------------------------------------- | ----------------------------------------------------------------------------------
+`kb-mode-next` <br/> (default: `Shift+Right`)        | Switch to the next matching mode. <br/> Switch to the next rofi-mode if the last matching mode is already selected.
+`kb-mode-previous` <br/> (default: `Shift+Left`)     | Switch to the previous matching mode. <br/> Switch to the previous rofi-mode if the first matching mode is already selected.
+`kb-accept-custom` <br/> (default: `Control+Return`) | Switch to the next matching mode (only if the input is empty).
 
 ### Command line options / Configuration
 
@@ -168,5 +180,7 @@ Option                  | Arguments     | Description
 `-prompt_theme`         | theme name    | Sets the icon theme, use this option multiple times to set fallback themes.
 
 The source file contains more configuration via `#define`.
+
+### Screenshot
 
 ![Screenshot](https://marvinkreis.github.io/rofi-plugins/rofi-prompt/example.png)

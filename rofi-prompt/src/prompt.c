@@ -64,9 +64,10 @@
  *     icon:        The name of the icon to display with the entry.     (default: name of the entry)
  *
  * Command line options:
- *      -prompt_file            Sets the json file containing the entries.
- *      -prompt_disable_icons   Disables icons.
- *      -prompt_theme           Sets the icon theme, can be used multiple times to set fallback themes.
+ * ---------------------
+ * -prompt_file <arg>      Sets the json file containing the entries.
+ * -prompt_disable_icons   Disables icons.
+ * -prompt_theme <arg>     Sets the icon theme, can be used multiple times to set fallback themes.
  */
 
 // ================================================================================================================= //
@@ -263,40 +264,42 @@ static ModeMode prompt_result ( Mode* sw, int mretv, char **input, unsigned int 
 {
     PromptModePrivateData* pd = ( PromptModePrivateData * ) mode_get_private_data ( sw );
 
-    if ( mretv & MENU_CANCEL ) {
-        return MODE_EXIT;
-    } else if ( mretv & MENU_PREVIOUS ) {
-        return PREVIOUS_DIALOG;
-    } else if ( mretv & MENU_NEXT ) {
-        return NEXT_DIALOG;
-    } else if ( mretv & MENU_OK ) {
-        char* input_ = *input;
+    ModeMode retv = RELOAD_DIALOG;
 
-        /*if ( input_[0] == ':' ) {
-            input_++;
-        }*/
-
+    /* Handle Return and Shift+Return*/
+    if ( mretv & MENU_OK ) {
         Entry* entry = &( pd->entries[selected_line] );
 
         /* Execute with arguments, if the user typed arguments after the name. */
         char* cmd = NULL;
-        if ( g_str_has_prefix ( input_, entry->name ) ) {
+        if ( g_str_has_prefix ( *input, entry->name ) ) {
             int name_len = strlen ( entry->name );
-            cmd = g_strconcat ( entry->cmd, input_ + name_len, NULL );
+            cmd = g_strconcat ( entry->cmd, *input + name_len, NULL );
         } else {
             cmd = g_strdup ( entry->cmd );
         }
 
         helper_execute_command ( NULL, cmd, entry->open_in_terminal, NULL );
-
         g_free ( cmd );
-        return MODE_EXIT;
+        retv = MODE_EXIT;
+
+    /* Handle Control+Return or custom input. */
     } else if ( mretv & MENU_CUSTOM_INPUT ) {
         helper_execute_command ( NULL, *input, false, NULL );
-        return MODE_EXIT;
-    } else {
-        return RELOAD_DIALOG;
+        retv = MODE_EXIT;
+
+    /* Default actions */
+    } else if ( mretv & MENU_CANCEL ) {
+        retv = MODE_EXIT;
+    } else if ( mretv & MENU_NEXT ) {
+        retv = NEXT_DIALOG;
+    } else if ( mretv & MENU_PREVIOUS ) {
+        retv = PREVIOUS_DIALOG;
+    } else if ( mretv & MENU_QUICK_SWITCH ) {
+        retv = ( mretv & MENU_LOWER_MASK );
     }
+
+    return retv;
 }
 
 static int prompt_token_match ( const Mode* sw, rofi_int_matcher **tokens, unsigned int index )
@@ -305,10 +308,6 @@ static int prompt_token_match ( const Mode* sw, rofi_int_matcher **tokens, unsig
 
     char* name = pd->entries[index].name;
     char* input = pd->input;
-
-    /*if ( input[0] == ':' ) {
-        input++;
-    }*/
 
     /* Match if the name contains the input, or the input contains the name with a whitespace afterwards (for arguments). */
     if ( g_str_has_prefix ( name, pd->input ) ) {

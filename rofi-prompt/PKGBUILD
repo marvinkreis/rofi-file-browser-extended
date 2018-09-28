@@ -1,7 +1,7 @@
 pkgname=rofi-prompt
-pkgver=0.0.1
+pkgver=0.0.2
 pkgrel=1
-pkgdesc="Plugin to use rofi for executing custom entries"
+pkgdesc="Plugin to use rofi for custom menus"
 url="https://github.com/marvinkreis/${pkgname}"
 arch=("i686" "x86_64")
 license=("MIT")

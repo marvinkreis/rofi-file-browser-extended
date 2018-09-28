@@ -27,7 +27,7 @@
 // ================================================================================================================= //
 
 /*
- * Reads all json-file in a directory as dictionaries and lets the user query values by keys.
+ * Reads all json-files in a directory as dictionaries and lets the user query values by keys.
  * Dictionaries must be saved as utf-8 and have the following structure:
  *      {
  *        "key1": "value1",
@@ -40,11 +40,17 @@
  *      substring matching
  *      Levenshtein distance matching
  *
- * Matching modes can be switched by switching modes (MENU_PREVIOUS, MENU_NEXT).
+ *
+ * Key Bindings:
+ * ------------
+ * kb-mode-next     (default: Shift+Right)    | Switch to the next matching mode. Switch to the next rofi-mode if the last matching mode is already selected.
+ * kb-mode-previous (default: Shift+Left)     | Switch to the previous matching mode. Switch to the previous rofi-mode if the first matching mode is already selected.
+ * kb-accept-custom (default: Control+Return) | Switch to the next matching mode (only if the input is empty).
  *
  * Command line options:
- *      -dict_path '/path/to/directory'     Sets the directory containing the dictionaries.
- *      -dict_mode <0|1|2>                  Sets the matching mode.
+ * ---------------------
+ * -dict_path '/path/to/directory'     Sets the directory containing the dictionaries.
+ * -dict_mode <0|1|2>                  Sets the matching mode.
  */
 
 // ================================================================================================================= //
@@ -102,16 +108,16 @@
 #define USE_MESSAGE true
 
 /* Format of the message. Arguments are: "current mode", "search string" */
-#define MESSAGE_FORMAT " %s %s"
+#define MESSAGE_FORMAT "%s %s"
 
 /* Format of the results. Arguments are: "dictionary name", "spacing", "key", "spacing", "value"
    If DISPLAY_DICT_NAME is false, "dictionary name" and the first "spacing" will be omitted. */
 #define RESULT_FORMAT "<span alpha='50%%'>%s</span>%s<span background='#FFFFFF12'>%s</span>%s%s"
 
 /* Symbols to use for displaying the matching mode in the message bar. */
-#define EXACT_MATCH_SYMBOL "-"
-#define SUBSTRING_MATCH_SYMBOL "+"
-#define LEVENSHTEIN_MATCH_SYMBOL "*"
+#define EXACT_MATCH_SYMBOL "[-]"
+#define SUBSTRING_MATCH_SYMBOL "[+]"
+#define LEVENSHTEIN_MATCH_SYMBOL "[*]"
 
 // ================================================================================================================= //
 
@@ -305,30 +311,50 @@ static ModeMode dict_result ( Mode* sw, int mretv, char** input, unsigned int se
 {
     DictModePrivateData* pd = ( DictModePrivateData * ) mode_get_private_data ( sw );
 
+    ModeMode retv = RELOAD_DIALOG;
+
+    /* Default actions */
     if ( mretv & MENU_CANCEL ) {
-        return MODE_EXIT;
-    } else if ( mretv & MENU_PREVIOUS ) {
-        pd->cur_match_mode = ( pd->cur_match_mode + 2 ) % 3;
-    } else if ( mretv & MENU_NEXT ) {
-        pd->cur_match_mode = ( pd->cur_match_mode + 1 ) % 3;
-    }
+        retv = MODE_EXIT;
+    } else if ( ( mretv & MENU_NEXT ) && pd->cur_match_mode >= 2 ) {
+        retv = NEXT_DIALOG;
+    } else if ( ( mretv & MENU_PREVIOUS ) && pd->cur_match_mode <= 0 ) {
+        retv = PREVIOUS_DIALOG;
+    } else if ( mretv & MENU_QUICK_SWITCH ) {
+        retv = ( mretv & MENU_LOWER_MASK );
 
-    char* search = NULL;
-
-    /* Use the old search string if no input provided. */
-    if ( strlen ( *input ) == 0 ) {
-        search = pd->search;
+    /* Handle match mode switching Control+Return. */
     } else {
-        search = *input;
-        g_free ( pd->search );
-        pd->search = g_strdup ( search );
+
+        /* Handle match mode switching Control+Return. */
+        if ( ( mretv & MENU_CUSTOM_INPUT ) && strlen ( *input ) == 0 ) {
+            pd->cur_match_mode = ( pd->cur_match_mode + 1 ) % 3;
+
+        /* Handle match mode switching Shift+Left and Shift+Right. */
+        } else if ( ( mretv & MENU_NEXT ) && pd->cur_match_mode <= 1 ) {
+            pd->cur_match_mode = ( pd->cur_match_mode + 1 ) % 3;
+        } else if ( ( mretv & MENU_PREVIOUS ) && pd->cur_match_mode >= 1 ) {
+            pd->cur_match_mode = ( pd->cur_match_mode + 2 ) % 3;
+        }
+
+        char* search = NULL;
+
+        /* Use the old search string if no input provided. */
+        if ( strlen ( *input ) == 0 ) {
+            search = pd->search;
+        } else {
+            search = *input;
+            g_free ( pd->search );
+            pd->search = g_strdup ( search );
+        }
+
+        if (search != NULL) {
+            set_results ( search, sw );
+        }
+
     }
 
-    if (search != NULL) {
-        set_results ( search, sw );
-    }
-
-    return RESET_DIALOG;
+    return retv;
 }
 
 static int dict_token_match ( const Mode* sw, rofi_int_matcher** tokens, unsigned int index )
