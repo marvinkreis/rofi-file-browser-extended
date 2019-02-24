@@ -1,30 +1,37 @@
-pkgname=rofi-file-browser-extended
+# Maintainer: Marvin Kreis <MarvinKreis@web.de>
+
+pkgname=rofi-file-browser-extended-git
 pkgver=0.1.0
 pkgrel=1
-pkgdesc="Plugin to use rofi as a file browser"
-url="https://github.com/marvinkreis/${pkgname}"
-arch=("i686" "x86_64")
+pkgdesc="A plugin to use rofi as a file browser"
+arch=("x86_64")
+url="https://github.com/marvinkreis/${pkgname%-git}"
 license=("MIT")
 depends=("rofi" "json-c")
 makedepends=("git")
-
-source=("git://github.com/marvinkreis/${pkgname}.git")
+provides=("rofi-file-browser-extended")
+replaces=("rofi-file_browser-extended")
+source=("git+https://github.com/marvinkreis/${pkgname%-git}.git")
 md5sums=("SKIP")
 
+pkgver() {
+    printf "%s" "$(git describe --long | sed 's/\([^-]*-\)g/r\1/;s/-/./g')"
+}
+
 prepare() {
-    cd "${srcdir}/${pkgname}"
+    cd "${srcdir}/${pkgname%-git}"
     git submodule init
     git submodule update
 }
 
 build() {
-    cd "${srcdir}/${pkgname}"
+    cd "${srcdir}/${pkgname%-git}"
     autoreconf --install
-    ./configure
+    ./configure --prefix=/usr
     make
 }
 
 package() {
-    cd "${srcdir}/${pkgname}"
-    make DESTDIR="$pkgdir" PREFIX=/usr install
+    cd "${srcdir}/${pkgname%-git}"
+    make DESTDIR="${pkgdir}" PREFIX=/usr install
 }
