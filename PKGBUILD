@@ -1,4 +1,4 @@
-pkgname=rofi-file_browser-extended
+pkgname=rofi-file-browser-extended
 pkgver=0.1.0
 pkgrel=1
 pkgdesc="Plugin to use rofi as a file browser"
@@ -8,23 +8,23 @@ license=("MIT")
 depends=("rofi" "json-c")
 makedepends=("git")
 
-source=("git://github.com/marvinkreis/rofi-plugins.git")
+source=("git://github.com/marvinkreis/${pkgname}.git")
 md5sums=("SKIP")
 
 prepare() {
-    cd "$srcdir/rofi-plugins"
+    cd "${srcdir}/${pkgname}"
     git submodule init
     git submodule update
 }
 
 build() {
-    cd "$srcdir/rofi-plugins/${pkgname}"
-    autoreconf -i
+    cd "${srcdir}/${pkgname}"
+    autoreconf --install
     ./configure
     make
 }
 
 package() {
-    cd "$srcdir/rofi-plugins/${pkgname}"
+    cd "${srcdir}/${pkgname}"
     make DESTDIR="$pkgdir" PREFIX=/usr install
 }

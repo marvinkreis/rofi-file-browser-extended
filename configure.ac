@@ -1,4 +1,4 @@
-AC_INIT([rofi-dict], [0.0.1], [https://github.com/marvinkreis/],[],[https://reddit.org/r/qtools/])
+AC_INIT([rofi-file-browser-extended], [0.0.1], [https://github.com/marvinkreis/],[],[https://reddit.org/r/qtools/])
 
 AC_CONFIG_HEADER([config.h])
 
@@ -49,11 +49,11 @@ PKG_PROG_PKG_CONFIG
 
 
 dnl ---------------------------------------------------------------------
-dnl PKG_CONFIG based dependencies  
+dnl PKG_CONFIG based dependencies
 dnl ---------------------------------------------------------------------
+NK_INIT([bindings xdg-theme])
 PKG_CHECK_MODULES([glib],     [glib-2.0 >= 2.40 gio-unix-2.0 gmodule-2.0 ])
 PKG_CHECK_MODULES([rofi],     [rofi])
-PKG_CHECK_MODULES([jsonc],    [json-c])
 
 [rofi_PLUGIN_INSTALL_DIR]="`$PKG_CONFIG --variable=pluginsdir rofi`"
 AC_SUBST([rofi_PLUGIN_INSTALL_DIR])
@@ -65,5 +65,5 @@ dnl Add extra compiler flags
 dnl ---------------------------------------------------------------------
 AC_SUBST([AM_CFLAGS])
 
-AC_CONFIG_FILES([Makefile ])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -521,7 +521,7 @@ static void set_command_line_options ( Mode* sw )
     pd->show_hidden = ( find_arg ( "-fb_show_hidden" ) != -1 );
     pd->use_icons = ( find_arg ( "-fb_disable_icons" ) == -1 );
     pd->dmenu = ( find_arg ( "-fb_dmenu" ) != -1 );
-    pd->use_mode_keys = ( find_arg ( "-fb_disable_mode_keys" ) == -1 ); 
+    pd->use_mode_keys = ( find_arg ( "-fb_disable_mode_keys" ) == -1 );
     pd->show_status = ( find_arg ( "-fb_disable_status" ) == -1 );
 
     char* cmd = NULL;
@@ -787,8 +787,8 @@ static gint compare ( gconstpointer a, gconstpointer b, gpointer data )
 Mode mode =
 {
     .abi_version        = ABI_VERSION,
-    .name               = "file_browser",
-    .cfg_name_key       = "display-file_browser",
+    .name               = "file-browser",
+    .cfg_name_key       = "display-file-browser",
     ._init              = file_browser_init,
     ._get_num_entries   = file_browser_get_num_entries,
     ._result            = file_browser_result,
