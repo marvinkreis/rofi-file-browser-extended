@@ -1,7 +1,7 @@
 # Maintainer: Marvin Kreis <MarvinKreis@web.de>
 
 pkgname=rofi-file-browser-extended-git
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="A plugin to use rofi as a file browser"
 arch=("x86_64")
@@ -15,7 +15,8 @@ source=("git+https://github.com/marvinkreis/${pkgname%-git}.git")
 md5sums=("SKIP")
 
 pkgver() {
-    printf "%s" "$(git describe --long | sed 's/\([^-]*-\)g/r\1/;s/-/./g')"
+    cd "${srcdir}/${pkgname%-git}"
+    git describe --tags
 }
 
 prepare() {
