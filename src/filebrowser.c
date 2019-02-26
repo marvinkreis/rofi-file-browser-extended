@@ -1,61 +1,3 @@
-/**
- * rofi-file_browser
- *
- * MIT/X11 License
- * Copyright (c) 2017 Qball Cow <qball@gmpclient.org>
- * Copyright (c) 2018 Marvin Kreis <MarvinKreis@web.de>
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-// ================================================================================================================= //
-
-/*
- * Displays a file browser with icons.
- *
- * Key Bindings:
- * -------------
- * kb-mode-next     (default: Shift+Right):     Show hidden files. Switch to the next rofi-mode if hidden files are already shown.
- * kb-mode-previous (default: Shift+Left):      Hide hidden files. Switch to the previous rofi-mode if hidden files are already hidden.
- * kb-accept-custom (default: Control+Return):  Toggle hidden files (only if input is empty)
- * kb-accpet-alt    (default: Shift+Return):    Open the selected file with a custom command. You will be prompted to enter the command with which to open the file.
- *
- * Command line options:
- * ---------------------
- * -fb_cmd <arg>              Sets the command used to open the selected file with.
- * -fb_dir <arg>              Sets the starting directory.
- * -fb_show_hidden            Shows hidden files.
- * -fb_dmenu                  Print the absolute path of the selected file instead of opening it.
- * -fb_disable_mode_keys      Disables toggling hidden files with kb-mode-next and kb-mode-previous.
- *
- * -fb_theme <arg>            Sets the icon theme, can be used multiple times to set fallback themes.
- * -fb_disable_icons          Disables icons.
- *
- * -fb_disable_status         Disables the status bar that shows the current path and if hidden files are shown.
- * -fb_hidden_symbol <arg>    Set the status bar symbol that indicates that hidden files are shown.
- * -fb_no_hidden_symbol <arg> Set the status bar symbol that indicates that hidden files are not shown.
- * -fb_path_sep <arg>         Set the path separator for the current path in the status bar.
- */
-
-// ================================================================================================================= //
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -76,7 +18,7 @@
 #define START_DIR g_get_current_dir()
 
 /* The icon theme. */
-#define ICON_THEMES "Numix-Circle", "Numix"
+#define ICON_THEMES "Adwaita"
 
 /* The fallback icon themes. */
 #define FALLBACK_ICON_THEMES "Adwaita", "gnome"
@@ -518,35 +460,35 @@ static void set_command_line_options ( Mode* sw )
 {
     FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
-    pd->show_hidden = ( find_arg ( "-fb_show_hidden" ) != -1 );
-    pd->use_icons = ( find_arg ( "-fb_disable_icons" ) == -1 );
-    pd->dmenu = ( find_arg ( "-fb_dmenu" ) != -1 );
-    pd->use_mode_keys = ( find_arg ( "-fb_disable_mode_keys" ) == -1 );
-    pd->show_status = ( find_arg ( "-fb_disable_status" ) == -1 );
+    pd->show_hidden = ( find_arg ( "-file-browser-show-hidden" ) != -1 );
+    pd->use_icons = ( find_arg ( "-file-browser-disable-icons" ) == -1 );
+    pd->dmenu = ( find_arg ( "-file-browser-dmenu" ) != -1 );
+    pd->use_mode_keys = ( find_arg ( "-file-browser-disable-mode-keys" ) == -1 );
+    pd->show_status = ( find_arg ( "-file-browser-disable-status" ) == -1 );
 
     char* cmd = NULL;
-    if ( find_arg_str ( "-fb_cmd", &cmd ) ) {
+    if ( find_arg_str ( "-file-browser-cmd", &cmd ) ) {
         pd->cmd = g_strdup ( cmd );
     } else {
         pd->cmd = g_strdup ( CMD );
     }
 
     char* hidden_symbol = NULL;
-    if ( find_arg_str ( "-fb_hidden_symbol", &hidden_symbol ) ) {
+    if ( find_arg_str ( "-file-browser-hidden-symbol", &hidden_symbol ) ) {
         pd->hidden_symbol = g_strdup ( hidden_symbol );
     } else {
         pd->hidden_symbol = g_strdup ( HIDDEN_SYMBOL );
     }
 
     char* no_hidden_symbol = NULL;
-    if ( find_arg_str ( "-fb_no_hidden_symbol", &no_hidden_symbol ) ) {
+    if ( find_arg_str ( "-file-browser-no-hidden-symbol", &no_hidden_symbol ) ) {
         pd->no_hidden_symbol = g_strdup ( no_hidden_symbol );
     } else {
         pd->no_hidden_symbol = g_strdup ( NO_HIDDEN_SYMBOL );
     }
 
     char* path_sep = NULL;
-    if ( find_arg_str ( "-fb_path_sep", &path_sep ) ) {
+    if ( find_arg_str ( "-file-browser-path-sep", &path_sep ) ) {
         pd->path_sep = g_strdup ( path_sep );
     } else {
         pd->path_sep = g_strdup ( PATH_SEP );
@@ -554,11 +496,11 @@ static void set_command_line_options ( Mode* sw )
 
     /* Set the start directory. */
     char* start_dir = NULL;
-    if ( find_arg_str ( "-fb_dir", &start_dir ) ) {
+    if ( find_arg_str ( "-file-browser-dir", &start_dir ) ) {
         pd->current_dir = g_file_new_for_path ( start_dir );
         if ( !g_file_query_exists ( pd->current_dir, NULL ) ) {
             g_object_unref ( pd->current_dir );
-            fprintf ( stderr, "[file_browser] Start directory does not exist: %s\n", start_dir );
+            fprintf ( stderr, "[file-browser] Start directory does not exist: %s\n", start_dir );
             pd->current_dir = g_file_new_for_path ( START_DIR );
         }
     } else {
@@ -570,7 +512,7 @@ static void set_command_line_options ( Mode* sw )
         ICON_THEMES,
         NULL
     };
-    pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-fb_theme" ) );
+    pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-theme" ) );
     if ( pd->icon_themes == NULL ) {
         pd->icon_themes = g_strdupv ( ( char ** ) default_icon_themes );
     }
