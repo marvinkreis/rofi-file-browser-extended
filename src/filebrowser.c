@@ -105,19 +105,21 @@ typedef struct {
 
 // ================================================================================================================= //
 
+// TODO update doc
+
 /**
  * @param Mode The current mode.
  *
  * Sets command line options in the private data.
  */
-static void set_command_line_options ( Mode* sw );
+static void set_command_line_options ( FileBrowserModePrivateData* pd );
 
 /**
  * @param Mode The current mode.
  *
  * Gets the files in the current directory and sets them in the private data.
  */
-static void get_file_browser ( Mode* sw );
+static void get_file_browser ( FileBrowserModePrivateData* pd );
 
 /**
  * @param pd The private data.
@@ -141,7 +143,7 @@ static char* get_absolute_path ( char* path, char* current_dir );
 /**
  * TODO
  */
-static void change_dir ( char* path, Mode* sw );
+static void change_dir ( char* path, FileBrowserModePrivateData* pd );
 
 /**
  * @param path The absolute path of the file to open.
@@ -149,7 +151,7 @@ static void change_dir ( char* path, Mode* sw );
  *
  * Opens the file at the given path or prints it's absolute path to stdout if the dmenu option is set.
  */
-static void open_or_print_file ( char* path, Mode* sw );
+static void open_or_print_file ( char* path, FileBrowserModePrivateData* pd );
 
 /**
  * @param file The file to get the icon names of.
@@ -170,7 +172,7 @@ static char** get_icon_names ( FBFile file );
  *
  * @return An icon for the given list of icon names, or NULL if the icon doesn't exist.
  */
-static cairo_surface_t* get_icon_surf ( char** icon_names, int icon_size, const Mode* sw );
+static cairo_surface_t* get_icon_surf ( char** icon_names, int icon_size, FileBrowserModePrivateData* pd );
 
 /**
  * @param a The first file.
@@ -192,7 +194,7 @@ static int file_browser_init ( Mode* sw )
         mode_set_private_data ( sw, ( void * ) pd );
 
         /* Command line options */
-        set_command_line_options ( sw );
+        set_command_line_options ( pd );
 
         /* Other values */
         pd->open_custom = false;
@@ -215,7 +217,7 @@ static int file_browser_init ( Mode* sw )
         }
 
         /* Load the files. */
-        get_file_browser ( sw );
+        get_file_browser ( pd );
     }
 
     return true;
@@ -276,13 +278,13 @@ static ModeMode file_browser_result ( Mode* sw, int mretv, char **input, unsigne
         if ( mretv & ( MENU_OK | MENU_CUSTOM_INPUT | MENU_CUSTOM_ACTION ) ) {
             if ( strlen ( *input ) == 0 ) {
                 char* file_path = pd->files[pd->open_custom_index].path;
-                open_or_print_file ( file_path, sw );
+                open_or_print_file ( file_path, pd );
                 retv = MODE_EXIT;
             } else {
                 char* file_path = pd->files[pd->open_custom_index].path;
                 g_free ( pd->cmd );
                 pd->cmd = g_strdup ( *input );
-                open_or_print_file ( file_path, sw );
+                open_or_print_file ( file_path, pd );
                 retv = MODE_EXIT;
             }
         } else if ( mretv & MENU_CANCEL ) {
@@ -301,10 +303,11 @@ static ModeMode file_browser_result ( Mode* sw, int mretv, char **input, unsigne
     } else if ( mretv & MENU_OK ) {
         FBFile* entry = &( pd->files[selected_line] );
         if ( entry->type == UP || entry->type == DIRECTORY ) {
-            change_dir ( entry->path, sw );
+            change_dir ( entry->path, pd );
+            get_file_browser ( pd );
             retv = RESET_DIALOG;
         } else {
-            open_or_print_file ( entry->path, sw );
+            open_or_print_file ( entry->path, pd );
             retv = MODE_EXIT;
         }
 
@@ -314,7 +317,7 @@ static ModeMode file_browser_result ( Mode* sw, int mretv, char **input, unsigne
         /* Toggle hidden files with Control+Return. */
         if ( strlen ( *input ) == 0 ) {
             pd->show_hidden = !pd->show_hidden;
-            get_file_browser ( sw );
+            get_file_browser ( pd );
             retv = RELOAD_DIALOG;
 
         /* Handle custom input. */
@@ -329,10 +332,11 @@ static ModeMode file_browser_result ( Mode* sw, int mretv, char **input, unsigne
             if ( abs_path == NULL ) {
                 retv = RELOAD_DIALOG;
             } else if ( g_file_test ( abs_path, G_FILE_TEST_IS_DIR ) ){
-                change_dir ( abs_path, sw );
+                change_dir ( abs_path, pd );
+                get_file_browser ( pd );
                 retv = RESET_DIALOG;
             } else if ( g_file_test ( abs_path, G_FILE_TEST_IS_REGULAR ) ) {
-                open_or_print_file ( abs_path, sw );
+                open_or_print_file ( abs_path, pd );
                 retv = MODE_EXIT;
             }
 
@@ -342,13 +346,13 @@ static ModeMode file_browser_result ( Mode* sw, int mretv, char **input, unsigne
     /* Enable hidden files with Shift+Right. */
     } else if ( pd->use_mode_keys && ( mretv & MENU_NEXT ) && !pd->show_hidden ) {
         pd->show_hidden = true;
-        get_file_browser ( sw );
+        get_file_browser ( pd );
         retv = RELOAD_DIALOG;
 
     /* Disable hidden files with Shift+Left. */
     } else if ( pd->use_mode_keys && ( mretv & MENU_PREVIOUS ) && pd->show_hidden ) {
         pd->show_hidden = false;
-        get_file_browser ( sw );
+        get_file_browser ( pd );
         retv = RELOAD_DIALOG;
 
     /* Default actions */
@@ -417,7 +421,7 @@ static cairo_surface_t* file_browser_get_icon ( const Mode* sw, unsigned int sel
 
     if ( pd->show_icons ) {
         char** icon_names = get_icon_names ( pd->files[index] );
-        cairo_surface_t* icon =  get_icon_surf ( icon_names, height, sw );
+        cairo_surface_t* icon =  get_icon_surf ( icon_names, height, pd );
         g_strfreev ( icon_names );
 
         return icon;
@@ -451,10 +455,8 @@ static char* file_browser_get_message (const Mode* sw)
 
 // ================================================================================================================= //
 
-static void set_command_line_options ( Mode* sw )
+static void set_command_line_options ( FileBrowserModePrivateData* pd )
 {
-    FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
-
     pd->show_hidden = ( find_arg ( "-file-browser-show-hidden" ) != -1 );
     pd->show_icons = ( find_arg ( "-file-browser-disable-icons" ) == -1 );
     pd->dmenu = ( find_arg ( "-file-browser-dmenu" ) != -1 );
@@ -513,10 +515,8 @@ static void set_command_line_options ( Mode* sw )
     }
 }
 
-static void get_file_browser ( Mode* sw )
+static void get_file_browser ( FileBrowserModePrivateData* pd )
 {
-    FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
-
     free_list ( pd );
 
     DIR *dir = opendir ( pd->current_dir );
@@ -595,19 +595,14 @@ static char* get_absolute_path ( char* path, char* current_dir )
     }
 }
 
-static void change_dir ( char* path, Mode* sw )
+static void change_dir ( char* path, FileBrowserModePrivateData* pd )
 {
-    FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
-
     g_free ( pd->current_dir );
     pd->current_dir = g_strdup ( path );
-    get_file_browser ( sw );
 }
 
-static void open_or_print_file ( char* path, Mode* sw )
+static void open_or_print_file ( char* path, FileBrowserModePrivateData* pd )
 {
-    FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
-
     if ( pd->dmenu ) {
         printf("%s\n", path);
 
@@ -664,9 +659,7 @@ static char** get_icon_names ( FBFile fbfile )
     }
 }
 
-static cairo_surface_t* get_icon_surf ( char** icon_names, int icon_size, const Mode* sw ) {
-    FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
-
+    static cairo_surface_t* get_icon_surf ( char** icon_names, int icon_size, FileBrowserModePrivateData* pd ) {
     for (int i = 0; icon_names[i] != NULL; i++) {
 
         cairo_surface_t *icon_surf = g_hash_table_lookup ( pd->icons, icon_names[i] );
