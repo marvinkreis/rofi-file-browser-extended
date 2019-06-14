@@ -17,7 +17,7 @@
 /* The starting directory. */
 #define START_DIR g_get_current_dir()
 
-/* The icon theme. */
+/* The icon theme(s). */
 #define ICON_THEMES "Adwaita"
 
 /* The fallback icon themes. */
@@ -31,7 +31,7 @@
 /* The name to display for the parent directory. */
 #define PARENT_NAME ".."
 
-/* The format use to display files and directories. */
+/* The format used to display files and directories. Supports pango markup. */
 #define FILE_FORMAT "%s"
 #define DIRECTORY_FORMAT "%s"
 
@@ -61,8 +61,9 @@ typedef struct {
 
 typedef struct {
     /* Current directory */
-    GFile* current_dir;
+    char* current_dir;
 
+    /* ---- File list ---- */
     /* List of displayed files */
     FBFile* files;
     /* Number of displayed files */
@@ -70,24 +71,24 @@ typedef struct {
     /* Show hidden files */
     bool show_hidden;
 
-    /* Show icons in the file browser. */
-    bool use_icons;
+    /* ---- Icons ---- */
     /* Loaded icons by their names */
     GHashTable* icons;
     /* Icon theme context */
     NkXdgThemeContext *xdg_context;
-    /* Used icon themes with fallbacks */
-    char** icon_themes;
 
-    /* Is the user currently opening a file with a custom program.
+    /* ---- Custom command prompt ---- */
+    /* Is the user currently opening a file with a custom program?
        This prompts the user for a program to open the file with. */
     bool open_custom;
     /* The selected file index to be opened with a custom program. */
     int open_custom_index;
 
-    /* ---- Only command line options ---- */
+    /* ---- Command line options ---- */
     /* Command to open files with */
     char* cmd;
+    /* Show icons in the file browser. */
+    bool show_icons;
     /* Show the status bar.. */
     bool show_status;
     /* Print the absolute file path of selected file instead of opening it. */
@@ -98,6 +99,8 @@ typedef struct {
     char* hidden_symbol;
     char* no_hidden_symbol;
     char* path_sep;
+    /* Icon themes with fallbacks */
+    char** icon_themes;
 } FileBrowserModePrivateData;
 
 // ================================================================================================================= //
@@ -124,7 +127,7 @@ static void get_file_browser ( Mode* sw );
 static void free_list ( FileBrowserModePrivateData* pd );
 
 /**
- * @param The path the get the absolute path of.
+ * @param path The path the get the absolute path of.
  * @param current_dir The current directory.
  *
  * Gets the absolute path of either an already absolute path or a relative path to the current directory.
@@ -133,16 +136,10 @@ static void free_list ( FileBrowserModePrivateData* pd );
  * @return The absolute path, or NULL if no file or directory with the path exists.
  *         If a path is returned, it should be free'd with g_free() afterwards.
  */
-static char* get_absolute_path ( char* path, GFile* current_dir );
+static char* get_absolute_path ( char* path, char* current_dir );
 
 /**
- * @param path The path the get the absolute path of.
- * @param current_dir The current directory.
- *
- * Gets the absolute path of either an already absolute path or a relative path to the current directory.
- * If no file or directory with the path, exists, NULL is returned.
- *
- * @return The absolute path, or NULL if no file or directory with the path exists.
+ * TODO
  */
 static void change_dir ( char* path, Mode* sw );
 
@@ -206,7 +203,7 @@ static int file_browser_init ( Mode* sw )
         pd->xdg_context = NULL;
 
         /* Set up icons if enabled. */
-        if ( pd->use_icons ) {
+        if ( pd->show_icons ) {
             static const gchar * const fallback_icon_themes[] = {
                 FALLBACK_ICON_THEMES,
                 NULL
@@ -231,17 +228,17 @@ static void file_browser_destroy ( Mode* sw )
 
     if ( pd != NULL ) {
         /* Free file list. */
-        g_object_unref ( pd->current_dir );
         free_list ( pd );
 
         /* Free icon themes and icons. */
-        if ( pd->use_icons ) {
+        if ( pd->show_icons ) {
             g_hash_table_destroy ( pd->icons );
             nk_xdg_theme_context_free ( pd->xdg_context );
         }
         g_strfreev ( pd->icon_themes );
 
         /* Free the rest. */
+        g_free ( pd->current_dir );
         g_free ( pd->cmd );
         g_free ( pd->hidden_symbol );
         g_free ( pd->no_hidden_symbol );
@@ -418,7 +415,7 @@ static cairo_surface_t* file_browser_get_icon ( const Mode* sw, unsigned int sel
         index = selected_line;
     }
 
-    if ( pd->use_icons ) {
+    if ( pd->show_icons ) {
         char** icon_names = get_icon_names ( pd->files[index] );
         cairo_surface_t* icon =  get_icon_surf ( icon_names, height, sw );
         g_strfreev ( icon_names );
@@ -439,12 +436,10 @@ static char* file_browser_get_message (const Mode* sw)
         return message;
 
     } else if ( pd->show_status ) {
-        char* path = g_file_get_path ( pd->current_dir );
-        char** split = g_strsplit ( g_file_get_path(pd->current_dir), "/", -1 );
+        char** split = g_strsplit ( pd->current_dir, "/", -1 );
         char* join = g_strjoinv ( pd->path_sep, split );
         char* message = g_strconcat ( pd->show_hidden ? pd->hidden_symbol : pd->no_hidden_symbol, join, NULL );
 
-        g_free ( path );
         g_strfreev ( split );
         g_free ( join );
 
@@ -461,7 +456,7 @@ static void set_command_line_options ( Mode* sw )
     FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
     pd->show_hidden = ( find_arg ( "-file-browser-show-hidden" ) != -1 );
-    pd->use_icons = ( find_arg ( "-file-browser-disable-icons" ) == -1 );
+    pd->show_icons = ( find_arg ( "-file-browser-disable-icons" ) == -1 );
     pd->dmenu = ( find_arg ( "-file-browser-dmenu" ) != -1 );
     pd->use_mode_keys = ( find_arg ( "-file-browser-disable-mode-keys" ) == -1 );
     pd->show_status = ( find_arg ( "-file-browser-disable-status" ) == -1 );
@@ -497,14 +492,14 @@ static void set_command_line_options ( Mode* sw )
     /* Set the start directory. */
     char* start_dir = NULL;
     if ( find_arg_str ( "-file-browser-dir", &start_dir ) ) {
-        pd->current_dir = g_file_new_for_path ( start_dir );
-        if ( !g_file_query_exists ( pd->current_dir, NULL ) ) {
-            g_object_unref ( pd->current_dir );
+        if ( g_file_test ( start_dir, G_FILE_TEST_EXISTS ) ) {
+            pd->current_dir = g_strdup( start_dir );
+        } else {
             fprintf ( stderr, "[file-browser] Start directory does not exist: %s\n", start_dir );
-            pd->current_dir = g_file_new_for_path ( START_DIR );
+            pd->current_dir = g_strdup ( START_DIR );
         }
     } else {
-        pd->current_dir = g_file_new_for_path ( START_DIR );
+        pd->current_dir = g_strdup ( START_DIR );
     }
 
     /* Set the icon themes. */
@@ -524,8 +519,7 @@ static void get_file_browser ( Mode* sw )
 
     free_list ( pd );
 
-    char *cdir = g_file_get_path ( pd->current_dir );
-    DIR *dir = opendir ( cdir );
+    DIR *dir = opendir ( pd->current_dir );
 
     if ( dir != NULL ) {
         struct dirent *rd = NULL;
@@ -544,7 +538,7 @@ static void get_file_browser ( Mode* sw )
                 FBFile* entry = &( pd->files[pd->num_files] );
 
                 entry->name = g_filename_to_utf8 ( rd->d_name, -1, NULL, NULL, NULL);
-                entry->path = g_build_filename ( cdir, rd->d_name, NULL );
+                entry->path = g_build_filename ( pd->current_dir, rd->d_name, NULL );
 
                 if ( g_strcmp0 ( rd->d_name, ".." ) == 0 ) {
                     entry->type = UP;
@@ -583,15 +577,15 @@ static void free_list ( FileBrowserModePrivateData* pd )
     pd->num_files = 0;
 }
 
-static char* get_absolute_path ( char* path, GFile* current_dir )
+static char* get_absolute_path ( char* path, char* current_dir )
 {
+    /* Check if the path is already absolute. */
     if ( g_file_test ( path, G_FILE_TEST_EXISTS ) ) {
         return g_strdup ( path );
-    } else {
-        char* current_path = g_file_get_path ( current_dir );
-        char* new_path = g_build_filename ( current_path, path, NULL );
-        g_free ( current_path );
 
+    /* Construct the absolute path and check if it exists. */
+    } else {
+        char* new_path = g_build_filename ( current_dir, path, NULL );
         if ( g_file_test ( new_path, G_FILE_TEST_EXISTS ) ) {
             return new_path;
         } else {
@@ -605,9 +599,8 @@ static void change_dir ( char* path, Mode* sw )
 {
     FileBrowserModePrivateData* pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
-    GFile *new_dir = g_file_new_for_path ( path );
-    g_object_unref ( pd->current_dir );
-    pd->current_dir = new_dir;
+    g_free ( pd->current_dir );
+    pd->current_dir = g_strdup ( path );
     get_file_browser ( sw );
 }
 
@@ -619,7 +612,6 @@ static void open_or_print_file ( char* path, Mode* sw )
         printf("%s\n", path);
 
     } else {
-        char* current_path = g_file_get_path ( pd->current_dir );
         char* complete_cmd = NULL;
 
         if ( g_strrstr ( pd->cmd, "%s" ) != NULL ) {
@@ -628,9 +620,8 @@ static void open_or_print_file ( char* path, Mode* sw )
             complete_cmd = g_strconcat ( pd->cmd, " ", "'", path, "'", NULL );
         }
 
-        helper_execute_command ( current_path, complete_cmd, false, NULL );
+        helper_execute_command ( pd->current_dir, complete_cmd, false, NULL );
 
-        g_free ( current_path );
         g_free ( complete_cmd );
     }
 }
