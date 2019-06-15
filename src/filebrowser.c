@@ -1,9 +1,12 @@
+#define _XOPEN_SOURCE 700
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 
-#include <dirent.h>
+#include <ftw.h>
 #include <gmodule.h>
 #include <gio/gio.h>
 
@@ -30,12 +33,8 @@
 /* The name to display for the parent directory. */
 #define UP_NAME ".."
 
-#define ERROR_ICON "error"
-#define UP_ICON "go-up"
-
-/* The format used to display files and directories. Supports pango markup. */
-#define FILE_FORMAT "%s"
-#define DIRECTORY_FORMAT "%s"
+#define ERROR_ICONS "error"
+#define UP_ICONS "go-up"
 
 /* The default command to use to open files. */
 #define CMD "xdg-open '%s'"
@@ -44,7 +43,8 @@
    If the message contains %s, it will be replaced with the file name. */
 #define OPEN_CUSTOM_MESSAGE_FORMAT "Enter command to open '%s' with, or cancel to go back."
 
-#define DEPTH_LIMIT 1
+/* The depth up to which files are recursively listed. */
+#define DEPTH 1
 
 // ================================================================================================================= //
 
@@ -54,6 +54,7 @@ typedef enum FBFileType {
     UP,
     DIRECTORY,
     RFILE,
+    INACCESSIBLE
 } FBFileType;
 
 typedef struct {
@@ -74,7 +75,7 @@ typedef struct {
     /* Show hidden files. */
     bool show_hidden;
     /* Scan files recursively up to a given depth. 0 means no limit. */
-    int depth_limit;
+    int depth;
 
     /* ---- Icons ---- */
     /* Loaded icons by their names. */
@@ -110,6 +111,9 @@ typedef struct {
 
 // ================================================================================================================= //
 
+/* Save private data globally for nftw. */
+static FileBrowserModePrivateData* global_pd;
+
 /**
  * Sets the command line options and the defaults for missing command line options.
  * Returns false if some option could not be set and the initialization should be aborted.
@@ -127,9 +131,20 @@ static char *get_default_icon_theme ( void );
 static void free_files ( FileBrowserModePrivateData *pd );
 
 /**
+ * Function used by nftw to list files recursively.
+ */
+static int add_file ( const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf );
+
+/**
  * Frees the current file list and loads the file list for the current directory and options.
  */
 static void load_files ( FileBrowserModePrivateData *pd );
+
+/**
+ * If the given path is not absolute, constructs an absolute file path with the current dir.
+ * If a file exists for the path, returns the path, otherwise returns NULL.
+ */
+static char *get_existing_abs_path ( char *path, char *current_dir );
 
 /**
  * Simplifies the given path (e.g. removes "..") and loads the file list for the new path.
@@ -141,13 +156,6 @@ static void change_dir ( char *path, FileBrowserModePrivateData *pd );
  * Directories should appear before regular files, directories and files should be sorted alphabetically.
  */
 static gint compare_files ( gconstpointer a, gconstpointer b, gpointer data );
-
-/**
- * If the given path is already absolute, returns a duplicate of the path.
- * If the given path is relative, constructs a new absolute path from the relative path and the current directory.
- * If the path does not exist, returns NULL.
- */
-static char *get_absolute_path ( char *path, char *current_dir );
 
 /**
  * Gets the most specific icon for a file, and caches it in a hash map.
@@ -192,7 +200,7 @@ static int file_browser_init ( Mode *sw )
         }
 
         /* Load the files. */
-        load_files ( pd );
+        change_dir ( pd->current_dir, pd );
     }
 
     return true;
@@ -305,7 +313,7 @@ static ModeMode file_browser_result ( Mode *sw, int mretv, char **input, unsigne
             char *file = g_filename_from_utf8 ( expanded_input, -1, NULL, NULL, NULL );
             g_free ( expanded_input );
 
-            char *abs_path = get_absolute_path ( file, pd->current_dir );
+            char *abs_path = get_existing_abs_path ( file, pd->current_dir );
             g_free ( file );
 
             if ( abs_path == NULL ) {
@@ -372,18 +380,11 @@ static char *file_browser_get_display_value ( const Mode *sw, unsigned int selec
         index = selected_line;
     }
 
-    /* MARKUP flag, not defined in accessible headers */
-    *state |= 8;
-
     switch ( pd->files[index].type ) {
     case UP:
         return g_strdup ( UP_NAME );
-    case RFILE:
-        return g_strdup_printf ( FILE_FORMAT, pd->files[index].name );
-    case DIRECTORY:
-        return g_strdup_printf ( DIRECTORY_FORMAT, pd->files[index].name );
     default:
-        return g_strdup ( "error" );
+        return g_strdup ( pd->files[index].name );
     }
 }
 
@@ -468,33 +469,32 @@ static bool set_command_line_options ( FileBrowserModePrivateData *pd )
         pd->path_sep = g_strdup ( PATH_SEP );
     }
 
+    if ( ! find_arg_int ( "-file-browser-depth", &pd->depth ) ) {
+        pd->depth = DEPTH;
+    }
+
     char *start_dir = NULL;
-    if ( find_arg_str ( "-file-browser-dir", &start_dir ) ) {
-        if ( g_file_test ( start_dir, G_FILE_TEST_EXISTS ) ) {
-            pd->current_dir = g_strdup( start_dir );
-        } else {
-            fprintf ( stderr, "[file-browser] Start directory does not exist: %s\n", start_dir );
-            return false;
-        }
+    if ( ! find_arg_str ( "-file-browser-dir", &start_dir ) ) {
+        start_dir = START_DIR;
+    }
+    char *abs_path = get_existing_abs_path ( start_dir, g_get_current_dir() );
+    if ( abs_path != NULL ) {
+        pd->current_dir = abs_path;
     } else {
-        pd->current_dir = g_strdup ( START_DIR );
+        fprintf ( stderr, "[file-browser] Start directory does not exist: %s\n", start_dir );
+        return false;
     }
 
     pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-theme" ) );
-    /* Detect GTK icon theme if no theme was specified. */
     if ( pd->icon_themes == NULL ) {
         char *default_theme = get_default_icon_theme ();
-
-        default_theme = NULL;
         if ( default_theme == NULL ) {
             fprintf ( stderr, "[file-browser] Could not determine GTK icon theme. Maybe try setting a theme with -file-browser-theme\n" );
         }
-
         char *icon_themes[] = {
             default_theme,
             NULL
         };
-
         pd->icon_themes = g_strdupv ( icon_themes );
     }
 
@@ -521,65 +521,96 @@ static void free_files ( FileBrowserModePrivateData *pd )
     pd->num_files = 0;
 }
 
-static void load_files ( FileBrowserModePrivateData *pd )
+static int add_file ( const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf )
 {
-    free_files ( pd );
+    FileBrowserModePrivateData *pd = global_pd;
 
-    DIR *dir = opendir ( pd->current_dir );
+    /* Skip hidden files. */
+    if ( ! pd->show_hidden && fpath[ftwbuf->base] == '.' ) {
+        return FTW_SKIP_SUBTREE;
 
-    if ( dir != NULL ) {
-        struct dirent *rd = NULL;
-        while ( ( rd = readdir ( dir ) ) != NULL ) {
-            /* Ignore rd if rd is the current directory or rd is a hidden file and not shown. */
-            if ( ( g_strcmp0 ( rd->d_name, "." ) == 0 ) ||
-                 ( !pd->show_hidden &&
-                   rd->d_name[0] == '.' &&
-                   g_strcmp0 ( rd->d_name, ".." ) != 0 ) ) {
-                continue;
-            }
-
-            if ( rd->d_type == DT_REG || rd->d_type == DT_DIR || rd->d_type == DT_LNK ) {
-                pd->files = g_realloc ( pd->files, ( pd->num_files + 1 ) * sizeof ( FBFile ) );
-
-                FBFile* entry = &( pd->files[pd->num_files] );
-
-                entry->name = g_filename_to_utf8 ( rd->d_name, -1, NULL, NULL, NULL);
-                entry->path = g_build_filename ( pd->current_dir, rd->d_name, NULL );
-
-                if ( g_strcmp0 ( rd->d_name, ".." ) == 0 ) {
-                    entry->type = UP;
-                } else {
-                    switch ( rd->d_type ) {
-                        case DT_REG:
-                            entry->type = RFILE;
-                            break;
-                        case DT_DIR:
-                            entry->type = DIRECTORY;
-                            break;
-                        case DT_LNK:
-                            entry->type = g_file_test ( entry->path, G_FILE_TEST_IS_DIR ) ? DIRECTORY : RFILE;
-                    }
-                }
-
-                pd->num_files++;
-            }
-        }
-
-        closedir ( dir );
+    /* Skip the current dir itself. */
+    } else if ( ftwbuf->level == 0 ) {
+        return FTW_CONTINUE;
     }
 
+    int pos = strlen ( fpath ) - 1;
+    int level = ftwbuf->level;
+    while ( level > 0 ) {
+        pos--;
+        if ( fpath[pos] == G_DIR_SEPARATOR ) {
+            level--;
+        }
+    }
+    pos++;
+
+    FBFile fbfile;
+    fbfile.path = g_strdup ( fpath );
+    fbfile.name = g_filename_to_utf8 ( &fpath[pos], -1, NULL, NULL, NULL);
+
+    switch ( typeflag ) {
+    case FTW_F:
+        fbfile.type = RFILE;
+        break;
+    case FTW_D:
+        fbfile.type = DIRECTORY;
+        break;
+    case FTW_DNR:
+        fbfile.type = INACCESSIBLE;
+        break;
+    }
+
+    pd->files = g_realloc ( pd->files, ( pd->num_files + 1 ) * sizeof ( FBFile ) );
+    pd->files[pd->num_files] = fbfile;
+    pd->num_files++;
+
+    if ( pd->depth == 0 || ( ftwbuf->level < global_pd->depth ) ) {
+        return FTW_CONTINUE;
+    } else {
+        return FTW_SKIP_SUBTREE;
+    }
+}
+
+static void load_files ( FileBrowserModePrivateData *pd )
+{
+    global_pd = pd;
+
+    free_files ( pd );
+    pd->files = g_realloc ( pd->files, ( pd->num_files + 1 ) * sizeof ( FBFile ) );
+
+    FBFile up;
+    up.type = UP;
+    up.name = g_strdup ( UP_NAME );
+    up.path = g_build_filename ( pd->current_dir, UP_NAME, NULL );
+    pd->files[pd->num_files] = up;
+    pd->num_files++;
+
+    nftw ( pd->current_dir, add_file, 16, FTW_ACTIONRETVAL );
     g_qsort_with_data ( pd->files, pd->num_files, sizeof (FBFile ), compare_files, NULL );
+}
+
+static char *get_existing_abs_path ( char *path, char *current_dir ) {
+    char *abs_path = g_canonicalize_filename ( path, current_dir );
+    if ( abs_path == NULL ) {
+        fprintf ( stderr, "[file-browser] Invalid path: '%s'\n", path );
+        return NULL;
+    }
+    if ( ! g_file_test ( abs_path, G_FILE_TEST_EXISTS ) ) {
+        fprintf ( stderr, "[file-browser] Path does not exist: '%s'\n", path );
+        g_free ( abs_path );
+        return NULL;
+    }
+    return abs_path;
 }
 
 static void change_dir ( char *path, FileBrowserModePrivateData *pd )
 {
+    char* new_dir = get_existing_abs_path ( path, pd->current_dir );
+    if ( new_dir == NULL ) {
+        return;
+    }
     g_free ( pd->current_dir );
-
-    GFile *file = g_file_new_for_path ( path );
-    char* simplified_path = g_file_get_path ( file );
-    g_object_unref ( file );
-
-    pd->current_dir = simplified_path;
+    pd->current_dir = new_dir;
     load_files ( pd );
 }
 
@@ -594,34 +625,16 @@ static gint compare_files ( gconstpointer a, gconstpointer b, gpointer data )
     return g_strcmp0 ( fa->name, fb->name );
 }
 
-static char *get_absolute_path ( char *path, char *current_dir )
-{
-    /* Check if the path is already absolute. */
-    if ( g_file_test ( path, G_FILE_TEST_EXISTS ) ) {
-        return g_strdup ( path );
-
-    /* Construct the absolute path and check if it exists. */
-    } else {
-        char *new_path = g_build_filename ( current_dir, path, NULL );
-        if ( g_file_test ( new_path, G_FILE_TEST_EXISTS ) ) {
-            return new_path;
-        } else {
-            g_free ( new_path );
-            return NULL;
-        }
-    }
-}
-
 static cairo_surface_t *get_icon_surf ( FBFile fbfile, int icon_size, FileBrowserModePrivateData *pd ) {
-    static char *error_icon_names[] = { ERROR_ICON, NULL };
-    static char *up_icon_names[] = { UP_ICON, NULL };
+    static char *error_icon_names[] = { ERROR_ICONS, NULL };
+    static char *up_icon_names[] = { UP_ICONS, NULL };
 
     char **icon_names = NULL;
     GIcon *icon = NULL;
     cairo_surface_t *icon_surf = NULL;
 
     /* Get icon names for the file. */
-    if ( fbfile.path == NULL ) {
+    if ( fbfile.path == NULL || fbfile.type == INACCESSIBLE ) {
         icon_names = error_icon_names;
     } else if ( fbfile.type == UP ) {
         icon_names = up_icon_names;
