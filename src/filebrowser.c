@@ -33,8 +33,10 @@
 /* The name to display for the parent directory. */
 #define UP_NAME ".."
 
+/* Special / fallback icons. */
 #define ERROR_ICONS "error"
 #define UP_ICONS "go-up"
+#define FALLBACK_ICON "text-x-generic"
 
 /* The default command to use to open files. */
 #define CMD "xdg-open \"%s\""
@@ -645,6 +647,7 @@ static cairo_surface_t *get_icon_surf ( FBFile fbfile, int icon_size, FileBrowse
         if ( file_info != NULL ) {
             icon = g_file_info_get_icon ( file_info );
             if ( G_IS_THEMED_ICON ( icon ) ) {
+                g_themed_icon_append_name ( G_THEMED_ICON ( icon ), FALLBACK_ICON );
                 icon_names = ( char ** ) g_themed_icon_get_names ( G_THEMED_ICON ( icon ) );
             }
         }
@@ -669,7 +672,8 @@ static cairo_surface_t *get_icon_surf ( FBFile fbfile, int icon_size, FileBrowse
 
         if ( icon_path == NULL ) {
             continue;
-        }
+        } else
+            printf("%s\n", icon_names[i]);
 
         if ( g_str_has_suffix ( icon_path, ".png" ) ) {
             icon_surf = cairo_image_surface_create_from_png ( icon_path );
