@@ -30,19 +30,20 @@ Key                                                  | Action
 
 ### Command line options / Configuration
 
-Option                                 | Description
--------------------------------------- | -----------
-`-file-browser-cmd <cmd>`              | Set the command to open selected files with (default: `xdg-open`).
-`-file-browser-dir <path>`             | Set the starting directory (default: current working directory).
-`-file-browser-show-hidden`            | Show hidden files (default: disabled).
-`-file-browser-dmenu`                  | Print the absolute path of the selected file to stdout instead of opening it (default: disabled).
-`-file-browser-disable-mode-keys`      | Disable toggling hidden files with `kb-mode-next` and `kb-mode-previous` (default: enabled).
-`-file-browser-theme <theme-name>`     | Set the icon theme (default: `Adwaita`).
-`-file-browser-disable-icons`          | Disable icons (default: enabled).
-`-file-browser-disable-status`         | Disable the status bar (default: enabled).
-`-file-browser-hidden-symbol <string>` | Set the status bar symbol that indicates that hidden files are shown.
-`-file-browser-disable-hidden-symbol`  | Disable the status bar symbol that indicates if hidden files are shown.
-`-file-browser-path-sep <string>`      | Set the path separator for the current path in the status bar.
+Option                                    | Description
+----------------------------------------- | -----------
+`-file-browser-cmd <cmd>`                 | Set the command to open selected files with (default: `xdg-open`).
+`-file-browser-dir <path>`                | Set the starting directory (default: current working directory).
+`-file-browser-show-hidden`               | Show hidden files (default: disabled).
+`-file-browser-dmenu`                     | Print the absolute path of the selected file to stdout instead of opening it (default: disabled).
+`-file-browser-disable-mode-keys`         | Disable toggling hidden files with `kb-mode-next` and `kb-mode-previous` (default: enabled).
+`-file-browser-theme <theme-name>`        | Set the icon theme (default: `Adwaita`).
+`-file-browser-disable-icons`             | Disable icons (default: enabled).
+`-file-browser-disable-status`            | Disable the status bar (default: enabled).
+`-file-browser-no-hidden-symbol <string>` | Set the status bar symbol that indicates that hidden files are not shown.
+`-file-browser-hidden-symbol <string>`    | Set the status bar symbol that indicates that hidden files are shown.
+`-file-browser-disable-hidden-symbol`     | Disable the status bar symbol that indicates if hidden files are shown.
+`-file-browser-path-sep <string>`         | Set the path separator for the current path in the status bar.
 
 Theme options can be used multiple times to set fallback themes.
 The source file contains more configuration via `#define`.
