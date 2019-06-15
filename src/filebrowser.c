@@ -44,6 +44,8 @@
    If the message contains %s, it will be replaced with the file name. */
 #define OPEN_CUSTOM_MESSAGE_FORMAT "Enter command to open '%s' with, or cancel to go back."
 
+#define DEPTH_LIMIT 1
+
 // ================================================================================================================= //
 
 G_MODULE_EXPORT Mode mode;
@@ -71,6 +73,8 @@ typedef struct {
     unsigned int num_files;
     /* Show hidden files. */
     bool show_hidden;
+    /* Scan files recursively up to a given depth. 0 means no limit. */
+    int depth_limit;
 
     /* ---- Icons ---- */
     /* Loaded icons by their names. */
@@ -108,8 +112,9 @@ typedef struct {
 
 /**
  * Sets the command line options and the defaults for missing command line options.
+ * Returns false if some option could not be set and the initialization should be aborted.
  */
-static void set_command_line_options ( FileBrowserModePrivateData *pd );
+static bool set_command_line_options ( FileBrowserModePrivateData *pd );
 
 /**
  * Returns the name of the default GTK icon theme.
@@ -171,7 +176,9 @@ static int file_browser_init ( Mode *sw )
         pd->icons = NULL;
         pd->xdg_context = NULL;
 
-        set_command_line_options ( pd );
+        if ( ! set_command_line_options ( pd ) ) {
+            return false;
+        }
 
         /* Set up icons if enabled. */
         if ( pd->show_icons ) {
@@ -202,8 +209,12 @@ static void file_browser_destroy ( Mode *sw )
 
         /* Free icon themes and icons. */
         if ( pd->show_icons ) {
-            g_hash_table_destroy ( pd->icons );
-            nk_xdg_theme_context_free ( pd->xdg_context );
+            if ( pd->icons != NULL ) {
+                g_hash_table_destroy ( pd->icons );
+            }
+            if ( pd->xdg_context != NULL ) {
+                nk_xdg_theme_context_free ( pd->xdg_context );
+            }
         }
         g_strfreev ( pd->icon_themes );
 
@@ -421,7 +432,7 @@ static char *file_browser_get_message ( const Mode *sw )
 
 // ================================================================================================================= //
 
-static void set_command_line_options ( FileBrowserModePrivateData *pd )
+static bool set_command_line_options ( FileBrowserModePrivateData *pd )
 {
     pd->show_hidden = ( find_arg ( "-file-browser-show-hidden" ) != -1 );
     pd->show_icons = ( find_arg ( "-file-browser-disable-icons" ) == -1 );
@@ -457,35 +468,37 @@ static void set_command_line_options ( FileBrowserModePrivateData *pd )
         pd->path_sep = g_strdup ( PATH_SEP );
     }
 
-    /* Set the start directory. */
     char *start_dir = NULL;
     if ( find_arg_str ( "-file-browser-dir", &start_dir ) ) {
         if ( g_file_test ( start_dir, G_FILE_TEST_EXISTS ) ) {
             pd->current_dir = g_strdup( start_dir );
         } else {
             fprintf ( stderr, "[file-browser] Start directory does not exist: %s\n", start_dir );
-            pd->current_dir = g_strdup ( START_DIR );
+            return false;
         }
     } else {
         pd->current_dir = g_strdup ( START_DIR );
     }
 
-    /* Set the icon themes. */
     pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-theme" ) );
     /* Detect GTK icon theme if no theme was specified. */
     if ( pd->icon_themes == NULL ) {
         char *default_theme = get_default_icon_theme ();
+
+        default_theme = NULL;
         if ( default_theme == NULL ) {
-            fprintf ( stderr, "[file-browser] Could not determine GTK icon theme.\n" );
-            g_abort();
+            fprintf ( stderr, "[file-browser] Could not determine GTK icon theme. Maybe try setting a theme with -file-browser-theme\n" );
         }
 
         char *icon_themes[] = {
             default_theme,
             NULL
         };
+
         pd->icon_themes = g_strdupv ( icon_themes );
     }
+
+    return true;
 }
 
 static char *get_default_icon_theme ( void )
