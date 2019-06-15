@@ -598,7 +598,13 @@ static char* get_absolute_path ( char* path, char* current_dir )
 static void change_dir ( char* path, FileBrowserModePrivateData* pd )
 {
     g_free ( pd->current_dir );
-    pd->current_dir = g_strdup ( path );
+
+    /* Simplify the path (e.g. remove ".." by creating a GFile. */
+    GFile *file = g_file_new_for_path ( path );
+    char* simplified_path = g_file_get_path ( file );
+    g_object_unref ( file );
+
+    pd->current_dir = simplified_path;
 }
 
 static void open_or_print_file ( char* path, FileBrowserModePrivateData* pd )
