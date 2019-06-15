@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
+
+#include <dirent.h>
 #include <gmodule.h>
 #include <gio/gio.h>
 
@@ -8,17 +11,13 @@
 #include <rofi/helper.h>
 #include <rofi/mode-private.h>
 
-#include <stdbool.h>
-#include <dirent.h>
 #include <nkutils-xdg-theme.h>
+#include <gtk/gtk.h>
 
 // ================================================================================================================= //
 
 /* The starting directory. */
 #define START_DIR g_get_current_dir()
-
-/* The icon theme(s). */
-#define ICON_THEMES "Adwaita"
 
 /* The fallback icon themes. */
 #define FALLBACK_ICON_THEMES "Adwaita", "gnome"
@@ -184,6 +183,8 @@ static cairo_surface_t* get_icon_surf ( char** icon_names, int icon_size, FileBr
  * Directories should appear before regular files, directories and files should be sorted alphabetically.
  */
 static gint compare ( gconstpointer a, gconstpointer b, gpointer data );
+
+static char* get_default_icon_theme ( void );
 
 // ================================================================================================================= //
 
@@ -505,13 +506,20 @@ static void set_command_line_options ( FileBrowserModePrivateData* pd )
     }
 
     /* Set the icon themes. */
-    const gchar *default_icon_themes[] = {
-        ICON_THEMES,
-        NULL
-    };
     pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-theme" ) );
+    /* Detect GTK icon theme if no theme was specified. */
     if ( pd->icon_themes == NULL ) {
-        pd->icon_themes = g_strdupv ( ( char ** ) default_icon_themes );
+        char* default_theme = get_default_icon_theme ();
+        if ( default_theme == NULL ) {
+            fprintf ( stderr, "[file-browser] Could not determine GTK icon theme.\n" );
+            g_abort();
+        }
+
+        char *icon_themes[] = {
+            default_theme,
+            NULL
+        };
+        pd->icon_themes = g_strdupv ( icon_themes );
     }
 }
 
@@ -665,7 +673,7 @@ static char** get_icon_names ( FBFile fbfile )
     }
 }
 
-    static cairo_surface_t* get_icon_surf ( char** icon_names, int icon_size, FileBrowserModePrivateData* pd ) {
+static cairo_surface_t* get_icon_surf ( char** icon_names, int icon_size, FileBrowserModePrivateData* pd ) {
     for (int i = 0; icon_names[i] != NULL; i++) {
 
         cairo_surface_t *icon_surf = g_hash_table_lookup ( pd->icons, icon_names[i] );
@@ -712,6 +720,14 @@ static gint compare ( gconstpointer a, gconstpointer b, gpointer data )
     }
 
     return g_strcmp0 ( fa->name, fb->name );
+}
+
+static char* get_default_icon_theme ( void )
+{
+    char *theme_name = NULL;
+    gtk_init(NULL, NULL);
+    g_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &theme_name, NULL);
+    return theme_name;
 }
 
 // ================================================================================================================= //
