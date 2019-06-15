@@ -22,31 +22,50 @@
 /* The starting directory. */
 #define START_DIR g_get_current_dir()
 
+/* The default command to use to open files. */
+#define CMD "xdg-open \"%s\""
+
+/* The depth up to which files are recursively listed. */
+#define DEPTH 1
+
+/* Show hidden files by default. */
+#define SHOW_HIDDEN false
+
+/* Sort file by type: directories first, Inaccessible files last */
+#define SORT_BY_TYPE true
+
+/* Print the file path instead of opening the file. */
+#define DMENU false
+
+/* Use mode keys (kb-mode-next, kb-mode-previous) to toggle hidden files. */
+#define USE_MODE_KEYS true
+
+/* Show icons. */
+#define SHOW_ICONS true
+
 /* The fallback icon themes. */
 #define FALLBACK_ICON_THEMES "Adwaita", "gnome"
 
+/* Show a status with the current path and mode. */
+#define SHOW_STATUS true
+
 /* The message format. */
-#define NO_HIDDEN_SYMBOL "[-]"
-#define HIDDEN_SYMBOL "[+]"
+#define HIDE_HIDDEN_SYMBOL "[-]"
+#define SHOW_HIDDEN_SYMBOL "[+]"
 #define PATH_SEP " / "
 
 /* The name to display for the parent directory. */
-#define UP_NAME ".."
+#define UP_TEXT ".."
 
 /* Special / fallback icons. */
-#define ERROR_ICONS "error"
-#define UP_ICONS "go-up"
+#define UP_ICON "go-up"
+#define INACCESSIBLE_ICON "error"
 #define FALLBACK_ICON "text-x-generic"
-
-/* The default command to use to open files. */
-#define CMD "xdg-open \"%s\""
+#define ERROR_ICON "error"
 
 /* The message to display when prompting the user to enter the program to open a file with.
    If the message contains %s, it will be replaced with the file name. */
 #define OPEN_CUSTOM_MESSAGE_FORMAT "Enter command to open '%s' with, or cancel to go back."
-
-/* The depth up to which files are recursively listed. */
-#define DEPTH 1
 
 // ================================================================================================================= //
 
@@ -78,6 +97,8 @@ typedef struct {
     bool show_hidden;
     /* Scan files recursively up to a given depth. 0 means no limit. */
     int depth;
+    /* Show directories first, Inaccessible files last. */
+    bool sort_by_type;
 
     /* ---- Icons ---- */
     /* Loaded icons by their names. */
@@ -105,16 +126,31 @@ typedef struct {
     bool dmenu;
     /* Use kb-mode-previous and kb-mode-next to toggle hidden files. */
     bool use_mode_keys;
+    /* Text for the "go-up" entry. */
+    char *up_text;
     /* Status bar format. */
-    char *hidden_symbol;
-    char *no_hidden_symbol;
+    char *show_hidden_symbol;
+    char *hide_hidden_symbol;
     char *path_sep;
+    /* Icons names. */
+    char *up_icon;
+    char *inaccessible_icon;
+    char *fallback_icon;
+    char *error_icon;
 } FileBrowserModePrivateData;
 
 // ================================================================================================================= //
 
-/* Save private data globally for nftw. */
+/**
+ * Save private data globally for nftw.
+ */
 static FileBrowserModePrivateData* global_pd;
+
+/**
+ * Returns a copy of the value of a string command line option if one is specified.
+ * Otherwise, returns a copy of the given default value.
+ */
+static char* get_string_option ( char *name, char* default_val );
 
 /**
  * Sets the command line options and the defaults for missing command line options.
@@ -123,9 +159,9 @@ static FileBrowserModePrivateData* global_pd;
 static bool set_command_line_options ( FileBrowserModePrivateData *pd );
 
 /**
- * Returns the name of the default GTK icon theme.
+ * Sets the default GTK icon theme as the theme, if possible.
  */
-static char *get_default_icon_theme ( void );
+static void set_default_icon_theme ( FileBrowserModePrivateData *pd );
 
 /**
  * Frees the current file list.
@@ -154,10 +190,16 @@ static char *get_existing_abs_path ( char *path, char *current_dir );
 static void change_dir ( char *path, FileBrowserModePrivateData *pd );
 
 /**
- * Compares two files by the order in which they should appear in the file browser.
- * Directories should appear before regular files, directories and files should be sorted alphabetically.
+ * Sort files by type.
+ * Directories appear before regular files, inaccessible directories and files appear last.
+ * Files of the same type are sorted alphabetically.
  */
-static gint compare_files ( gconstpointer a, gconstpointer b, gpointer data );
+static gint compare_files_type ( gconstpointer a, gconstpointer b, gpointer data );
+
+/**
+ * Sort files only alphabetically.
+ */
+static gint compare_files_no_type ( gconstpointer a, gconstpointer b, gpointer data );
 
 /**
  * Gets the most specific icon for a file, and caches it in a hash map.
@@ -231,8 +273,8 @@ static void file_browser_destroy ( Mode *sw )
         /* Free the rest. */
         g_free ( pd->current_dir );
         g_free ( pd->cmd );
-        g_free ( pd->hidden_symbol );
-        g_free ( pd->no_hidden_symbol );
+        g_free ( pd->show_hidden_symbol );
+        g_free ( pd->hide_hidden_symbol );
         g_free ( pd->path_sep );
 
         /* Fill with zeros, just in case. */
@@ -292,12 +334,17 @@ static ModeMode file_browser_result ( Mode *sw, int mretv, char **input, unsigne
     /* Handle Return. */
     } else if ( mretv & MENU_OK ) {
         FBFile* entry = &( pd->files[selected_line] );
-        if ( entry->type == UP || entry->type == DIRECTORY ) {
+        switch ( entry->type ) {
+        case UP:
+        case DIRECTORY:
             change_dir ( entry->path, pd );
             retv = RESET_DIALOG;
-        } else {
+            break;
+        case RFILE:
+        case INACCESSIBLE:
             open_file ( entry->path, pd );
             retv = MODE_EXIT;
+            break;
         }
 
     /* Handle custom input or Control+Return. */
@@ -382,12 +429,7 @@ static char *file_browser_get_display_value ( const Mode *sw, unsigned int selec
         index = selected_line;
     }
 
-    switch ( pd->files[index].type ) {
-    case UP:
-        return g_strdup ( UP_NAME );
-    default:
-        return g_strdup ( pd->files[index].name );
-    }
+    return g_strdup ( pd->files[index].name );
 }
 
 static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int selected_line, int height )
@@ -421,7 +463,7 @@ static char *file_browser_get_message ( const Mode *sw )
     } else if ( pd->show_status ) {
         char** split = g_strsplit ( pd->current_dir, G_DIR_SEPARATOR_S, -1 );
         char* join = g_strjoinv ( pd->path_sep, split );
-        char* message = g_strconcat ( pd->show_hidden ? pd->hidden_symbol : pd->no_hidden_symbol, join, NULL );
+        char* message = g_strconcat ( pd->show_hidden ? pd->show_hidden_symbol : pd->hide_hidden_symbol, join, NULL );
 
         g_strfreev ( split );
         g_free ( join );
@@ -437,44 +479,28 @@ static char *file_browser_get_message ( const Mode *sw )
 
 static bool set_command_line_options ( FileBrowserModePrivateData *pd )
 {
-    pd->show_hidden = ( find_arg ( "-file-browser-show-hidden" ) != -1 );
-    pd->show_icons = ( find_arg ( "-file-browser-disable-icons" ) == -1 );
-    pd->dmenu = ( find_arg ( "-file-browser-dmenu" ) != -1 );
-    pd->use_mode_keys = ( find_arg ( "-file-browser-disable-mode-keys" ) == -1 );
-    pd->show_status = ( find_arg ( "-file-browser-disable-status" ) == -1 );
+    pd->show_hidden        = ( find_arg ( "-file-browser-show-hidden"          ) != -1 ) ? true  : SHOW_HIDDEN;
+    pd->show_icons         = ( find_arg ( "-file-browser-disable-icons"        ) != -1 ) ? false : SHOW_ICONS;
+    pd->dmenu              = ( find_arg ( "-file-browser-dmenu"                ) != -1 ) ? true  : DMENU;
+    pd->use_mode_keys      = ( find_arg ( "-file-browser-disable-mode-keys"    ) != -1 ) ? false : USE_MODE_KEYS;
+    pd->show_status        = ( find_arg ( "-file-browser-disable-status"       ) != -1 ) ? false : SHOW_STATUS;
+    pd->sort_by_type       = ( find_arg ( "-file-browser-disable-sort-by-type" ) != -1 ) ? false : SORT_BY_TYPE;
+    pd->cmd                = get_string_option ( "-file-browser-cmd",                CMD );
+    pd->show_hidden_symbol = get_string_option ( "-file-browser-show-hidden-symbol", SHOW_HIDDEN_SYMBOL );
+    pd->hide_hidden_symbol = get_string_option ( "-file-browser-hide-hidden-symbol", HIDE_HIDDEN_SYMBOL );
+    pd->path_sep           = get_string_option ( "-file-browser-path-sep",           PATH_SEP );
+    pd->up_icon            = get_string_option ( "-file-browser-up-icon",            UP_ICON );
+    pd->inaccessible_icon  = get_string_option ( "-file-browser-inaccessible-icon",  INACCESSIBLE_ICON );
+    pd->fallback_icon      = get_string_option ( "-file-browser-fallback-icon",      FALLBACK_ICON );
+    pd->error_icon         = get_string_option ( "-file-browser-error-icon",         ERROR_ICON );
+    pd->up_text            = get_string_option ( "-file-browser-up-text",            UP_TEXT );
 
-    char *cmd = NULL;
-    if ( find_arg_str ( "-file-browser-cmd", &cmd ) ) {
-        pd->cmd = g_strdup ( cmd );
-    } else {
-        pd->cmd = g_strdup ( CMD );
-    }
-
-    char *hidden_symbol = NULL;
-    if ( find_arg_str ( "-file-browser-hidden-symbol", &hidden_symbol ) ) {
-        pd->hidden_symbol = g_strdup ( hidden_symbol );
-    } else {
-        pd->hidden_symbol = g_strdup ( HIDDEN_SYMBOL );
-    }
-
-    char *no_hidden_symbol = NULL;
-    if ( find_arg_str ( "-file-browser-no-hidden-symbol", &no_hidden_symbol ) ) {
-        pd->no_hidden_symbol = g_strdup ( no_hidden_symbol );
-    } else {
-        pd->no_hidden_symbol = g_strdup ( NO_HIDDEN_SYMBOL );
-    }
-
-    char *path_sep = NULL;
-    if ( find_arg_str ( "-file-browser-path-sep", &path_sep ) ) {
-        pd->path_sep = g_strdup ( path_sep );
-    } else {
-        pd->path_sep = g_strdup ( PATH_SEP );
-    }
-
+    /* Depth. */
     if ( ! find_arg_int ( "-file-browser-depth", &pd->depth ) ) {
         pd->depth = DEPTH;
     }
 
+    /* Start directory. */
     char *start_dir = NULL;
     if ( ! find_arg_str ( "-file-browser-dir", &start_dir ) ) {
         start_dir = START_DIR;
@@ -487,28 +513,43 @@ static bool set_command_line_options ( FileBrowserModePrivateData *pd )
         return false;
     }
 
-    pd->icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-theme" ) );
-    if ( pd->icon_themes == NULL ) {
-        char *default_theme = get_default_icon_theme ();
-        if ( default_theme == NULL ) {
-            fprintf ( stderr, "[file-browser] Could not determine GTK icon theme. Maybe try setting a theme with -file-browser-theme\n" );
-        }
-        char *icon_themes[] = {
-            default_theme,
-            NULL
-        };
-        pd->icon_themes = g_strdupv ( icon_themes );
+    /* Icon theme. */
+    char **icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-theme" ) );
+    if ( pd->icon_themes != NULL ) {
+        pd->icon_themes = icon_themes;
+    } else {
+        set_default_icon_theme ( pd );
     }
 
     return true;
 }
 
-static char *get_default_icon_theme ( void )
+static char* get_string_option ( char *name, char* default_val )
 {
-    char *theme_name = NULL;
+    char* val = NULL;
+    if ( find_arg_str ( name, &val ) ) {
+        return g_strdup ( val );
+    } else {
+        return g_strdup ( default_val );
+    }
+}
+
+static void set_default_icon_theme ( FileBrowserModePrivateData *pd )
+{
+    char *default_theme = NULL;
     gtk_init(NULL, NULL);
-    g_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &theme_name, NULL);
-    return theme_name;
+    g_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &default_theme, NULL);
+
+    if ( default_theme == NULL ) {
+        fprintf ( stderr, "[file-browser] Could not determine GTK icon theme. Maybe try setting a theme with -file-browser-theme\n" );
+    }
+
+    char *icon_themes[] = {
+        default_theme,
+        NULL
+    };
+
+    pd->icon_themes = g_strdupv ( icon_themes );
 }
 
 static void free_files ( FileBrowserModePrivateData *pd )
@@ -582,16 +623,23 @@ static void load_files ( FileBrowserModePrivateData *pd )
 
     FBFile up;
     up.type = UP;
-    up.name = g_strdup ( UP_NAME );
-    up.path = g_build_filename ( pd->current_dir, UP_NAME, NULL );
+    up.name = g_strdup ( pd->up_text );
+    up.path = g_build_filename ( pd->current_dir, "..", NULL );
     pd->files[pd->num_files] = up;
     pd->num_files++;
 
     nftw ( pd->current_dir, add_file, 16, FTW_ACTIONRETVAL );
-    g_qsort_with_data ( pd->files, pd->num_files, sizeof (FBFile ), compare_files, NULL );
+
+    /* Sort all but the first entry ("go-up"). */
+    if ( pd->sort_by_type ) {
+        g_qsort_with_data ( &( pd->files[1] ), pd->num_files - 1, sizeof ( FBFile ), compare_files_type, NULL );
+    } else {
+        g_qsort_with_data ( &( pd->files[1] ), pd->num_files - 1, sizeof ( FBFile ), compare_files_no_type, NULL );
+    }
 }
 
-static char *get_existing_abs_path ( char *path, char *current_dir ) {
+static char *get_existing_abs_path ( char *path, char *current_dir )
+{
     char *abs_path = g_canonicalize_filename ( path, current_dir );
     if ( abs_path == NULL ) {
         fprintf ( stderr, "[file-browser] Invalid path: '%s'\n", path );
@@ -616,30 +664,40 @@ static void change_dir ( char *path, FileBrowserModePrivateData *pd )
     load_files ( pd );
 }
 
-static gint compare_files ( gconstpointer a, gconstpointer b, gpointer data )
+static gint compare_files_type ( gconstpointer a, gconstpointer b, gpointer data )
 {
     FBFile *fa = ( FBFile * ) a;
     FBFile *fb = ( FBFile * ) b;
     if ( fa->type != fb->type ){
         return fa->type - fb->type;
     }
-
     return g_strcmp0 ( fa->name, fb->name );
 }
 
-static cairo_surface_t *get_icon_surf ( FBFile fbfile, int icon_size, FileBrowserModePrivateData *pd ) {
-    static char *error_icon_names[] = { ERROR_ICONS, NULL };
-    static char *up_icon_names[] = { UP_ICONS, NULL };
+static gint compare_files_no_type ( gconstpointer a, gconstpointer b, gpointer data )
+{
+    FBFile *fa = ( FBFile * ) a;
+    FBFile *fb = ( FBFile * ) b;
+    return g_strcmp0 ( fa->name, fb->name );
+}
 
+static cairo_surface_t *get_icon_surf ( FBFile fbfile, int icon_size, FileBrowserModePrivateData *pd )
+{
+    char *default_icon_names[] = { NULL, NULL };
     char **icon_names = NULL;
     GIcon *icon = NULL;
     cairo_surface_t *icon_surf = NULL;
 
     /* Get icon names for the file. */
-    if ( fbfile.path == NULL || fbfile.type == INACCESSIBLE ) {
-        icon_names = error_icon_names;
-    } else if ( fbfile.type == UP ) {
-        icon_names = up_icon_names;
+    if ( fbfile.type == UP ) {
+        default_icon_names[0] = pd->up_icon;
+        icon_names = default_icon_names;
+    } else if ( fbfile.type == INACCESSIBLE ) {
+        default_icon_names[0] = pd->inaccessible_icon;
+        icon_names = default_icon_names;
+    } else if ( fbfile.path == NULL ) {
+        default_icon_names[0] = pd->error_icon;
+        icon_names = default_icon_names;
     } else {
         GFile *file = g_file_new_for_path ( fbfile.path );
         GFileInfo *file_info = g_file_query_info ( file, "standard::icon", G_FILE_QUERY_INFO_NONE, NULL, NULL );
@@ -647,7 +705,7 @@ static cairo_surface_t *get_icon_surf ( FBFile fbfile, int icon_size, FileBrowse
         if ( file_info != NULL ) {
             icon = g_file_info_get_icon ( file_info );
             if ( G_IS_THEMED_ICON ( icon ) ) {
-                g_themed_icon_append_name ( G_THEMED_ICON ( icon ), FALLBACK_ICON );
+                g_themed_icon_append_name ( G_THEMED_ICON ( icon ), pd->fallback_icon );
                 icon_names = ( char ** ) g_themed_icon_get_names ( G_THEMED_ICON ( icon ) );
             }
         }
@@ -655,7 +713,8 @@ static cairo_surface_t *get_icon_surf ( FBFile fbfile, int icon_size, FileBrowse
         g_object_unref ( file );
 
         if ( icon_names == NULL ) {
-            icon_names = error_icon_names;
+            default_icon_names[0] = pd->error_icon;
+            icon_names = default_icon_names;
         }
     }
 
@@ -672,8 +731,7 @@ static cairo_surface_t *get_icon_surf ( FBFile fbfile, int icon_size, FileBrowse
 
         if ( icon_path == NULL ) {
             continue;
-        } else
-            printf("%s\n", icon_names[i]);
+        }
 
         if ( g_str_has_suffix ( icon_path, ".png" ) ) {
             icon_surf = cairo_image_surface_create_from_png ( icon_path );
