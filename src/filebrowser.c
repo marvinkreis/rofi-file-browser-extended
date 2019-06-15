@@ -37,7 +37,7 @@
 #define UP_ICONS "go-up"
 
 /* The default command to use to open files. */
-#define CMD "xdg-open '%s'"
+#define CMD "xdg-open \"%s\""
 
 /* The message to display when prompting the user to enter the program to open a file with.
    If the message contains %s, it will be replaced with the file name. */
@@ -703,12 +703,17 @@ static void open_file ( char *path, FileBrowserModePrivateData *pd )
         printf("%s\n", path);
 
     } else {
-        char* complete_cmd = NULL;
+        /* Escape the file path. */
+        char **split = g_strsplit ( path, "\"", -1 );
+        path = g_strjoinv ( "\\\"", split );
+        g_strfreev ( split );
 
+        /* Construct the command. */
+        char* complete_cmd = NULL;
         if ( g_strrstr ( pd->cmd, "%s" ) != NULL ) {
             complete_cmd = g_strdup_printf ( pd->cmd, path );
         } else {
-            complete_cmd = g_strconcat ( pd->cmd, " ", "'", path, "'", NULL );
+            complete_cmd = g_strconcat ( pd->cmd, " \"", path, "\"", NULL );
         }
 
         helper_execute_command ( pd->current_dir, complete_cmd, false, NULL );
