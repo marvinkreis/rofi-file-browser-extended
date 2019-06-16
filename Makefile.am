@@ -11,7 +11,9 @@ include submodules/libnkutils/libnkutils.mk
 plugin_LTLIBRARIES = filebrowser.la
 
 filebrowser_la_SOURCES=\
-		 src/filebrowser.c
+        src/filebrowser.c\
+        src/options.c\
+        src/util.c
 
 filebrowser_la_CFLAGS= @glib_CFLAGS@ @rofi_CFLAGS@ $(NKUTILS_CFLAGS) @gtk_CFLAGS@
 filebrowser_la_LIBADD= @glib_LIBS@ @rofi_LIBS@ $(NKUTILS_LIBS) @gtk_LIBS@
