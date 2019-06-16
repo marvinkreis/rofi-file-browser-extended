@@ -67,6 +67,14 @@
    If the message contains %s, it will be replaced with the file name. */
 #define OPEN_CUSTOM_MESSAGE_FORMAT "Enter command to open '%s' with, or cancel to go back."
 
+/* Keys for custom bindings. Only KB_CUSTOM_* and KB_ACCEPT_ALT supported. */
+/* Key for custom program prompt. */
+#define OPEN_CUSTOM_KEY KB_ACCEPT_ALT
+/* Key for opening file without closing. */
+#define OPEN_MULTI_KEY KB_CUSTOM_11
+/* Key for opening file without closing. */
+#define TOGGLE_HIDDEN_KEY KB_CUSTOM_12
+
 // ================================================================================================================= //
 
 G_MODULE_EXPORT Mode mode;
@@ -84,6 +92,16 @@ typedef struct {
     char *path;
     enum FBFileType type;
 } FBFile;
+
+/* Keys for custom key bindings. */
+typedef enum FBKey {
+    KB_CUSTOM_1,  KB_CUSTOM_2,  KB_CUSTOM_3,  KB_CUSTOM_4,  KB_CUSTOM_5,
+    KB_CUSTOM_6,  KB_CUSTOM_7,  KB_CUSTOM_8,  KB_CUSTOM_9,  KB_CUSTOM_10,
+    KB_CUSTOM_11, KB_CUSTOM_12, KB_CUSTOM_13, KB_CUSTOM_14, KB_CUSTOM_15,
+    KB_CUSTOM_16, KB_CUSTOM_17, KB_CUSTOM_18, KB_CUSTOM_19, KB_CUSTOM_20,
+    KB_ACCEPT_ALT,
+    KEY_NONE
+} FBKey;
 
 typedef struct {
     char *current_dir;
@@ -114,6 +132,15 @@ typedef struct {
     bool open_custom;
     /* The selected file index to be opened. */
     int open_custom_index;
+
+    /* ---- Key bindings ---- */
+    /* Only KB_CUSTOM_* and KB_ACCEPT_ALT supported. */
+    /* Key for custom program prompt. */
+    FBKey open_custom_key;
+    /* Key for opening file without closing. */
+    FBKey open_multi_key;
+    /* Key for toggling hidden files. */
+    FBKey toggle_hidden_key;
 
     /* ---- Other command line options ---- */
     /* Command to open files with. */
@@ -147,16 +174,26 @@ typedef struct {
 static FileBrowserModePrivateData* global_pd;
 
 /**
- * Returns a copy of the value of a string command line option if one is specified.
- * Otherwise, returns a copy of the given default value.
- */
-static char* get_string_option ( char *name, char* default_val );
-
-/**
  * Sets the command line options and the defaults for missing command line options.
  * Returns false if some option could not be set and the initialization should be aborted.
  */
 static bool set_command_line_options ( FileBrowserModePrivateData *pd );
+
+/**
+ * Returns a newly allocated copy of a string command line option if it is specified.
+ * Otherwise, returns a newly allocated copy of the given default value.
+ */
+static char* get_string_option ( char *name, char* default_val );
+
+/**
+ * Sets the key bindings from the command line options.
+ */
+static void set_key_bindings ( FileBrowserModePrivateData *pd );
+
+/*
+ * Returns the FBKey of a key name. If the name is invalid, returns KEY_NONE;
+ */
+static FBKey get_key_for_name ( char* key_str );
 
 /**
  * Sets the default GTK icon theme as the theme, if possible.
@@ -305,6 +342,14 @@ static ModeMode file_browser_result ( Mode *sw, int mretv, char **input, unsigne
 
     ModeMode retv = RELOAD_DIALOG;
 
+    /* Check if one of the custom key bindings pressed. */
+    FBKey key = -1;
+    if ( mretv & MENU_CUSTOM_ACTION ) {
+        key = KB_ACCEPT_ALT;
+    } else if ( mretv & MENU_QUICK_SWITCH ) {
+        key = mretv & MENU_LOWER_MASK;
+    }
+
     /* Handle prompt for program to open file with. */
     if ( pd->open_custom ) {
         if ( mretv & ( MENU_OK | MENU_CUSTOM_INPUT | MENU_CUSTOM_ACTION ) ) {
@@ -326,13 +371,13 @@ static ModeMode file_browser_result ( Mode *sw, int mretv, char **input, unsigne
         }
 
     /* Handle Shift+Return. */
-    } else if ( ( mretv & MENU_CUSTOM_ACTION ) && ( selected_line != -1 ) ) {
+    } else if ( key == pd->open_custom_key && selected_line != -1 ) {
         pd->open_custom = true;
         pd->open_custom_index = selected_line;
         retv = RESET_DIALOG;
 
     /* Handle Return. */
-    } else if ( mretv & MENU_OK ) {
+    } else if ( key == pd->open_multi_key || mretv & MENU_OK ) {
         FBFile* entry = &( pd->files[selected_line] );
         switch ( entry->type ) {
         case UP:
@@ -343,7 +388,9 @@ static ModeMode file_browser_result ( Mode *sw, int mretv, char **input, unsigne
         case RFILE:
         case INACCESSIBLE:
             open_file ( entry->path, pd );
-            retv = MODE_EXIT;
+            if ( key != pd->open_multi_key ) {
+                retv = MODE_EXIT;
+            }
             break;
         }
 
@@ -369,6 +416,12 @@ static ModeMode file_browser_result ( Mode *sw, int mretv, char **input, unsigne
 
             g_free ( abs_path );
         }
+
+    /* Toggle hidden files with toggle_hidden_key. */
+    } else if ( key == pd->toggle_hidden_key ) {
+        pd->show_hidden = ! pd->show_hidden;
+        load_files ( pd );
+        retv = RELOAD_DIALOG;
 
     /* Enable hidden files with Shift+Right. */
     } else if ( pd->use_mode_keys && ( mretv & MENU_NEXT ) && !pd->show_hidden ) {
@@ -477,6 +530,7 @@ static bool set_command_line_options ( FileBrowserModePrivateData *pd )
     pd->use_mode_keys      = ( find_arg ( "-file-browser-disable-mode-keys"    ) != -1 ) ? false : USE_MODE_KEYS;
     pd->show_status        = ( find_arg ( "-file-browser-disable-status"       ) != -1 ) ? false : SHOW_STATUS;
     pd->sort_by_type       = ( find_arg ( "-file-browser-disable-sort-by-type" ) != -1 ) ? false : SORT_BY_TYPE;
+
     pd->cmd                = get_string_option ( "-file-browser-cmd",                CMD );
     pd->show_hidden_symbol = get_string_option ( "-file-browser-show-hidden-symbol", SHOW_HIDDEN_SYMBOL );
     pd->hide_hidden_symbol = get_string_option ( "-file-browser-hide-hidden-symbol", HIDE_HIDDEN_SYMBOL );
@@ -513,17 +567,72 @@ static bool set_command_line_options ( FileBrowserModePrivateData *pd )
         set_default_icon_theme ( pd );
     }
 
+    set_key_bindings ( pd );
+
     return true;
+}
+
+static void set_key_bindings ( FileBrowserModePrivateData *pd )
+{
+    pd->open_custom_key   = OPEN_CUSTOM_KEY;
+    pd->open_multi_key    = OPEN_MULTI_KEY;
+    pd->toggle_hidden_key = TOGGLE_HIDDEN_KEY;
+
+    FBKey *keys[] = { &pd->open_custom_key,
+                      &pd->open_multi_key,
+                      &pd->toggle_hidden_key };
+    char  *names[] = { "open-custom",
+                       "open-multi",
+                       "toggle-hidden" };
+    char  *options[] = { "-file-browser-open-custom-key",
+                         "-file-browser-open-multi-key",
+                         "-file-browser-toggle-hidden-key" };
+    char  *params[]  = { NULL, NULL, NULL };
+
+    for ( int i = 0; i < 3; i++ ) {
+        if ( find_arg_str ( options[i], &params[i] ) ) {
+            *keys[i] = get_key_for_name ( params[i] );
+            if ( *keys[i] == KEY_NONE ) {
+                fprintf ( stderr, "[file-browser] Could not match key \"%s\". Disabling key binding for \"%s\". "
+                        "Supported keys are \"kb-accept-alt\" and \"kb-custom-*\".\n", params[i], names[i] );
+            }
+        }
+    }
+
+    for ( int i = 0; i < 3; i++ ) {
+        if ( params[i] != NULL && *keys[i] != KEY_NONE ) {
+            for ( int j = 0; j < 3; j++ ) {
+                if ( i != j && *keys[i] == *keys[j] ) {
+                    *keys[j] = KEY_NONE;
+                    fprintf ( stderr, "[file-browser] Detected key binding clash. Both \"%s\" and \"%s\" use \"%s\". "
+                            "Disabling \"%s\".\n", names[i], names[j], params[i], names[j]);
+                }
+            }
+        }
+    }
 }
 
 static char* get_string_option ( char *name, char* default_val )
 {
-    char* val = NULL;
+    char* val;
     if ( find_arg_str ( name, &val ) ) {
         return g_strdup ( val );
     } else {
         return g_strdup ( default_val );
     }
+}
+
+static FBKey get_key_for_name ( char* key_str )
+{
+    if ( g_strcmp0 ( key_str, "kb-accept-alt" ) == 0 ) {
+        return KB_ACCEPT_ALT;
+    } else if ( g_str_has_prefix ( key_str, "kb-custom-" ) ) {
+        int index = atoi ( key_str + strlen ( "kb-custom-" ) );
+        if ( index >= 1 && index <= 20 ) {
+            return index - 1;
+        }
+    }
+    return KEY_NONE;
 }
 
 static void set_default_icon_theme ( FileBrowserModePrivateData *pd )
@@ -533,7 +642,8 @@ static void set_default_icon_theme ( FileBrowserModePrivateData *pd )
     g_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &default_theme, NULL);
 
     if ( default_theme == NULL ) {
-        fprintf ( stderr, "[file-browser] Could not determine GTK icon theme. Maybe try setting a theme with -file-browser-theme\n" );
+        fprintf ( stderr, "[file-browser] Could not determine GTK icon theme. "
+                "Maybe try setting a theme with -file-browser-theme\n" );
     }
 
     char *icon_themes[] = {
