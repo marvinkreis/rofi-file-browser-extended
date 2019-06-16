@@ -68,7 +68,7 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
     if ( abs_path != NULL ) {
         pd->current_dir = abs_path;
     } else {
-        print_err ( "Start directory does not exist: %s\n", start_dir );
+        print_err ( "Start directory does not exist: \"%s\".\n", start_dir );
         return false;
     }
 
@@ -156,7 +156,7 @@ static void set_default_icon_theme ( FileBrowserModePrivateData *pd )
 
     if ( default_theme == NULL ) {
         fprintf ( stderr, "[file-browser] Could not determine GTK icon theme. "
-                "Maybe try setting a theme with -file-browser-theme\n" );
+                "Maybe try setting a theme with \"-file-browser-theme\".\n" );
     }
 
     char *icon_themes[] = {

@@ -73,25 +73,28 @@ static void file_browser_destroy ( Mode *sw )
         free_files ( pd );
 
         /* Free icon themes and icons. */
-        if ( pd->show_icons ) {
-            if ( pd->icons != NULL ) {
-                g_hash_table_destroy ( pd->icons );
-            }
-            if ( pd->xdg_context != NULL ) {
-                nk_xdg_theme_context_free ( pd->xdg_context );
-            }
+        if ( pd->icons != NULL ) {
+            g_hash_table_destroy ( pd->icons );
+        }
+        if ( pd->xdg_context != NULL ) {
+            nk_xdg_theme_context_free ( pd->xdg_context );
         }
         g_strfreev ( pd->icon_themes );
 
         /* Free the rest. */
         g_free ( pd->current_dir );
         g_free ( pd->cmd );
+        g_free ( pd->up_text );
         g_free ( pd->show_hidden_symbol );
         g_free ( pd->hide_hidden_symbol );
         g_free ( pd->path_sep );
+        g_free ( pd->up_icon );
+        g_free ( pd->inaccessible_icon );
+        g_free ( pd->fallback_icon );
+        g_free ( pd->error_icon );
 
         /* Fill with zeros, just in case. */
-        memset ( ( void* ) pd , 0, sizeof ( pd ) );
+        memset ( ( void * ) pd , 0, sizeof ( pd ) );
 
         g_free ( pd );
     }
