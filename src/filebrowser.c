@@ -349,15 +349,7 @@ static ModeMode file_browser_result ( Mode *sw, int mretv, char **input, unsigne
 
     /* Handle custom input or Control+Return. */
     } else if ( mretv & MENU_CUSTOM_INPUT ) {
-
-        /* Toggle hidden files with Control+Return. */
-        if ( strlen ( *input ) == 0 ) {
-            pd->show_hidden = !pd->show_hidden;
-            load_files ( pd );
-            retv = RELOAD_DIALOG;
-
-        /* Handle custom input. */
-        } else {
+        if ( strlen ( *input ) > 0 ) {
             char *expanded_input = rofi_expand_path ( *input );
             char *file = g_filename_from_utf8 ( expanded_input, -1, NULL, NULL, NULL );
             g_free ( expanded_input );
