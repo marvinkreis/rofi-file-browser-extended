@@ -18,6 +18,8 @@ typedef struct {
     /* Absolute path of the file. */
     char *path;
     enum FBFileType type;
+    /* Cached icon. */
+    cairo_surface_t *icon;
 } FBFile;
 
 /* Keys for custom key bindings. */

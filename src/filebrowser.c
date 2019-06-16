@@ -260,6 +260,10 @@ static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int sel
 {
     FileBrowserModePrivateData *pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
+    if ( ! pd->show_icons ) {
+        return NULL;
+    }
+
     int index;
     if ( pd->open_custom ) {
         index = pd->open_custom_index;
@@ -267,17 +271,16 @@ static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int sel
         index = selected_line;
     }
 
-    if ( pd->show_icons ) {
-        cairo_surface_t *icon =  get_icon_surf ( pd->files[index], height, pd );
-        return icon;
-    } else {
-        return NULL;
+    if ( pd->files[index].icon == NULL ) {
+        pd->files[index].icon = get_icon_surf ( pd->files[index], height, pd );
     }
+
+    return pd->files[index].icon;
 }
 
 static char *file_browser_get_message ( const Mode *sw )
-{
-    FileBrowserModePrivateData *pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
+    {
+        FileBrowserModePrivateData *pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
 
     if ( pd->open_custom ) {
         char* file_name = pd->files[pd->open_custom_index].name;
@@ -337,6 +340,7 @@ int add_file ( const char *fpath, const struct stat *sb, int typeflag, struct FT
     pos++;
 
     FBFile fbfile;
+    fbfile.icon = NULL;
     fbfile.path = g_strdup ( fpath );
     fbfile.name = g_filename_to_utf8 ( &fpath[pos], -1, NULL, NULL, NULL);
 
@@ -371,6 +375,7 @@ void load_files ( FileBrowserModePrivateData *pd )
     pd->files = g_realloc ( pd->files, ( pd->num_files + 1 ) * sizeof ( FBFile ) );
 
     FBFile up;
+    up.icon = NULL;
     up.type = UP;
     up.name = g_strdup ( pd->up_text );
     up.path = g_build_filename ( pd->current_dir, "..", NULL );
