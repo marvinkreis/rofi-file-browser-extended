@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmodule.h>
+#include <rofi/mode.h>
 
 #include "types.h"
 #include "keys.h"
@@ -32,4 +33,13 @@ char *get_name_of_key ( FBKey key ) {
             return g_strdup ( buf );
         }
     }
+}
+
+FBKey get_key_for_rofi_mretv(int mretv) {
+    if ( mretv & MENU_CUSTOM_ACTION ) {
+        return KB_ACCEPT_ALT;
+    } else if ( mretv & MENU_QUICK_SWITCH ) {
+        return KB_CUSTOM_1 + ( mretv & MENU_LOWER_MASK );
+    }
+    return -1;
 }

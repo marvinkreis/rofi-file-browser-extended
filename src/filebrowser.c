@@ -13,16 +13,17 @@
 #include "types.h"
 #include "files.h"
 #include "icons.h"
+#include "keys.h"
 #include "util.h"
 #include "options.h"
 
 G_MODULE_EXPORT Mode mode;
 
 /**
- * If the dmenu option is not given, opens the file at the given path.
- * If the dmenu option is given, prints the absolute path to stdout.
+ * If not in dmenu mode, opens the file at the given path with the given command.
+ * If in dmenu mode, prints the absolute path to stdout.
  */
-static void open_file ( char *path, FileBrowserModePrivateData *pd );
+static void open_file(char *path, char *cmd, FileBrowserModePrivateData *pd);
 
 // ================================================================================================================= //
 
@@ -95,28 +96,20 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
     FileBrowserKeyData *kd = &pd->key_data;
 
     ModeMode retv = RELOAD_DIALOG;
+    FBKey key = get_key_for_rofi_mretv ( mretv );
 
-    /* Check if one of the custom key bindings pressed. */
-    FBKey key = -1;
-    if ( mretv & MENU_CUSTOM_ACTION ) {
-        key = KB_ACCEPT_ALT;
-    } else if ( mretv & MENU_QUICK_SWITCH ) {
-        key = mretv & MENU_LOWER_MASK;
-    }
-
-    /* Handle prompt for program to open file with. */
+    /* Handle open-custom prompt. */
     if ( pd->open_custom ) {
-        if ( mretv & ( MENU_OK | MENU_CUSTOM_INPUT | MENU_CUSTOM_ACTION ) ) {
-            if ( strlen ( *input ) == 0 ) {
-                char *file_path = fd->files[pd->open_custom_index].path;
-                open_file ( file_path, pd );
+        if ( mretv & MENU_OK || key == kd->open_custom_key || key == kd->open_multi_key ) {
+            char *cmd = ( *input != NULL && strlen ( *input ) == 0 ) ? pd->cmd : *input;
+            char *path = fd->files[pd->open_custom_index].path;
+            open_file ( path, cmd, pd );
+            pd->open_custom = false;
+            pd->open_custom_index = -1;
+            if ( key != kd->open_multi_key ) {
                 retv = MODE_EXIT;
             } else {
-                char* file_path = fd->files[pd->open_custom_index].path;
-                g_free ( pd->cmd );
-                pd->cmd = g_strdup ( *input );
-                open_file ( file_path, pd );
-                retv = MODE_EXIT;
+                retv = RESET_DIALOG;
             }
         } else if ( mretv & MENU_CANCEL ) {
             pd->open_custom = false;
@@ -124,24 +117,28 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
             retv = RESET_DIALOG;
         }
 
-    /* Handle Shift+Return. */
+    /* Handle open-custom key press. */
     } else if ( key == kd->open_custom_key && selected_line != -1 ) {
         pd->open_custom = true;
         pd->open_custom_index = selected_line;
         retv = RESET_DIALOG;
 
-    /* Handle Return. */
+    /* Handle return or open-multi. */
     } else if ( key == kd->open_multi_key || mretv & MENU_OK ) {
         FBFile* entry = &fd->files[selected_line];
         switch ( entry->type ) {
         case UP:
         case DIRECTORY:
-            change_dir ( entry->path, fd );
-            retv = RESET_DIALOG;
+            if ( key == kd->open_multi_key ) {
+                open_file ( entry->path, pd->cmd, pd );
+            } else {
+                change_dir ( entry->path, fd );
+                retv = RESET_DIALOG;
+            }
             break;
         case RFILE:
         case INACCESSIBLE:
-            open_file ( entry->path, pd );
+            open_file ( entry->path, pd->cmd, pd );
             if ( key != kd->open_multi_key ) {
                 retv = MODE_EXIT;
             }
@@ -164,7 +161,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
                 change_dir ( abs_path, fd );
                 retv = RESET_DIALOG;
             } else if ( g_file_test ( abs_path, G_FILE_TEST_IS_REGULAR ) ) {
-                open_file ( abs_path, pd );
+                open_file(abs_path, pd->cmd, pd);
                 retv = MODE_EXIT;
             }
 
@@ -286,7 +283,7 @@ static char *file_browser_get_message ( const Mode *sw )
 
 // ================================================================================================================= //
 
-static void open_file ( char *path, FileBrowserModePrivateData *pd )
+static void open_file ( char *path, char *cmd, FileBrowserModePrivateData *pd )
 {
     if ( pd->dmenu ) {
         printf("%s\n", path);
@@ -299,10 +296,10 @@ static void open_file ( char *path, FileBrowserModePrivateData *pd )
 
         /* Construct the command. */
         char* complete_cmd = NULL;
-        if ( g_strrstr ( pd->cmd, "%s" ) != NULL ) {
-            complete_cmd = g_strdup_printf ( pd->cmd, path );
+        if ( g_strrstr ( cmd, "%s" ) != NULL ) {
+            complete_cmd = g_strdup_printf ( cmd, path );
         } else {
-            complete_cmd = g_strconcat ( pd->cmd, " \"", path, "\"", NULL );
+            complete_cmd = g_strconcat ( cmd, " \"", path, "\"", NULL );
         }
 
         helper_execute_command ( pd->file_data.current_dir, complete_cmd, false, NULL );
