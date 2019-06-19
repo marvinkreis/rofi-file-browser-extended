@@ -8,7 +8,7 @@ arch=("x86_64")
 url="https://github.com/marvinkreis/${pkgname%-git}"
 license=("MIT")
 depends=("rofi" "gtk3")
-makedepends=("git")
+makedepends=("git" "cmake")
 provides=("rofi-file-browser-extended")
 replaces=("rofi-file_browser-extended")
 source=("git+https://github.com/marvinkreis/${pkgname%-git}.git")
@@ -27,12 +27,12 @@ prepare() {
 
 build() {
     cd "${srcdir}/${pkgname%-git}"
-    autoreconf --install
-    ./configure --prefix=/usr
+    cmake .
     make
 }
 
 package() {
     cd "${srcdir}/${pkgname%-git}"
     make DESTDIR="${pkgdir}" PREFIX=/usr install
+    install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
 }
