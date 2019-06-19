@@ -1,4 +1,4 @@
-AC_INIT([rofi-file-browser-extended], [0.0.1], [https://github.com/marvinkreis/rofi-file-browser-extended/issues], [], [https://github.com/marvinkreis/rofi-file-browser-extended])
+AC_INIT([rofi-file-browser-extended], [1.0.0], [https://github.com/marvinkreis/rofi-file-browser-extended/issues], [], [https://github.com/marvinkreis/rofi-file-browser-extended])
 
 AC_CONFIG_MACRO_DIRS([m4])
 
