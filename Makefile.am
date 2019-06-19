@@ -12,9 +12,12 @@ plugin_LTLIBRARIES = filebrowser.la
 
 filebrowser_la_SOURCES=\
         src/filebrowser.c\
+        src/files.c\
+        src/icons.c\
+        src/keys.c\
         src/options.c\
         src/util.c
 
-filebrowser_la_CFLAGS= @glib_CFLAGS@ @rofi_CFLAGS@ $(NKUTILS_CFLAGS) @gtk_CFLAGS@
+filebrowser_la_CFLAGS= @glib_CFLAGS@ @rofi_CFLAGS@ $(NKUTILS_CFLAGS) @gtk_CFLAGS@ @fb_CFLAGS@
 filebrowser_la_LIBADD= @glib_LIBS@ @rofi_LIBS@ $(NKUTILS_LIBS) @gtk_LIBS@
 filebrowser_la_LDFLAGS= -module -avoid-version

@@ -1,9 +1,7 @@
-AC_INIT([rofi-file-browser-extended], [0.0.1], [https://github.com/marvinkreis/],[],[https://reddit.org/r/qtools/])
-
-AC_CONFIG_HEADER([config.h])
-
+AC_INIT([rofi-file-browser-extended], [0.0.1], [https://github.com/marvinkreis/rofi-file-browser-extended/issues], [], [https://github.com/marvinkreis/rofi-file-browser-extended])
 
 AC_CONFIG_MACRO_DIRS([m4])
+
 dnl ---------------------------------------------------------------------
 dnl Setup automake to be silent and in foreign mode.
 dnl We want xz distribution
@@ -41,12 +39,10 @@ dnl Base CFLAGS
 dnl ---------------------------------------------------------------------
 AM_CFLAGS="-Wall -Wextra -Wparentheses -Winline -pedantic  -Wunreachable-code"
 
-
 dnl ---------------------------------------------------------------------
 dnl Check dependencies
 dnl ---------------------------------------------------------------------
 PKG_PROG_PKG_CONFIG
-
 
 dnl ---------------------------------------------------------------------
 dnl PKG_CONFIG based dependencies
@@ -58,6 +54,9 @@ PKG_CHECK_MODULES([gtk],  [gtk+-3.0])
 
 [rofi_PLUGIN_INSTALL_DIR]="`$PKG_CONFIG --variable=pluginsdir rofi`"
 AC_SUBST([rofi_PLUGIN_INSTALL_DIR])
+
+fb_CFLAGS="-I./include"
+AC_SUBST(fb_CFLAGS)
 
 LT_INIT([disable-static])
 
