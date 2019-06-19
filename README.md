@@ -7,6 +7,7 @@ Use rofi to open files with a simple file browser.
 ## Features
 
 * Icons depending on file type
+* Enter any absolute path to directly switch to it
 * Open files with custom commands (`open custom`)
 * Open multiple files without closing rofi (`open multi`)
 * Output the absolute file path to stdout instead of opening a file (`dmenu mode`)
