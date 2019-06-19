@@ -1,8 +1,8 @@
-## Description
+# rofi-file-browser-extended
 
 Use rofi to open files with a simple file browser.
 
-![Screenshot](https://marvinkreis.github.io/rofi-plugins/rofi-file_browser-extended/example.png)
+![Screenshot](https://marvinkreis.github.io/rofi-file-browser-extended/example.png)
 
 ## Features
 
@@ -15,8 +15,8 @@ Use rofi to open files with a simple file browser.
 
 ## Key-Bindings
 
-Key                                                                    | Action
----------------------------------------------------------------------- | ----------------------------------------------------------------------------------
+Key                                                                      | Action
+------------------------------------------------------------------------ | ----------------------------------------------------------------------------------
 `kb-accept-alt` <br/> *(default: `Shift+Return`)* <br/> **configurable** | `open custom`: Open the selected file with custom a command. <br/> You will be prompted to enter the command with which to open the file.
 `kb-custom-11` <br/> *(default: `Alt+Shift+1`)* <br/> **configurable**   | `open multi`: Open the selected file without closing rofi. <br/> Can be used in the prompt of `open custom`.
 `kb-custom-12` <br/> *(default: `Alt+Shift+2`)* <br/> **configurable**   | `toggle hidden`: Toggle if hidden files are shown.
@@ -25,9 +25,13 @@ Key                                                                    | Action
 
 Configurable key bindings can be changed via command line options.
 
-## Command line options
+## Configuration
 
-### Behaviour
+Default options can be set in `include/config.h`.
+
+# Command line options
+
+## Behaviour
 
 Option                               | Description
 ------------------------------------ | -----------
@@ -38,7 +42,7 @@ Option                               | Description
 `-file-browser-dmenu`                | `dmenu mode`: Print the absolute path of the selected file to stdout instead of opening it. *(default: disabled)*
 `-file-browser-disable-sort-by-type` | Don't show directories first and inaccessible directories last. *(default: enabled)*
 
-### Key bindings
+## Key bindings
 
 Option                                      | Description
 ------------------------------------------- | -----------
@@ -51,7 +55,7 @@ Supported key bindings are `kb-accept-alt` and `kb-custom-*`.
 You can change the actual key bindings that correspond to `kb-accept-alt` and `kb-custom-*` via [X resources](https://wiki.archlinux.org/index.php/X_resources).
 Run `rofi -dump-xresources` to get a list of available options.
 
-### Appearance
+## Appearance
 
 Option                                        | Description
 --------------------------------------------- | -----------
@@ -70,7 +74,7 @@ Option                                        | Description
 `gtk3-icon-browser` can be used to search for icon names.
 The theme option can be specified multiple times to set fallback themes.
 
-### Example
+## Example
 
 ```bash
 rofi -modi file-browser -show file-browser        \
@@ -87,21 +91,39 @@ rofi -modi file-browser -show file-browser        \
 
 ```
 
-## Configuration
+# Installation
 
-Default options can be set in `src/config.h`.
+## Arch User Repository
 
-## Compilation
+This plugin can be found in the AUR under [rofi-file-browser-extended-git](https://aur.archlinux.org/packages/rofi-file-browser-extended-git/).
 
-### Dependencies
+## Dependencies
 
 | Dependency | Version |
 | ---------- | ------- |
-| rofi       | 1.4     |
+| rofi       | 1.4+    |
+| gtk3       | 3.0+    |
 
-### Installation
+## Compilation
 
-Use the following steps to compile the plugin with the **autotools** build system:
+This plugin can be compiled with either **CMake** or the **Autotools** build system.
+
+### CMake
+
+Use the following steps to compile the plugin with **CMake**:
+
+```bash
+git submodule init
+git submodule update
+
+cmake .
+make
+make install # optional: install the plugin
+```
+
+### Autotools
+
+Use the following steps to compile the plugin with the **Autotools** build system:
 
 ```bash
 git submodule init
@@ -110,5 +132,5 @@ git submodule update
 autoreconf -i
 ./configure
 make
-make install
+make install # optional: install the plugin
 ```
