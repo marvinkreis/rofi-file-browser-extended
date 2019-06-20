@@ -1,21 +1,31 @@
 #include <stdio.h>
 #include <gmodule.h>
+#include <gio/gio.h>
 
 #include "util.h"
 
 char *get_existing_abs_path ( char *path, char *current_dir )
 {
-    char *abs_path = g_canonicalize_filename ( path, current_dir );
-    if ( abs_path == NULL ) {
-        print_err ( "Invalid path: \"%s\"\n", path );
-        return NULL;
+    char *new_path;
+    if ( g_file_test ( path, G_FILE_TEST_EXISTS ) ) {
+        new_path = g_strdup ( path );
+    } else {
+        new_path = g_build_filename ( current_dir, path, NULL );
+        if ( ! g_file_test ( new_path, G_FILE_TEST_EXISTS ) ) {
+            print_err ( "Path does not exist: \"%s\"\n", path );
+            g_free ( new_path );
+            return NULL;
+        }
     }
-    if ( ! g_file_test ( abs_path, G_FILE_TEST_EXISTS ) ) {
-        print_err ( "Path does not exist: \"%s\"\n", path );
-        g_free ( abs_path );
-        return NULL;
-    }
-    return abs_path;
+
+    /* Canonicalize the path. */
+    GFile *file = g_file_new_for_path ( new_path );
+    char *canonical_path = g_file_get_path ( file );
+
+    g_object_unref ( file );
+    g_free ( new_path );
+
+    return canonical_path;
 }
 
 void print_err ( const char *format, ... )
