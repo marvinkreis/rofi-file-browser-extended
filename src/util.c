@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdarg.h>
 #include <gmodule.h>
 #include <gio/gio.h>
 

@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 700
 #define _GNU_SOURCE
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <gmodule.h>
 #include <cairo.h>

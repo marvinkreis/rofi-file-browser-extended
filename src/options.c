@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <gmodule.h>
 #include <cairo.h>
 #include <nkutils-xdg-theme.h>
