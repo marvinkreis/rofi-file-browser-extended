@@ -34,14 +34,17 @@ Default options can be set in `include/config.h`.
 
 ## Behaviour
 
-Option                               | Description
------------------------------------- | -----------
-`-file-browser-cmd <cmd>`            | Set the command to open selected files with. *(default: `xdg-open`)*
-`-file-browser-dir <path>`           | Set the starting directory. *(default: current working directory)*
-`-file-browser-depth <depth>`        | Set the depth up to which files are recursively listed, set to 0 to set no limit. *(default: 1)*
-`-file-browser-show-hidden`          | Show hidden files. *(default: disabled)*
-`-file-browser-dmenu`                | `dmenu mode`: Print the absolute path of the selected file to stdout instead of opening it. *(default: disabled)*
-`-file-browser-disable-sort-by-type` | Don't show directories first and inaccessible directories last. *(default: enabled)*
+Option                              | Description
+----------------------------------- | -----------
+`-file-browser-cmd <cmd>`           | Set the command to open selected files with. *(default: `xdg-open`)*
+`-file-browser-dir <path>`          | Set the starting directory. *(default: current working directory)*
+`-file-browser-depth <depth>`       | Set the depth up to which files are recursively listed, set to 0 to set no limit. *(default: 1)*
+`-file-browser-show-hidden`         | Show hidden files. *(default: disabled)*
+`-file-browser-dmenu`               | `dmenu mode`: Print the absolute path of the selected file to stdout instead of opening it. *(default: disabled)*
+`-file-browser-sort-by-type <0/1>`  | Enable / Disable sort by type (directories first, inaccessible files last). *(default: 1)*
+`-file-browser-sort-by-depth <0/1>` | Enable / Disable sort by depth when listing files recursively. *(default: 0)*
+
+Sort-by-type is secondary to sort-by-depth if both are enabled.
 
 ## Key bindings
 
@@ -89,7 +92,6 @@ rofi -modi file-browser -show file-browser        \
     -file-browser-path-sep "/"                    \
     -file-browser-up-text "up"                    \
     -file-browser-up-icon "go-previous"
-
 ```
 
 # Installation

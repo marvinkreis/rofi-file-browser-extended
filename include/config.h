@@ -13,8 +13,11 @@
 /* Show hidden files by default. */
 #define SHOW_HIDDEN false
 
-/* Sort file by type: directories first, inaccessible files last */
+/* Sort file by type: directories first, inaccessible files last. */
 #define SORT_BY_TYPE true
+
+/* Sort file by depth: files with lower depth first. */
+#define SORT_BY_DEPTH false
 
 /* Print the file path instead of opening the file. */
 #define DMENU false

@@ -31,12 +31,11 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
     FileBrowserIconData *id = &pd->icon_data;
     FileBrowserKeyData *kd = &pd->key_data;
 
-    fd->show_hidden        = ( find_arg ( "-file-browser-show-hidden"          ) != -1 ) ? true  : SHOW_HIDDEN;
-    fd->sort_by_type       = ( find_arg ( "-file-browser-disable-sort-by-type" ) != -1 ) ? false : SORT_BY_TYPE;
-    id->show_icons         = ( find_arg ( "-file-browser-disable-icons"        ) != -1 ) ? false : SHOW_ICONS;
-    kd->use_mode_keys      = ( find_arg ( "-file-browser-disable-mode-keys"    ) != -1 ) ? false : USE_MODE_KEYS;
-    pd->dmenu              = ( find_arg ( "-file-browser-dmenu"                ) != -1 ) ? true  : DMENU;
-    pd->show_status        = ( find_arg ( "-file-browser-disable-status"       ) != -1 ) ? false : SHOW_STATUS;
+    fd->show_hidden        = ( find_arg ( "-file-browser-show-hidden"       ) != -1 ) ? true  : SHOW_HIDDEN;
+    id->show_icons         = ( find_arg ( "-file-browser-disable-icons"     ) != -1 ) ? false : SHOW_ICONS;
+    kd->use_mode_keys      = ( find_arg ( "-file-browser-disable-mode-keys" ) != -1 ) ? false : USE_MODE_KEYS;
+    pd->dmenu              = ( find_arg ( "-file-browser-dmenu"             ) != -1 ) ? true  : DMENU;
+    pd->show_status        = ( find_arg ( "-file-browser-disable-status"    ) != -1 ) ? false : SHOW_STATUS;
 
     fd->up_text            = get_string_option ( "-file-browser-up-text",            UP_TEXT );
     id->up_icon            = get_string_option ( "-file-browser-up-icon",            UP_ICON );
@@ -51,6 +50,20 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
     /* Depth. */
     if ( ! find_arg_int ( "-file-browser-depth", &fd->depth ) ) {
         fd->depth = DEPTH;
+    }
+
+    /* Sorting method. */
+    int sort_by_type;
+    if ( find_arg_int ( "-file-browser-sort-by-type", &sort_by_type ) ) {
+        fd->sort_by_type = sort_by_type != 0;
+    } else {
+        fd->sort_by_type = SORT_BY_TYPE;
+    }
+    int sort_by_depth;
+    if ( find_arg_int ( "-file-browser-sort-by-depth", &sort_by_depth ) ) {
+        fd->sort_by_depth = sort_by_depth != 0;
+    } else {
+        fd->sort_by_depth = SORT_BY_DEPTH;
     }
 
     /* Start directory. */

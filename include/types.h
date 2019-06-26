@@ -23,6 +23,8 @@ typedef struct {
     char *name;
     /* Type of the file. */
     enum FBFileType type;
+    /* Depth of the file when listing recursively. */
+    unsigned int depth;
     /* Cached icon. */
     cairo_surface_t *icon;
 } FBFile;
@@ -40,8 +42,10 @@ typedef struct {
     bool show_hidden;
     /* Scan files recursively up to a given depth. 0 means no limit. */
     int depth;
-    /* Show directories first, Inaccessible files last. */
+    /* Show directories first, inaccessible files last. */
     bool sort_by_type;
+    /* Show files with lower depth first. */
+    bool sort_by_depth;
     /* Text for the "go-up" entry. */
     char *up_text;
 } FileBrowserFileData;
