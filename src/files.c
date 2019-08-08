@@ -123,12 +123,12 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
 {
     FileBrowserFileData *pd = global_pd;
 
-    /* Skip hidden files. */
-    if ( ! pd->show_hidden && fpath[ftwbuf->base] == '.' ) {
-        return FTW_SKIP_SUBTREE;
     /* Skip the current dir itself. */
-    } else if ( ftwbuf->level == 0 ) {
+    if ( ftwbuf->level == 0 ) {
         return FTW_CONTINUE;
+    /* Skip hidden files. */
+    } else if ( ! pd->show_hidden && fpath[ftwbuf->base] == '.' ) {
+        return FTW_SKIP_SUBTREE;
     }
 
     /* Determine the start position of the display name in the path. */
