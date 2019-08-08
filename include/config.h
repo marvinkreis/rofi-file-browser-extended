@@ -10,6 +10,12 @@
 /* The depth up to which files are recursively listed. */
 #define DEPTH 1
 
+/* Only show directories. */
+#define ONLY_DIRS false
+
+/* Only show files. */
+#define ONLY_FILES false
+
 /* Show hidden files by default. */
 #define SHOW_HIDDEN false
 

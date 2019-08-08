@@ -40,6 +40,8 @@ Option                              | Description
 `-file-browser-dir <path>`          | Set the starting directory. *(default: current working directory)*
 `-file-browser-depth <depth>`       | Set the depth up to which files are recursively listed, set to 0 to set no limit. *(default: 1)*
 `-file-browser-show-hidden`         | Show hidden files. *(default: disabled)*
+`-file-browser-only-dirs`           | Show only directories. *(default: disabled)*
+`-file-browser-only-files`          | Show only files. *(default: disabled)*
 `-file-browser-dmenu`               | `dmenu mode`: Print the absolute path of the selected file to stdout instead of opening it. *(default: disabled)*
 `-file-browser-sort-by-type <0/1>`  | Enable / Disable sort by type (directories first, inaccessible files last). *(default: 1)*
 `-file-browser-sort-by-depth <0/1>` | Enable / Disable sort by depth when listing files recursively. *(default: 0)*
@@ -76,8 +78,9 @@ Option                                        | Description
 `-file-browser-inaccessible-icon <icon-name>` | Set the icon for inaccessible directories. *(default: `"error"`)*
 `-file-browser-error-icon <icon-name>`        | Set the icon used when an error occurs. *(default: `"error"`)*
 
-`gtk3-icon-browser` can be used to search for icon names.
-The theme option can be specified multiple times to set fallback themes.
+- The plugin will load faster when the GTK icon theme is specified.
+- The GTK icon theme option can be specified multiple times to set fallback themes.
+- `gtk3-icon-browser` can be used to search for icon names.
 
 ## Example
 

@@ -40,6 +40,10 @@ typedef struct {
     unsigned int size_files;
     /* Show hidden files. */
     bool show_hidden;
+    /* Only show dirs. */
+    bool only_dirs;
+    /* Only show files. */
+    bool only_files;
     /* Scan files recursively up to a given depth. 0 means no limit. */
     int depth;
     /* Show directories first, inaccessible files last. */

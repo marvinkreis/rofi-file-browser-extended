@@ -135,7 +135,8 @@ char **get_default_icon_theme ( void )
     g_object_get ( gtk_settings_get_default (), "gtk-icon-theme-name", &default_theme, NULL );
 
     if ( default_theme == NULL ) {
-        print_err ( "Could not determine GTK icon theme. Maybe try setting a theme with \"-file-browser-theme\".\n" );
+        print_err ( "Could not determine GTK icon theme. Maybe try setting a theme with "
+                    "\"-file-browser-icon-theme\".\n" );
     }
 
     char *icon_themes[] = {

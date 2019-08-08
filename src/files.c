@@ -10,7 +10,7 @@
 /**
  * Save file browser data globally so nftw's callback can access it.
  */
-static FileBrowserFileData* global_pd;
+static FileBrowserFileData* global_fd;
 
 /**
  * Frees the current files (but keeps the actual file array intact).
@@ -91,7 +91,7 @@ void load_files ( FileBrowserFileData *fd )
     up->icon = NULL;
 
     /* Load the files. */
-    global_pd = fd;
+    global_fd = fd;
     nftw ( fd->current_dir, add_file, 16, FTW_ACTIONRETVAL );
 
     /* Sort all but the parent dir. */
@@ -121,13 +121,13 @@ void change_dir ( char *path, FileBrowserFileData *pd )
 
 static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, int typeflag, struct FTW *ftwbuf )
 {
-    FileBrowserFileData *pd = global_pd;
+    FileBrowserFileData *fd = global_fd;
 
     /* Skip the current dir itself. */
     if ( ftwbuf->level == 0 ) {
         return FTW_CONTINUE;
     /* Skip hidden files. */
-    } else if ( ! pd->show_hidden && fpath[ftwbuf->base] == '.' ) {
+    } else if ( ! fd->show_hidden && fpath[ftwbuf->base] == '.' ) {
         return FTW_SKIP_SUBTREE;
     }
 
@@ -150,10 +150,18 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
 
     switch ( typeflag ) {
         case FTW_F:
-            fbfile.type = RFILE;
+            if ( fd->only_dirs ) {
+                return FTW_CONTINUE;
+            } else {
+                fbfile.type = RFILE;
+            }
             break;
         case FTW_D:
-            fbfile.type = DIRECTORY;
+            if ( fd->only_files ) {
+                return FTW_CONTINUE;
+            } else {
+                fbfile.type = DIRECTORY;
+            }
             break;
         case FTW_DNR:
             fbfile.type = INACCESSIBLE;
@@ -164,14 +172,14 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
     }
 
     /* Increase the array size if needed. */
-    if ( pd->size_files <= pd->num_files ) {
-        pd->size_files *= 2;
-        pd->files = g_realloc ( pd->files, ( pd->size_files ) * sizeof ( FBFile ) );
+    if ( fd->size_files <= fd->num_files ) {
+        fd->size_files *= 2;
+        fd->files = g_realloc ( fd->files, ( fd->size_files ) * sizeof ( FBFile ) );
     }
-    pd->files[pd->num_files] = fbfile;
-    pd->num_files++;
+    fd->files[fd->num_files] = fbfile;
+    fd->num_files++;
 
-    if ( ( ftwbuf->level < global_pd->depth ) || pd->depth == 0 ) {
+    if ( ( ftwbuf->level < global_fd->depth ) || fd->depth == 0 ) {
         return FTW_CONTINUE;
     } else {
         return FTW_SKIP_SUBTREE;
