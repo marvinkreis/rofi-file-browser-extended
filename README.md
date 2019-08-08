@@ -63,7 +63,8 @@ Run `rofi -dump-xresources` to get a list of available options.
 
 Option                                        | Description
 --------------------------------------------- | -----------
-`-file-browser-theme <theme-name>`            | Set the GTK icon theme. *(default: system GTK icon theme)*
+`-file-browser-icon-theme <theme-name>`       | Set the GTK icon theme. *(default: system GTK icon theme)*
+`-file-browser-theme <theme-name>`            | Same as `-file-browser-icon-theme`.
 `-file-browser-disable-icons`                 | Disable icons. *(default: enabled)*
 `-file-browser-disable-status`                | Disable the status bar. *(default: enabled)*
 `-file-browser-hide-hidden-symbol <string>`   | Set the indicator that hidden files are hidden. *(default: `"[-]"`)*
@@ -87,7 +88,7 @@ rofi -modi file-browser -show file-browser        \
     -file-browser-depth 2                         \
     -file-browser-open-multi-key "kb-accept-alt"  \
     -file-browser-open-custom-key "kb-custom-11"  \
-    -file-browser-theme "Adwaita"                 \
+    -file-browser-icon-theme "Adwaita"            \
     -file-browser-hide-hidden-symbol ""           \
     -file-browser-path-sep "/"                    \
     -file-browser-up-text "up"                    \

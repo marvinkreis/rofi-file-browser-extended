@@ -81,6 +81,9 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
 
     /* Icon theme. */
     char **icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-theme" ) );
+    if ( icon_themes == NULL ) {
+        icon_themes = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-icon-theme" ) );
+    }
     if ( icon_themes != NULL ) {
         id->icon_themes = icon_themes;
     } else {
