@@ -92,6 +92,21 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
         id->icon_themes = get_default_icon_theme ();
     }
 
+    /* Set glob patterns. */
+    char **exclude_globs_strs = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-exclude" ) );
+    if ( exclude_globs_strs == NULL ) {
+        fd->num_exclude_patterns = 0;
+    } else {
+        int num_globs;
+        for ( num_globs = 0; exclude_globs_strs[num_globs] != NULL; num_globs++ ) { }
+
+        fd->num_exclude_patterns = num_globs;
+        fd->exclude_patterns = g_malloc ( num_globs * sizeof ( GPatternSpec* ) );
+        for ( int i = 0; i < num_globs; i++ ) {
+            fd->exclude_patterns[i] = g_pattern_spec_new ( exclude_globs_strs[i] );
+        }
+    }
+
     set_key_bindings ( &pd->key_data );
 
     return true;

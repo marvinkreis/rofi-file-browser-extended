@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 700
 #define _GNU_SOURCE
 
+#include <stdbool.h>
 #include <gmodule.h>
 
 #include "types.h"
@@ -16,6 +17,11 @@ static FileBrowserFileData* global_fd;
  * Frees the current files (but keeps the actual file array intact).
  */
 static void free_files ( FileBrowserFileData *fd );
+
+/**
+ * Matches a base name to the specified exclude glob patterns.
+ */
+static bool match_glob_patterns(const char *basename, FileBrowserFileData *fd);
 
 /**
  * Function used by nftw to add files to the list recursively.
@@ -72,6 +78,10 @@ void destroy_files ( FileBrowserFileData *fd )
     fd->current_dir = NULL;
     fd->files = NULL;
     fd->up_text = NULL;
+    for ( int i = 0; i < fd->num_exclude_patterns; i++ ) {
+        g_pattern_spec_free ( fd->exclude_patterns[i] );
+    }
+    fd->num_exclude_patterns = 0;
 }
 
 void load_files ( FileBrowserFileData *fd )
@@ -118,10 +128,21 @@ void change_dir ( char *path, FileBrowserFileData *pd )
     load_files ( pd );
 }
 
+static bool match_glob_patterns ( const char *basename, FileBrowserFileData *fd )
+{
+    int len = strlen ( basename );
+    for ( int i = 0; i < fd->num_exclude_patterns; i++ ) {
+        if ( g_pattern_match( fd->exclude_patterns[i], len, basename, NULL ) ) {
+            return false;
+        }
+    }
+    return true;
+}
 
 static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, int typeflag, struct FTW *ftwbuf )
 {
     FileBrowserFileData *fd = global_fd;
+    FBFile fbfile;
 
     /* Skip the current dir itself. */
     if ( ftwbuf->level == 0 ) {
@@ -129,24 +150,10 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
     /* Skip hidden files. */
     } else if ( ! fd->show_hidden && fpath[ftwbuf->base] == '.' ) {
         return FTW_SKIP_SUBTREE;
+    /* Skip excluded patterns. */
+    } else if ( ! match_glob_patterns( fpath, fd ) ) {
+        return FTW_SKIP_SUBTREE;
     }
-
-    /* Determine the start position of the display name in the path. */
-    int pos = strlen ( fpath ) - 1;
-    int level = ftwbuf->level;
-    while ( level > 0 ) {
-        pos--;
-        if ( fpath[pos] == G_DIR_SEPARATOR ) {
-            level--;
-        }
-    }
-    pos++;
-
-    FBFile fbfile;
-    fbfile.path = g_strdup ( fpath );
-    fbfile.name = &fbfile.path[pos];
-    fbfile.depth = ftwbuf->level;
-    fbfile.icon = NULL;
 
     switch ( typeflag ) {
         case FTW_F:
@@ -170,6 +177,22 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
             fbfile.type = INACCESSIBLE;
             break;
     }
+
+    /* Determine the start position of the display name in the path. */
+    int pos = strlen ( fpath ) - 1;
+    int level = ftwbuf->level;
+    while ( level > 0 ) {
+        pos--;
+        if ( fpath[pos] == G_DIR_SEPARATOR ) {
+            level--;
+        }
+    }
+    pos++;
+
+    fbfile.path = g_strdup ( fpath );
+    fbfile.name = &fbfile.path[pos];
+    fbfile.depth = ftwbuf->level;
+    fbfile.icon = NULL;
 
     /* Increase the array size if needed. */
     if ( fd->size_files <= fd->num_files ) {

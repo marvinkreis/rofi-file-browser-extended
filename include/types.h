@@ -32,10 +32,14 @@ typedef struct {
 typedef struct {
     /* Absolute path of the current directory. */
     char *current_dir;
-    /* List of displayed files. */
+    /* List of displayed files, not NULL-terminated. */
     FBFile *files;
     /* Number of displayed files. */
     unsigned int num_files;
+    /* Glob patterns to exclude dirs / files, not NULL-terminated. */
+    GPatternSpec **exclude_patterns;
+    /* Number of exclude glob patters. */
+    unsigned int num_exclude_patterns;
     /* Lower bound of the size of the files array. */
     unsigned int size_files;
     /* Show hidden files. */
@@ -63,7 +67,7 @@ typedef struct {
     GHashTable *icons;
     /* Icon theme context. */
     NkXdgThemeContext *xdg_context;
-    /* Icon themes with fallbacks. */
+    /* Icon themes with fallbacks, NULL-terminated. */
     char **icon_themes;
     /* Icons names. */
     char *up_icon;
