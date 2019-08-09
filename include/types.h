@@ -113,6 +113,8 @@ typedef struct {
     bool show_status;
     /* Print the absolute file path of selected file instead of opening it. */
     bool dmenu;
+    /* Open directories instead of descending into them. */
+    bool no_descend;
     /* Status bar format. */
     char *show_hidden_symbol;
     char *hide_hidden_symbol;

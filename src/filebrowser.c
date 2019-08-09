@@ -130,7 +130,10 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         switch ( entry->type ) {
         case UP:
         case DIRECTORY:
-            if ( key == kd->open_multi_key ) {
+            if ( pd-> no_descend && key != kd->open_multi_key ) {
+                open_file ( entry->path, pd->cmd, pd );
+                retv = MODE_EXIT;
+            } else if ( key == kd->open_multi_key ) {
                 open_file ( entry->path, pd->cmd, pd );
             } else {
                 change_dir ( entry->path, fd );

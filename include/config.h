@@ -28,6 +28,9 @@
 /* Print the file path instead of opening the file. */
 #define DMENU false
 
+/* Open directories instead of descending into them. */
+#define NO_DESCEND false
+
 /* Use mode keys (kb-mode-next, kb-mode-previous) to toggle hidden files. */
 #define USE_MODE_KEYS true
 
