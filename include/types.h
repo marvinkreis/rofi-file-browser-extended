@@ -85,7 +85,8 @@ typedef enum FBKey {
     KB_CUSTOM_11, KB_CUSTOM_12, KB_CUSTOM_13, KB_CUSTOM_14, KB_CUSTOM_15,
     KB_CUSTOM_16, KB_CUSTOM_17, KB_CUSTOM_18, KB_CUSTOM_19, KB_CUSTOM_20,
     KB_ACCEPT_ALT,
-    KEY_NONE
+    KEY_NONE,       // no key is assigned to an action
+    KEY_UNSUPPORTED // key is not a supported FBKey
 } FBKey;
 
 typedef struct {

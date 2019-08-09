@@ -79,7 +79,7 @@ cairo_surface_t *get_icon_for_file ( FBFile *fbfile, int icon_size, FileBrowserI
         }
     }
 
-    cairo_surface_t *icon_surf = get_icon_for_names( id, icon_names, icon_size );
+    cairo_surface_t *icon_surf = get_icon_for_names ( id, icon_names, icon_size );
     if ( icon_surf == NULL ) {
         print_err ( "Could not find an icon for file \"%s\".", fbfile->name );
     }

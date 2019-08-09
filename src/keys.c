@@ -35,11 +35,11 @@ char *get_name_of_key ( FBKey key ) {
     }
 }
 
-FBKey get_key_for_rofi_mretv(int mretv) {
+FBKey get_key_for_rofi_mretv ( int mretv ) {
     if ( mretv & MENU_CUSTOM_ACTION ) {
         return KB_ACCEPT_ALT;
     } else if ( mretv & MENU_QUICK_SWITCH ) {
         return KB_CUSTOM_1 + ( mretv & MENU_LOWER_MASK );
     }
-    return -1;
+    return KEY_UNSUPPORTED;
 }
