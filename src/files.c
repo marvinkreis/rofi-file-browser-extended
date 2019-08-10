@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <gmodule.h>
 
 #include "types.h"
@@ -141,6 +142,7 @@ void change_dir ( char *path, FileBrowserFileData *pd )
     char* new_dir = get_existing_abs_path ( path, pd->current_dir );
     g_free ( pd->current_dir );
     pd->current_dir = new_dir;
+    chdir ( new_dir );
     load_files ( pd );
 }
 

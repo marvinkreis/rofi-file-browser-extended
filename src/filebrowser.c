@@ -54,7 +54,8 @@ static int file_browser_init ( Mode *sw )
         if ( pd->stdin_mode ) {
             load_files_from_stdin ( &pd->file_data );
         } else {
-            load_files ( &pd->file_data );
+            FileBrowserFileData *fd = &pd->file_data;
+            change_dir ( fd->current_dir, fd );
         }
     }
 
@@ -167,6 +168,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
     } else if ( mretv & MENU_CUSTOM_INPUT ) {
         if ( strlen ( *input ) > 0 ) {
             char *expanded_input = rofi_expand_path ( *input );
+
             char *file = g_filename_from_utf8 ( expanded_input, -1, NULL, NULL, NULL );
             g_free ( expanded_input );
 
