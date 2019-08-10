@@ -39,6 +39,7 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
     pd->dmenu              = ( find_arg ( "-file-browser-dmenu"             ) != -1 ) ? true  : DMENU;
     pd->show_status        = ( find_arg ( "-file-browser-disable-status"    ) != -1 ) ? false : SHOW_STATUS;
     pd->no_descend         = ( find_arg ( "-file-browser-no-descend"        ) != -1 ) ? true  : NO_DESCEND;
+    pd->stdin_mode         = ( find_arg ( "-file-browser-stdin"             ) != -1 ) ? true  : STDIN_MODE;
 
     fd->up_text            = get_string_option ( "-file-browser-up-text",            UP_TEXT );
     id->up_icon            = get_string_option ( "-file-browser-up-icon",            UP_ICON );

@@ -49,7 +49,11 @@ static int file_browser_init ( Mode *sw )
         }
 
         /* Load the files. */
-        load_files( &pd->file_data );
+        if ( pd->stdin_mode ) {
+            load_files_from_stdin ( &pd->file_data );
+        } else {
+            load_files ( &pd->file_data );
+        }
     }
 
     return true;
@@ -130,7 +134,8 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         switch ( entry->type ) {
         case UP:
         case DIRECTORY:
-            if ( pd-> no_descend && key != kd->open_multi_key ) {
+        directory:
+            if ( pd->no_descend && key != kd->open_multi_key ) {
                 open_file ( entry->path, pd->cmd, pd );
                 retv = MODE_EXIT;
             } else if ( key == kd->open_multi_key ) {
@@ -142,11 +147,18 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
             break;
         case RFILE:
         case INACCESSIBLE:
+        file:
             open_file ( entry->path, pd->cmd, pd );
             if ( key != kd->open_multi_key ) {
                 retv = MODE_EXIT;
             }
             break;
+        case UNKNOWN:
+            if ( g_file_test ( entry->path, G_FILE_TEST_IS_DIR ) ) {
+                goto directory;
+            } else {
+                goto file;
+            }
         }
 
     /* Handle custom input or Control+Return. */

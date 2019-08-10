@@ -2,6 +2,7 @@
 #define _GNU_SOURCE
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <gmodule.h>
 
 #include "types.h"
@@ -14,9 +15,14 @@
 static FileBrowserFileData* global_fd;
 
 /**
- * Frees the current files (but keeps the actual file array intact).
+ * Frees the current files and initializes the file list with size 1.
  */
 static void free_files ( FileBrowserFileData *fd );
+
+/**
+ * Inserts a file into the file list of FileBrowserFileData, expanding the list if necessary.
+ */
+static void insert_file ( FBFile *fbfile, FileBrowserFileData *fd );
 
 /**
  * Matches a base name to the specified exclude glob patterns.
@@ -66,7 +72,8 @@ void free_files ( FileBrowserFileData *fd )
         g_free ( files[i].path );
     }
     fd->num_files = 0;
-    fd->size_files = 0;
+    fd->files = g_realloc ( fd->files, sizeof ( FBFile ) );
+    fd->size_files = 1;
 }
 
 void destroy_files ( FileBrowserFileData *fd )
@@ -84,21 +91,28 @@ void destroy_files ( FileBrowserFileData *fd )
     fd->num_exclude_patterns = 0;
 }
 
+static void insert_file ( FBFile *fbfile, FileBrowserFileData *fd ) {
+    /* Increase the array size if needed. */
+    if ( fd->size_files <= fd->num_files ) {
+        fd->size_files *= 2;
+        fd->files = g_realloc ( fd->files, ( fd->size_files ) * sizeof ( FBFile ) );
+    }
+    fd->files[fd->num_files] = *fbfile;
+    fd->num_files++;
+}
+
 void load_files ( FileBrowserFileData *fd )
 {
     free_files ( fd );
 
     /* Insert the parent dir. */
-    fd->files = g_realloc ( fd->files, sizeof ( FBFile ) );
-    fd->size_files = 1;
-    fd->num_files = 1;
-
-    FBFile *up = &fd->files[0];
-    up->type = UP;
-    up->name = fd->up_text;
-    up->path = g_build_filename ( fd->current_dir, "..", NULL );
-    up->depth = 0;
-    up->icon = NULL;
+    FBFile up;
+    up.type = UP;
+    up.name = fd->up_text;
+    up.path = g_build_filename ( fd->current_dir, "..", NULL );
+    up.depth = 0;
+    up.icon = NULL;
+    insert_file ( &up, fd );
 
     /* Load the files. */
     global_fd = fd;
@@ -142,7 +156,6 @@ static bool match_glob_patterns ( const char *basename, FileBrowserFileData *fd 
 static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, int typeflag, struct FTW *ftwbuf )
 {
     FileBrowserFileData *fd = global_fd;
-    FBFile fbfile;
 
     /* Skip the current dir itself. */
     if ( ftwbuf->level == 0 ) {
@@ -154,6 +167,8 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
     } else if ( ! match_glob_patterns( fpath, fd ) ) {
         return FTW_SKIP_SUBTREE;
     }
+
+    FBFile fbfile;
 
     switch ( typeflag ) {
         case FTW_F:
@@ -194,18 +209,42 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
     fbfile.depth = ftwbuf->level;
     fbfile.icon = NULL;
 
-    /* Increase the array size if needed. */
-    if ( fd->size_files <= fd->num_files ) {
-        fd->size_files *= 2;
-        fd->files = g_realloc ( fd->files, ( fd->size_files ) * sizeof ( FBFile ) );
-    }
-    fd->files[fd->num_files] = fbfile;
-    fd->num_files++;
+    insert_file ( &fbfile, fd );
 
     if ( ( ftwbuf->level < global_fd->depth ) || fd->depth == 0 ) {
         return FTW_CONTINUE;
     } else {
         return FTW_SKIP_SUBTREE;
+    }
+}
+
+void load_files_from_stdin ( FileBrowserFileData *fd ) {
+    free_files ( fd );
+    size_t current_dir_len = strlen ( fd->current_dir );
+
+    char *buffer = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    while ( ( read = getline ( &buffer, &len, stdin ) ) != -1 ) {
+        /* Strip the newline. */
+        buffer[read - 1] = '\0';
+
+        FBFile fbfile;
+        fbfile.type = UNKNOWN;
+        fbfile.depth = 1;
+        fbfile.icon = NULL;
+
+        /* If path is absolute. */
+        if ( buffer[0] == '/' ) {
+            fbfile.path = g_strdup ( buffer );
+            fbfile.name = fbfile.path;
+        } else {
+            fbfile.path = g_strconcat ( fd->current_dir, "/", buffer, NULL );
+            fbfile.name = &fbfile.path[current_dir_len + 1];
+        }
+
+        insert_file ( &fbfile, fd );
     }
 }
 
@@ -220,7 +259,7 @@ gint compare_files_type ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpoint
 {
     FBFile *fa = ( FBFile * ) a;
     FBFile *fb = ( FBFile * ) b;
-    if ( fa->type != fb->type ){
+    if ( fa->type != fb->type ) {
         return fa->type - fb->type;
     } else {
         return g_strcmp0 ( fa->name, fb->name );

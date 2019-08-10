@@ -11,7 +11,8 @@ typedef enum FBFileType {
     UP,
     DIRECTORY,
     RFILE,
-    INACCESSIBLE
+    INACCESSIBLE,
+    UNKNOWN // used when reading files from stdin
 } FBFileType;
 
 typedef struct {
@@ -40,7 +41,7 @@ typedef struct {
     GPatternSpec **exclude_patterns;
     /* Number of exclude glob patters. */
     unsigned int num_exclude_patterns;
-    /* Lower bound of the size of the files array. */
+    /* Size of the files array. */
     unsigned int size_files;
     /* Show hidden files. */
     bool show_hidden;
@@ -116,6 +117,8 @@ typedef struct {
     bool dmenu;
     /* Open directories instead of descending into them. */
     bool no_descend;
+    /* Read paths to display from stdin, implies no_descend. */
+    bool stdin_mode;
     /* Status bar format. */
     char *show_hidden_symbol;
     char *hide_hidden_symbol;

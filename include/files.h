@@ -14,6 +14,15 @@
 void load_files ( FileBrowserFileData *fd );
 
 /**
+ * Loads the file list from stdin.
+ * Paths must either be absolute or relative to the current directory.
+ * Paths will be displayed as they are given from stdin, including the order.
+ * It is not checked if the paths actually exist.
+ * Paths must be separated by newlines.
+ */
+void load_files_from_stdin ( FileBrowserFileData *fd );
+
+/**
  * Simplifies the given path (e.g. removes ".."), sets it, and loads the file list for the new path and options.
  */
 void change_dir ( char *path, FileBrowserFileData *fd );
