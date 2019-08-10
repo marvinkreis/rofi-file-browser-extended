@@ -1,5 +1,5 @@
-#ifndef FILE_BROWSER_CONFIG_H
-#define FILE_BROWSER_CONFIG_H
+#ifndef FILE_BROWSER_DEFAULTS_H
+#define FILE_BROWSER_DEFAULTS_H
 
 /* The starting directory. */
 #define START_DIR g_get_current_dir()

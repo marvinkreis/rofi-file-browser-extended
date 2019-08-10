@@ -28,7 +28,7 @@ Configurable key bindings can be changed via command line options.
 
 ## Configuration
 
-Default options can be set in `include/config.h`.
+Default options can be set in `include/defaults.h`.
 
 # Command line options
 

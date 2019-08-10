@@ -4,7 +4,7 @@
 #include <nkutils-xdg-theme.h>
 #include <rofi/helper.h>
 
-#include "config.h"
+#include "defaults.h"
 #include "types.h"
 #include "util.h"
 #include "options.h"

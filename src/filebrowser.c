@@ -10,7 +10,7 @@
 #include <rofi/helper.h>
 #include <rofi/mode-private.h>
 
-#include "config.h"
+#include "defaults.h"
 #include "types.h"
 #include "files.h"
 #include "icons.h"
