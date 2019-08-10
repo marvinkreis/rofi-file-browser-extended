@@ -134,6 +134,10 @@ typedef struct {
     bool open_custom;
     /* The selected file index to be opened. */
     int open_custom_index;
+    /* Custom commands to show in the command prompt. */
+    char **open_custom_commands;
+    /* Number of custom commands. */
+    int num_open_custom_commands;
 } FileBrowserModePrivateData;
 
 #endif

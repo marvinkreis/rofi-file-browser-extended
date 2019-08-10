@@ -78,6 +78,7 @@ static void file_browser_destroy ( Mode *sw )
     g_free ( pd->show_hidden_symbol );
     g_free ( pd->hide_hidden_symbol );
     g_free ( pd->path_sep );
+    g_strfreev ( pd->open_custom_commands );
 
     /* Fill with zeros, just in case. */
     memset ( ( void * ) pd , 0, sizeof ( pd ) );
@@ -91,7 +92,11 @@ static unsigned int file_browser_get_num_entries ( const Mode *sw )
     const FileBrowserFileData *fd = &pd->file_data;
 
     if ( pd->open_custom ) {
-        return 1;
+        if ( pd->num_open_custom_commands > 0 ) {
+            return pd->num_open_custom_commands;
+        } else {
+            return 1;
+        }
     } else {
         return fd->num_files;
     }
@@ -108,8 +113,13 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
 
     /* Handle open-custom prompt. */
     if ( pd->open_custom ) {
-        if ( mretv & MENU_OK || key == kd->open_custom_key || key == kd->open_multi_key ) {
-            char *cmd = ( *input != NULL && strlen ( *input ) == 0 ) ? pd->cmd : *input;
+        if ( mretv & MENU_OK || mretv & MENU_CUSTOM_INPUT || key == kd->open_custom_key || key == kd->open_multi_key ) {
+            char* cmd;
+            if ( pd->num_open_custom_commands > 0 && selected_line != -1 ) {
+                cmd = pd->open_custom_commands[selected_line];
+            } else {
+                cmd = ( *input != NULL && strlen ( *input ) == 0 ) ? pd->cmd : *input;
+            }
             FBFile *fbfile = & ( fd->files[pd->open_custom_index] );
             open_file ( fbfile, NULL, cmd, pd );
             pd->open_custom = false;
@@ -226,7 +236,11 @@ static int file_browser_token_match ( const Mode *sw, rofi_int_matcher **tokens,
     FileBrowserFileData *fd = &pd->file_data;
 
     if ( pd->open_custom ) {
-        return true;
+        if ( pd->num_open_custom_commands > 0 ) {
+            return helper_token_match ( tokens, pd->open_custom_commands[index] );
+        } else {
+            return true;
+        }
     } else {
         return helper_token_match ( tokens, fd->files[index].name );
     }
@@ -240,14 +254,17 @@ static char *file_browser_get_display_value ( const Mode *sw, unsigned int selec
 
     if ( !get_entry ) return NULL;
 
-    int index;
     if ( pd->open_custom ) {
-        index = pd->open_custom_index;
+        if ( pd->num_open_custom_commands > 0 ) {
+            return rofi_force_utf8 ( pd->open_custom_commands[selected_line],
+                    strlen ( pd->open_custom_commands[selected_line] ) );
+        } else {
+            return rofi_force_utf8 ( fd->files[pd->open_custom_index].name,
+                    strlen ( fd->files[pd->open_custom_index].name ) );
+        }
     } else {
-        index = selected_line;
+        return rofi_force_utf8 ( fd->files[selected_line].name, strlen ( fd->files[selected_line].name ) );
     }
-
-    return rofi_force_utf8 ( fd->files[index].name, strlen( fd->files[index].name ) );
 }
 
 static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int selected_line, int height )
@@ -262,7 +279,11 @@ static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int sel
 
     int index;
     if ( pd->open_custom ) {
-        index = pd->open_custom_index;
+        if ( pd->num_open_custom_commands > 0 ) {
+            return NULL;
+        } else {
+            index = pd->open_custom_index;
+        }
     } else {
         index = selected_line;
     }

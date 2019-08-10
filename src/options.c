@@ -58,6 +58,16 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
         fd->depth = DEPTH;
     }
 
+    /* Custom commands for open-custom prompt. */
+    pd->open_custom_commands =  g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-open-custom-cmd" ) );
+    if ( pd->open_custom_commands != NULL ) {
+        int num;
+        for ( num = 0; pd->open_custom_commands[num] != NULL; num++ ) { }
+        pd->num_open_custom_commands = num;
+    } else {
+        pd->num_open_custom_commands = 0;
+    }
+
     /* Sorting method. */
     int sort_by_type;
     if ( find_arg_int ( "-file-browser-sort-by-type", &sort_by_type ) ) {
