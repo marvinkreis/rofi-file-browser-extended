@@ -23,8 +23,10 @@ G_MODULE_EXPORT Mode mode;
 /**
  * If not in dmenu mode, opens the file at the given path with the given command.
  * If in dmenu mode, prints the absolute path to stdout.
+ * If fbfile is given, uses the path of fbfile.
+ * If fbfile is NULL, uses path.
  */
-static void open_file(char *path, char *cmd, FileBrowserModePrivateData *pd);
+static void open_file ( FBFile *fbfile, char *path, char *cmd, FileBrowserModePrivateData *pd );
 
 // ================================================================================================================= //
 
@@ -107,8 +109,8 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
     if ( pd->open_custom ) {
         if ( mretv & MENU_OK || key == kd->open_custom_key || key == kd->open_multi_key ) {
             char *cmd = ( *input != NULL && strlen ( *input ) == 0 ) ? pd->cmd : *input;
-            char *path = fd->files[pd->open_custom_index].path;
-            open_file ( path, cmd, pd );
+            FBFile *fbfile = & ( fd->files[pd->open_custom_index] );
+            open_file ( fbfile, NULL, cmd, pd );
             pd->open_custom = false;
             pd->open_custom_index = -1;
             if ( key != kd->open_multi_key ) {
@@ -136,10 +138,10 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         case DIRECTORY:
         directory:
             if ( pd->no_descend && key != kd->open_multi_key ) {
-                open_file ( entry->path, pd->cmd, pd );
+                open_file ( entry, NULL, pd->cmd, pd );
                 retv = MODE_EXIT;
             } else if ( key == kd->open_multi_key ) {
-                open_file ( entry->path, pd->cmd, pd );
+                open_file ( entry, NULL, pd->cmd, pd );
             } else {
                 change_dir ( entry->path, fd );
                 retv = RESET_DIALOG;
@@ -148,7 +150,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         case RFILE:
         case INACCESSIBLE:
         file:
-            open_file ( entry->path, pd->cmd, pd );
+            open_file ( entry, NULL, pd->cmd, pd );
             if ( key != kd->open_multi_key ) {
                 retv = MODE_EXIT;
             }
@@ -176,8 +178,8 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
             } else if ( g_file_test ( abs_path, G_FILE_TEST_IS_DIR ) ){
                 change_dir ( abs_path, fd );
                 retv = RESET_DIALOG;
-            } else if ( g_file_test ( abs_path, G_FILE_TEST_IS_REGULAR ) ) {
-                open_file(abs_path, pd->cmd, pd);
+            } else {
+                open_file ( NULL, abs_path, pd->cmd, pd );
                 retv = MODE_EXIT;
             }
 
@@ -299,23 +301,34 @@ static char *file_browser_get_message ( const Mode *sw )
 
 // ================================================================================================================= //
 
-static void open_file ( char *path, char *cmd, FileBrowserModePrivateData *pd )
+static void open_file ( FBFile* fbfile, char *path, char *cmd, FileBrowserModePrivateData *pd )
 {
+    char* used_path;
+    if ( fbfile != NULL ) {
+        if ( pd->open_parent_as_self && fbfile->type == UP ) {
+            used_path = pd->file_data.current_dir;
+        } else {
+            used_path = fbfile->path;
+        }
+    } else {
+        used_path = path;
+    }
+
     if ( pd->dmenu ) {
-        printf("%s\n", path);
+        printf( "%s\n", used_path );
 
     } else {
         /* Escape the file path. */
-        char **split = g_strsplit ( path, "\"", -1 );
-        path = g_strjoinv ( "\\\"", split );
+        char **split = g_strsplit ( used_path, "\"", -1 );
+        used_path = g_strjoinv ( "\\\"", split );
         g_strfreev ( split );
 
         /* Construct the command. */
         char* complete_cmd = NULL;
         if ( g_strrstr ( cmd, "%s" ) != NULL ) {
-            complete_cmd = g_strdup_printf ( cmd, path );
+            complete_cmd = g_strdup_printf ( cmd, used_path );
         } else {
-            complete_cmd = g_strconcat ( cmd, " \"", path, "\"", NULL );
+            complete_cmd = g_strconcat ( cmd, " \"", used_path, "\"", NULL );
         }
 
         helper_execute_command ( pd->file_data.current_dir, complete_cmd, false, NULL );

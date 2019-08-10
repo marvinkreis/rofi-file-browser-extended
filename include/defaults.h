@@ -16,6 +16,9 @@
 /* Only show files. */
 #define ONLY_FILES false
 
+/* Treat the parent directory (..) as the current directory when opening it. */
+#define OPEN_PARENT_AS_SELF false
+
 /* Show hidden files by default. */
 #define SHOW_HIDDEN false
 

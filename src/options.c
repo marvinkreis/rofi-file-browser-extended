@@ -31,25 +31,26 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
     FileBrowserIconData *id = &pd->icon_data;
     FileBrowserKeyData *kd = &pd->key_data;
 
-    fd->show_hidden        = ( find_arg ( "-file-browser-show-hidden"       ) != -1 ) ? true  : SHOW_HIDDEN;
-    fd->only_dirs          = ( find_arg ( "-file-browser-only-dirs"         ) != -1 ) ? true  : ONLY_DIRS;
-    fd->only_files         = ( find_arg ( "-file-browser-only-files"        ) != -1 ) ? true  : ONLY_FILES;
-    id->show_icons         = ( find_arg ( "-file-browser-disable-icons"     ) != -1 ) ? false : SHOW_ICONS;
-    kd->use_mode_keys      = ( find_arg ( "-file-browser-disable-mode-keys" ) != -1 ) ? false : USE_MODE_KEYS;
-    pd->dmenu              = ( find_arg ( "-file-browser-dmenu"             ) != -1 ) ? true  : DMENU;
-    pd->show_status        = ( find_arg ( "-file-browser-disable-status"    ) != -1 ) ? false : SHOW_STATUS;
-    pd->no_descend         = ( find_arg ( "-file-browser-no-descend"        ) != -1 ) ? true  : NO_DESCEND;
-    pd->stdin_mode         = ( find_arg ( "-file-browser-stdin"             ) != -1 ) ? true  : STDIN_MODE;
+    fd->show_hidden         = ( find_arg ( "-file-browser-show-hidden"         ) != -1 ) ? true  : SHOW_HIDDEN;
+    fd->only_dirs           = ( find_arg ( "-file-browser-only-dirs"           ) != -1 ) ? true  : ONLY_DIRS;
+    fd->only_files          = ( find_arg ( "-file-browser-only-files"          ) != -1 ) ? true  : ONLY_FILES;
+    id->show_icons          = ( find_arg ( "-file-browser-disable-icons"       ) != -1 ) ? false : SHOW_ICONS;
+    kd->use_mode_keys       = ( find_arg ( "-file-browser-disable-mode-keys"   ) != -1 ) ? false : USE_MODE_KEYS;
+    pd->dmenu               = ( find_arg ( "-file-browser-dmenu"               ) != -1 ) ? true  : DMENU;
+    pd->show_status         = ( find_arg ( "-file-browser-disable-status"      ) != -1 ) ? false : SHOW_STATUS;
+    pd->no_descend          = ( find_arg ( "-file-browser-no-descend"          ) != -1 ) ? true  : NO_DESCEND;
+    pd->stdin_mode          = ( find_arg ( "-file-browser-stdin"               ) != -1 ) ? true  : STDIN_MODE;
+    pd->open_parent_as_self = ( find_arg ( "-file-browser-open-parent-as-self" ) != -1 ) ? true  : OPEN_PARENT_AS_SELF;
 
-    fd->up_text            = get_string_option ( "-file-browser-up-text",            UP_TEXT );
-    id->up_icon            = get_string_option ( "-file-browser-up-icon",            UP_ICON );
-    id->inaccessible_icon  = get_string_option ( "-file-browser-inaccessible-icon",  INACCESSIBLE_ICON );
-    id->fallback_icon      = get_string_option ( "-file-browser-fallback-icon",      FALLBACK_ICON );
-    id->error_icon         = get_string_option ( "-file-browser-error-icon",         ERROR_ICON );
-    pd->cmd                = get_string_option ( "-file-browser-cmd",                CMD );
-    pd->show_hidden_symbol = get_string_option ( "-file-browser-show-hidden-symbol", SHOW_HIDDEN_SYMBOL );
-    pd->hide_hidden_symbol = get_string_option ( "-file-browser-hide-hidden-symbol", HIDE_HIDDEN_SYMBOL );
-    pd->path_sep           = get_string_option ( "-file-browser-path-sep",           PATH_SEP );
+    fd->up_text             = get_string_option ( "-file-browser-up-text",            UP_TEXT );
+    id->up_icon             = get_string_option ( "-file-browser-up-icon",            UP_ICON );
+    id->inaccessible_icon   = get_string_option ( "-file-browser-inaccessible-icon",  INACCESSIBLE_ICON );
+    id->fallback_icon       = get_string_option ( "-file-browser-fallback-icon",      FALLBACK_ICON );
+    id->error_icon          = get_string_option ( "-file-browser-error-icon",         ERROR_ICON );
+    pd->cmd                 = get_string_option ( "-file-browser-cmd",                CMD );
+    pd->show_hidden_symbol  = get_string_option ( "-file-browser-show-hidden-symbol", SHOW_HIDDEN_SYMBOL );
+    pd->hide_hidden_symbol  = get_string_option ( "-file-browser-hide-hidden-symbol", HIDE_HIDDEN_SYMBOL );
+    pd->path_sep            = get_string_option ( "-file-browser-path-sep",           PATH_SEP );
 
     /* Depth. */
     if ( ! find_arg_int ( "-file-browser-depth", &fd->depth ) ) {

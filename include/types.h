@@ -117,6 +117,8 @@ typedef struct {
     bool dmenu;
     /* Open directories instead of descending into them. */
     bool no_descend;
+    /* Treat the parent directory (..) as the current directory when opening it. */
+    bool open_parent_as_self;
     /* Read paths to display from stdin, implies no_descend. */
     bool stdin_mode;
     /* Status bar format. */

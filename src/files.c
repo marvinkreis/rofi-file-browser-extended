@@ -110,7 +110,7 @@ void load_files ( FileBrowserFileData *fd )
     up.type = UP;
     up.name = fd->up_text;
     up.path = g_build_filename ( fd->current_dir, "..", NULL );
-    up.depth = 0;
+    up.depth = -1;
     up.icon = NULL;
     insert_file ( &up, fd );
 
