@@ -246,6 +246,8 @@ void load_files_from_stdin ( FileBrowserFileData *fd ) {
 
         insert_file ( &fbfile, fd );
     }
+
+    g_free ( buffer );
 }
 
 gint compare_files ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data )
