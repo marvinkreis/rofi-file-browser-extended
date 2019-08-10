@@ -55,7 +55,9 @@ typedef struct {
     bool sort_by_type;
     /* Show files with lower depth first. */
     bool sort_by_depth;
-    /* Text for the "go-up" entry. */
+    /* Hide the parent directory (..). */
+    bool hide_parent;
+    /* Text for the parent directory (..). */
     char *up_text;
 } FileBrowserFileData;
 

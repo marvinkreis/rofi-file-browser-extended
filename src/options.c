@@ -34,6 +34,7 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
     fd->show_hidden         = ( find_arg ( "-file-browser-show-hidden"         ) != -1 ) ? true  : SHOW_HIDDEN;
     fd->only_dirs           = ( find_arg ( "-file-browser-only-dirs"           ) != -1 ) ? true  : ONLY_DIRS;
     fd->only_files          = ( find_arg ( "-file-browser-only-files"          ) != -1 ) ? true  : ONLY_FILES;
+    fd->hide_parent         = ( find_arg ( "-file-browser-hide-parent"         ) != -1 ) ? true  : HIDE_PARENT;
     id->show_icons          = ( find_arg ( "-file-browser-disable-icons"       ) != -1 ) ? false : SHOW_ICONS;
     kd->use_mode_keys       = ( find_arg ( "-file-browser-disable-mode-keys"   ) != -1 ) ? false : USE_MODE_KEYS;
     pd->dmenu               = ( find_arg ( "-file-browser-dmenu"               ) != -1 ) ? true  : DMENU;

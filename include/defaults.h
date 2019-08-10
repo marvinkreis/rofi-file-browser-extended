@@ -34,6 +34,9 @@
 /* Open directories instead of descending into them. */
 #define NO_DESCEND false
 
+/* Hide the parent directory (..). */
+#define HIDE_PARENT false
+
 /* Read paths to display from stdin. */
 #define STDIN_MODE false
 
