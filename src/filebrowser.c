@@ -75,7 +75,7 @@ static void file_browser_destroy ( Mode *sw )
     destroy_icons( &pd->icon_data );
 
     /* Free open-custom commands. */
-    destroy_open_custom_cmds ( pd );
+    destroy_cmds ( pd );
 
     /* Free the rest. */
     g_free ( pd->cmd );
@@ -95,7 +95,7 @@ static unsigned int file_browser_get_num_entries ( const Mode *sw )
     const FileBrowserFileData *fd = &pd->file_data;
 
     if ( pd->open_custom ) {
-        if ( pd->num_cmds > 0 ) {
+        if ( pd->show_cmds ) {
             return pd->num_cmds;
         } else {
             return 1;
@@ -118,12 +118,12 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
     if ( pd->open_custom ) {
         if ( mretv & MENU_OK || mretv & MENU_CUSTOM_INPUT || key == kd->open_custom_key || key == kd->open_multi_key ) {
             char* cmd;
-            if ( pd->num_cmds > 0 && selected_line != -1 ) {
+            if ( pd->show_cmds && selected_line != -1 ) {
                 cmd = pd->cmds[selected_line].cmd;
             } else {
                 cmd = ( *input != NULL && strlen ( *input ) == 0 ) ? pd->cmd : *input;
             }
-            FBFile *fbfile = & ( fd->files[pd->open_custom_index] );
+            FBFile *fbfile = &fd->files[pd->open_custom_index];
             open_file ( fbfile, NULL, cmd, pd );
             pd->open_custom = false;
             pd->open_custom_index = -1;
@@ -239,9 +239,9 @@ static int file_browser_token_match ( const Mode *sw, rofi_int_matcher **tokens,
     FileBrowserFileData *fd = &pd->file_data;
 
     if ( pd->open_custom ) {
-        if ( pd->num_cmds > 0 ) {
-            OpenCustomCMD *cmd = &pd->cmds[index];
-            return helper_token_match ( tokens, cmd->name != NULL ? cmd->name : cmd->cmd );
+        if ( pd->show_cmds ) {
+            FBCmd *fbcmd = &pd->cmds[index];
+            return helper_token_match ( tokens, fbcmd->name != NULL ? fbcmd->name : fbcmd->cmd );
         } else {
             return true;
         }
@@ -258,17 +258,14 @@ static char *file_browser_get_display_value ( const Mode *sw, unsigned int selec
 
     if ( !get_entry ) return NULL;
 
-    if ( pd->open_custom ) {
-        if ( pd->num_cmds > 0 ) {
-            OpenCustomCMD *cmd = &pd->cmds[selected_line];
-            char* name = cmd->name != NULL ? cmd->name : cmd->cmd;
-            return rofi_force_utf8 ( name, strlen ( name ) );
-        } else {
-            FBFile *fbfile = &fd->files[pd->open_custom_index];
-            return rofi_force_utf8 ( fbfile->name, strlen ( fbfile->name ) );
-        }
+    if ( pd->open_custom && pd->show_cmds ) {
+        FBCmd *fbcmd = &pd->cmds[selected_line];
+        char* name = fbcmd->name != NULL ? fbcmd->name : fbcmd->cmd;
+        return rofi_force_utf8 ( name, strlen ( name ) );
     } else {
-        return rofi_force_utf8 ( fd->files[selected_line].name, strlen ( fd->files[selected_line].name ) );
+        int index = pd->open_custom ? pd->open_custom_index : selected_line;
+        FBFile *fbfile = &fd->files[index];
+        return rofi_force_utf8 ( fbfile->name, strlen ( fbfile->name ) );
     }
 }
 
@@ -282,13 +279,13 @@ static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int sel
         return NULL;
     }
 
-    if ( pd->open_custom && pd->num_cmds > 0 ) {
-        OpenCustomCMD *cmd = &pd->cmds[selected_line];
-        if ( cmd->icon == NULL ) {
-            char* icon_names[2] = { cmd->icon_name, NULL };
-            cmd->icon = get_icon_for_names ( icon_names, height, id );
+    if ( pd->open_custom && pd->show_cmds ) {
+        FBCmd *fbcmd = &pd->cmds[selected_line];
+        if ( fbcmd->icon == NULL ) {
+            char* icon_names[2] = { fbcmd->icon_name, NULL };
+            fbcmd->icon = get_icon_for_names ( icon_names, height, id );
         }
-        return cmd->icon;
+        return fbcmd->icon;
     } else {
         int index = pd->open_custom ? pd->open_custom_index : selected_line;
         FBFile *fbfile = & fd->files[index];

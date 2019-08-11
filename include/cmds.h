@@ -19,6 +19,6 @@ void find_custom_cmds ( FileBrowserModePrivateData *pd );
 /**
  * Frees the commands for open-custom.
  */
-void destroy_open_custom_cmds ( FileBrowserModePrivateData *pd );
+void destroy_cmds(FileBrowserModePrivateData *pd);
 
 #endif

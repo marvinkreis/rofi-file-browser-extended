@@ -38,12 +38,12 @@ typedef struct {
     FBFile *files;
     /* Number of displayed files. */
     unsigned int num_files;
+    /* Size of the files array. */
+    unsigned int size_files;
     /* Glob patterns to exclude dirs / files, not NULL-terminated. */
     GPatternSpec **exclude_patterns;
     /* Number of exclude glob patters. */
     unsigned int num_exclude_patterns;
-    /* Size of the files array. */
-    unsigned int size_files;
     /* Show hidden files. */
     bool show_hidden;
     /* Only show dirs. */
@@ -116,7 +116,7 @@ typedef struct {
     char *icon_name;
     /* Cached icon. */
     cairo_surface_t *icon;
-} OpenCustomCMD;
+} FBCmd;
 
 typedef struct {
     FileBrowserFileData file_data;
@@ -146,10 +146,12 @@ typedef struct {
     bool open_custom;
     /* The selected file index to be opened. */
     int open_custom_index;
-    /* Custom commands to show in the command prompt. */
-    OpenCustomCMD *cmds;
-    /* Number of custom commands. */
+    /* Commands to show in open-custom. */
+    FBCmd *cmds;
+    /* Number of commands. */
     int num_cmds;
+    /* Show the commands, equal to (num_cmds > 0). */
+    bool show_cmds;
 } FileBrowserModePrivateData;
 
 #endif

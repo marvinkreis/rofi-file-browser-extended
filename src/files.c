@@ -38,26 +38,26 @@ static inline int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat 
 /**
  * Compares files alphabetically.
  */
-static inline gint compare_files ( gconstpointer a, gconstpointer b, gpointer data );
+static gint compare_files ( gconstpointer a, gconstpointer b, gpointer data );
 
 /**
  * Compares files to sort by type (directories first, inaccessible files last).
  * Then compares files alphabetically.
  */
-static inline gint compare_files_type ( gconstpointer a, gconstpointer b, gpointer data );
+static gint compare_files_type ( gconstpointer a, gconstpointer b, gpointer data );
 
 /**
  * Compares files to sort by depth.
  * Then compares files alphabetically.
  */
-static inline gint compare_files_depth ( gconstpointer a, gconstpointer b, gpointer data );
+static gint compare_files_depth ( gconstpointer a, gconstpointer b, gpointer data );
 
 /**
  * Compares files to sort by depth.
  * Then compares files to sort by type (directories first, inaccessible files last).
  * Then compares files alphabetically.
  */
-static inline gint compare_files_depth_type ( gconstpointer a, gconstpointer b, gpointer data );
+static gint compare_files_depth_type ( gconstpointer a, gconstpointer b, gpointer data );
 
 /**
  * Directories appear before regular files, inaccessible directories and files appear last.
@@ -66,7 +66,7 @@ static inline gint compare_files_depth_type ( gconstpointer a, gconstpointer b, 
 
 // ================================================================================================================= //
 
-void free_files ( FileBrowserFileData *fd )
+static void free_files ( FileBrowserFileData *fd )
 {
     FBFile *files = fd->files;
     for ( unsigned int i = 0; i < fd->num_files; i++ ) {
@@ -254,17 +254,17 @@ void load_files_from_stdin ( FileBrowserFileData *fd ) {
     g_free ( buffer );
 }
 
-gint compare_files ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data )
+static gint compare_files ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data )
 {
-    FBFile *fa = ( FBFile * ) a;
-    FBFile *fb = ( FBFile * ) b;
+    const FBFile *fa = a;
+    const FBFile *fb = b;
     return g_strcmp0 ( fa->name, fb->name );
 }
 
-gint compare_files_type ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data )
+static gint compare_files_type ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data )
 {
-    FBFile *fa = ( FBFile * ) a;
-    FBFile *fb = ( FBFile * ) b;
+    const FBFile *fa = a;
+    const FBFile *fb = b;
     if ( fa->type != fb->type ) {
         return fa->type - fb->type;
     } else {
@@ -272,10 +272,10 @@ gint compare_files_type ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpoint
     }
 }
 
-gint compare_files_depth ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data )
+static gint compare_files_depth ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data )
 {
-    FBFile *fa = ( FBFile * ) a;
-    FBFile *fb = ( FBFile * ) b;
+    const FBFile *fa = a;
+    const FBFile *fb = b;
     if ( fa->depth != fb->depth ) {
         return fa->depth - fb->depth;
     } else {
@@ -283,10 +283,10 @@ gint compare_files_depth ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpoin
     }
 }
 
-gint compare_files_depth_type ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data )
+static gint compare_files_depth_type ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data )
 {
-    FBFile *fa = ( FBFile * ) a;
-    FBFile *fb = ( FBFile * ) b;
+    const FBFile *fa = a;
+    const FBFile *fb = b;
     if ( fa->depth != fb->depth ) {
         return fa->depth - fb->depth;
     } else if ( fa->type != fb->type ) {

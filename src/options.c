@@ -108,9 +108,7 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
 
     /* Set commands for open-custom. */
     char ** cmds = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-oc-cmd" ) );
-    if ( cmds != NULL ) {
-        set_open_custom_cmds(cmds, pd);
-    }
+    set_open_custom_cmds ( cmds, pd );
     g_strfreev ( cmds );
     if ( find_arg ( "-file-browser-oc-find-cmds" ) != -1 ) {
         find_custom_cmds ( pd );
