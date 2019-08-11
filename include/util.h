@@ -12,4 +12,10 @@ char *get_existing_abs_path ( char *path, char *current_dir );
  */
 void print_err ( const char *format, ... );
 
+/**
+ * Counts the elements in a NULL-terminated string array.
+ * If the array is NULL, 0 is returned.
+ */
+unsigned int count_strv ( const char **array );
+
 #endif

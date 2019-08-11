@@ -38,3 +38,14 @@ void print_err ( const char *format, ... )
     va_end ( args );
     g_free ( new_format );
 }
+
+unsigned int count_strv ( const char **array ) {
+    if ( array == NULL ) {
+        return 0;
+    }
+    int num = 0;
+    while ( array[num] != NULL ) {
+        num++;
+    }
+    return num;
+}

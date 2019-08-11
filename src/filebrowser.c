@@ -39,9 +39,9 @@ static int file_browser_init ( Mode *sw )
 
         pd->open_custom = false;
         pd->open_custom_index = -1;
-        /* Other values are initialized by set_command_line_options( pd ). */
+        /* Other values are initialized by set_options ( pd ). */
 
-        if ( ! set_command_line_options ( pd ) ) {
+        if ( ! set_options ( pd ) ) {
             return false;
         }
 

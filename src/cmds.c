@@ -78,7 +78,7 @@ void destroy_cmds ( FileBrowserModePrivateData *pd ) {
 void find_custom_cmds ( FileBrowserModePrivateData *pd ) {
     char *path = g_strdup ( g_getenv ( "PATH" ) );
     if ( path == NULL ) {
-        print_err ( "Could not get $PATH environment variable to search for executables." );
+        print_err ( "Could not get $PATH environment variable to search for executables.\n" );
         return;
     }
 
@@ -90,7 +90,7 @@ void find_custom_cmds ( FileBrowserModePrivateData *pd ) {
         GDir *dir = g_dir_open ( dirname, 0, NULL );
 
         if ( dir == NULL ) {
-            print_err ( "Could not open directory \"%s\" in $PATH to search for executables.", dirname );
+            print_err ( "Could not open directory \"%s\" in $PATH to search for executables.\n", dirname );
 
         } else {
             const char *filename;

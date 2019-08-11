@@ -140,6 +140,9 @@ typedef struct {
     char *hide_hidden_symbol;
     char *path_sep;
 
+    /* Table used to save options from the config file. */
+    GHashTable *config_table;
+
     /* ---- Custom command prompt ---- */
     /* User is currently opening a file with a custom program.
        This prompts the user for a program to open the file with. */

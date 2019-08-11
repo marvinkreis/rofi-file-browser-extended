@@ -4,6 +4,9 @@
 /* The starting directory. */
 #define START_DIR g_get_current_dir()
 
+/* The configuration file. */
+#define CONFIG_FILE g_build_filename ( g_get_user_config_dir(), "rofi", "file-browser", NULL )
+
 /* The default command used to open files. */
 #define CMD "xdg-open \"%s\""
 
