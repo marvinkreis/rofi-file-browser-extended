@@ -19,7 +19,8 @@
  * Otherwise, returns a newly allocated copy of the given default value.
  * // TODO: update
  */
-static char *get_string_arg ( char *name, char *default_val, FileBrowserModePrivateData *pd );
+static char *str_arg_or_default ( char *name, char *default_val, FileBrowserModePrivateData *pd );
+static int int_arg_or_default ( char *name, int default_val, FileBrowserModePrivateData *pd );
 
 static void read_config_file ( char* path, FileBrowserModePrivateData *pd );
 
@@ -28,19 +29,24 @@ static char **fb_find_arg_strv ( char* option, FileBrowserModePrivateData *pd );
 static bool fb_find_arg_int ( char* option, int *arg, FileBrowserModePrivateData *pd );
 static bool fb_find_arg ( char* option, FileBrowserModePrivateData *pd );
 
+static void free_arg_list ( gpointer data );
+
 // ================================================================================================================= //
 
 bool set_options ( FileBrowserModePrivateData *pd )
 {
     FileBrowserFileData *fd = &pd->file_data;
     FileBrowserIconData *id = &pd->icon_data;
-    FileBrowserKeyData *kd = &pd->key_data;
+    FileBrowserKeyData  *kd = &pd->key_data;
 
+    /* Get the config file path and read the config file. */
     char *config_file = NULL;
     if ( ! find_arg_str ( "-file-browser-config", &config_file ) ) {
         config_file = CONFIG_FILE;
     }
-    read_config_file ( config_file, pd );
+    char *expanded_config_file = rofi_expand_path ( config_file );
+    read_config_file ( expanded_config_file, pd );
+    g_free ( expanded_config_file );
 
     fd->show_hidden         = fb_find_arg ( "-file-browser-show-hidden"         , pd ) ? true  : SHOW_HIDDEN;
     fd->only_dirs           = fb_find_arg ( "-file-browser-only-dirs"           , pd ) ? true  : ONLY_DIRS;
@@ -54,41 +60,26 @@ bool set_options ( FileBrowserModePrivateData *pd )
     pd->stdin_mode          = fb_find_arg ( "-file-browser-stdin"               , pd ) ? true  : STDIN_MODE;
     pd->open_parent_as_self = fb_find_arg ( "-file-browser-open-parent-as-self" , pd ) ? true  : OPEN_PARENT_AS_SELF;
 
-    fd->up_text             = get_string_arg ( "-file-browser-up-text",            UP_TEXT, pd);
-    id->up_icon             = get_string_arg ( "-file-browser-up-icon",            UP_ICON, pd );
-    id->inaccessible_icon   = get_string_arg ( "-file-browser-inaccessible-icon",  INACCESSIBLE_ICON, pd );
-    id->fallback_icon       = get_string_arg ( "-file-browser-fallback-icon",      FALLBACK_ICON, pd );
-    id->error_icon          = get_string_arg ( "-file-browser-error-icon",         ERROR_ICON, pd );
-    pd->cmd                 = get_string_arg ( "-file-browser-cmd",                CMD, pd );
-    pd->show_hidden_symbol  = get_string_arg ( "-file-browser-show-hidden-symbol", SHOW_HIDDEN_SYMBOL, pd );
-    pd->hide_hidden_symbol  = get_string_arg ( "-file-browser-hide-hidden-symbol", HIDE_HIDDEN_SYMBOL, pd );
-    pd->path_sep            = get_string_arg ( "-file-browser-path-sep",           PATH_SEP, pd );
+    fd->up_text             = str_arg_or_default ( "-file-browser-up-text",            UP_TEXT,            pd );
+    id->up_icon             = str_arg_or_default ( "-file-browser-up-icon",            UP_ICON,            pd );
+    id->inaccessible_icon   = str_arg_or_default ( "-file-browser-inaccessible-icon",  INACCESSIBLE_ICON,  pd );
+    id->fallback_icon       = str_arg_or_default ( "-file-browser-fallback-icon",      FALLBACK_ICON,      pd );
+    id->error_icon          = str_arg_or_default ( "-file-browser-error-icon",         ERROR_ICON,         pd );
+    pd->cmd                 = str_arg_or_default ( "-file-browser-cmd",                CMD,                pd );
+    pd->show_hidden_symbol  = str_arg_or_default ( "-file-browser-show-hidden-symbol", SHOW_HIDDEN_SYMBOL, pd );
+    pd->hide_hidden_symbol  = str_arg_or_default ( "-file-browser-hide-hidden-symbol", HIDE_HIDDEN_SYMBOL, pd );
+    pd->path_sep            = str_arg_or_default ( "-file-browser-path-sep",           PATH_SEP,           pd );
 
-    /* Depth. */
-    if ( ! fb_find_arg_int ( "-file-browser-depth", &fd->depth, pd ) ) {
-        fd->depth = DEPTH;
-    }
-
-    /* Sorting method. */
-    int sort_by_type;
-    if ( fb_find_arg_int ( "-file-browser-sort-by-type", &sort_by_type, pd ) ) {
-        fd->sort_by_type = sort_by_type != 0;
-    } else {
-        fd->sort_by_type = SORT_BY_TYPE;
-    }
-    int sort_by_depth;
-    if ( fb_find_arg_int ( "-file-browser-sort-by-depth", &sort_by_depth, pd ) ) {
-        fd->sort_by_depth = sort_by_depth != 0;
-    } else {
-        fd->sort_by_depth = SORT_BY_DEPTH;
-    }
+    fd->depth         = int_arg_or_default ( "-file-browser-depth",         DEPTH,         pd );
+    fd->sort_by_type  = int_arg_or_default ( "-file-browser-sort-by-type",  SORT_BY_TYPE,  pd ) != 0;
+    fd->sort_by_depth = int_arg_or_default ( "-file-browser-sort-by-depth", SORT_BY_DEPTH, pd ) != 0;
 
     /* Start directory. */
     char *start_dir = NULL;
     if ( ! fb_find_arg_str ( "-file-browser-dir", &start_dir, pd ) ) {
         start_dir = START_DIR;
     }
-    char *abs_path = get_existing_abs_path ( start_dir, g_get_current_dir() );
+    char *abs_path = get_existing_abs_path ( start_dir, g_get_current_dir () );
     if ( abs_path != NULL ) {
         fd->current_dir = abs_path;
     } else {
@@ -97,9 +88,9 @@ bool set_options ( FileBrowserModePrivateData *pd )
     }
 
     /* Icon theme. */
-    char **icon_themes = g_strdupv ( ( char ** ) fb_find_arg_strv ( "-file-browser-theme", pd ) );
+    char **icon_themes = fb_find_arg_strv ( "-file-browser-icon-theme", pd );
     if ( icon_themes == NULL ) {
-        icon_themes = g_strdupv ( ( char ** ) fb_find_arg_strv ( "-file-browser-icon-theme", pd ) );
+        icon_themes = fb_find_arg_strv ( "-file-browser-theme", pd );
     }
     if ( icon_themes != NULL ) {
         id->icon_themes = icon_themes;
@@ -108,13 +99,11 @@ bool set_options ( FileBrowserModePrivateData *pd )
     }
 
     /* Set glob patterns. */
-    char **exclude_globs_strs = g_strdupv ( ( char ** ) fb_find_arg_strv ( "-file-browser-exclude", pd ) );
+    char **exclude_globs_strs = fb_find_arg_strv ( "-file-browser-exclude", pd );
     if ( exclude_globs_strs == NULL ) {
         fd->num_exclude_patterns = 0;
     } else {
-        int num_globs;
-        for ( num_globs = 0; exclude_globs_strs[num_globs] != NULL; num_globs++ ) { }
-
+        int num_globs = count_strv ( ( const char ** ) exclude_globs_strs );
         fd->num_exclude_patterns = num_globs;
         fd->exclude_patterns = g_malloc ( num_globs * sizeof ( GPatternSpec* ) );
         for ( int i = 0; i < num_globs; i++ ) {
@@ -123,33 +112,32 @@ bool set_options ( FileBrowserModePrivateData *pd )
     }
 
     /* Set commands for open-custom. */
-    char ** cmds = g_strdupv ( ( char ** ) fb_find_arg_strv ( "-file-browser-oc-cmd", pd ) );
+    char ** cmds = fb_find_arg_strv ( "-file-browser-oc-cmd", pd );
     set_open_custom_cmds ( cmds, pd );
     g_strfreev ( cmds );
-    if ( fb_find_arg ( "-file-browser-oc-find-cmds", pd ) != -1 ) {
+    if ( fb_find_arg ( "-file-browser-oc-find-cmds", pd ) ) {
         find_custom_cmds ( pd );
     }
 
     /* Set key bindings. */
-    char *open_custom_key_str = NULL;
-    char *open_multi_key_str = NULL;
-    char *toggle_hidden_key_str = NULL;
-    fb_find_arg_str ( "-file-browser-open-custom-key", &open_custom_key_str, pd );
-    fb_find_arg_str ( "-file-browser-open-multi-key", &open_multi_key_str, pd );
-    fb_find_arg_str ( "-file-browser-toggle-hidden-key", &toggle_hidden_key_str, pd );
+    char *open_custom_key_str =   str_arg_or_default ( "-file-browser-open-custom-key",   NULL, pd );
+    char *open_multi_key_str =    str_arg_or_default ( "-file-browser-open-multi-key",    NULL, pd );
+    char *toggle_hidden_key_str = str_arg_or_default ( "-file-browser-toggle-hidden-key", NULL, pd );
     set_key_bindings ( open_custom_key_str, open_multi_key_str, toggle_hidden_key_str, &pd->key_data );
+    g_free ( open_custom_key_str );
+    g_free ( open_multi_key_str );
+    g_free ( toggle_hidden_key_str );
 
     return true;
 }
 
 void destroy_options ( FileBrowserModePrivateData *pd ) {
+    GList *list = g_hash_table_get_values ( pd->config_table );
+    while ( list != NULL ) {
+        g_slist_free_full ( list->data, g_free );
+        list = list->next;
+    }
     g_hash_table_destroy ( pd->config_table );
-}
-
-static void free_arg_list ( gpointer data )
-{
-    GSList *list = data;
-    g_slist_free_full ( list, g_free );
 }
 
 static void read_config_file ( char *config_file, FileBrowserModePrivateData *pd )
@@ -190,10 +178,15 @@ static void read_config_file ( char *config_file, FileBrowserModePrivateData *pd
             }
         }
 
+        GSList* args = g_hash_table_lookup ( pd->config_table, option );
         if ( arg == NULL ) {
-            g_hash_table_insert ( pd->config_table, g_strdup ( option ), NULL );
+            if ( args == NULL )  {
+                g_hash_table_insert ( pd->config_table, g_strdup ( option ), NULL );
+            } else {
+                print_err ( "Option \"%s\" was once supplied with an argument, and once without an argument "
+                                "in the config file.\n" );
+            }
         } else {
-            GSList* args = g_hash_table_lookup ( pd->config_table, option );
             args = g_slist_append ( args, g_strdup ( arg ) );
             g_hash_table_insert ( pd->config_table, g_strdup ( option ), args );
         }
@@ -275,19 +268,30 @@ static char **fb_find_arg_strv ( char* option, FileBrowserModePrivateData *pd )
     for ( i = 0; i < num_cli; i++ ) {
         args[i] = g_strdup ( cli_args[i] );
     }
-    for ( ; list != NULL; list = list->next ) {
+    while ( list != NULL ) {
         args[i++] = g_strdup ( list->data );
+        list = list->next;
     }
 
     return args;
 }
 
-static char* get_string_arg ( char *name, char *default_val, FileBrowserModePrivateData *pd )
+static char* str_arg_or_default ( char *name, char *default_val, FileBrowserModePrivateData *pd )
 {
     char* val;
     if ( fb_find_arg_str ( name, &val, pd ) ) {
         return val;
     } else {
         return g_strdup ( default_val );
+    }
+}
+
+static int int_arg_or_default ( char *name, int default_val, FileBrowserModePrivateData *pd )
+{
+    int val;
+    if ( fb_find_arg_int ( name, &val, pd ) ) {
+        return val;
+    } else {
+        return default_val;
     }
 }
