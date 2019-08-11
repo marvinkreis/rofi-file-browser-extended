@@ -12,11 +12,6 @@
 static void add_custom_cmds ( FBCmd* cmds, int num_cmds, FileBrowserModePrivateData *pd );
 
 /**
- * Function used to add cmds to an array, iterating over a hash table.
- */
-static gboolean add_cmd ( gpointer cmd, G_GNUC_UNUSED gpointer unused, gpointer pd );
-
-/**
  * Compares the command strings of two cmds in lexicographic order.
  */
 static gint compare_cmds ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data );
@@ -115,32 +110,29 @@ void find_custom_cmds ( FileBrowserModePrivateData *pd ) {
 
     g_free ( path );
 
-    struct { FBCmd* data; int num; } arr;
-    arr.data = malloc ( g_hash_table_size ( table ) * sizeof ( FBCmd ) );
-    arr.num = 0;
+    FBCmd *cmds = malloc ( g_hash_table_size ( table ) * sizeof ( FBCmd ) );
+    int num_cmds = 0;
 
-    g_hash_table_foreach_steal ( table, add_cmd, &arr );
+    for ( GList *list = g_hash_table_get_keys( table ); list != NULL; list = list->next ) {
+        char *cmdstr = list->data;
+
+        FBCmd *fbcmd = &cmds[num_cmds];
+        fbcmd->cmd = cmdstr;
+        fbcmd->name = NULL;
+        fbcmd->icon_name = NULL;
+        fbcmd->icon = NULL;
+
+        num_cmds++;
+    }
+
+    g_hash_table_steal_all ( table );
     g_hash_table_destroy ( table );
 
-    g_qsort_with_data ( arr.data, arr.num, sizeof ( FBCmd ), compare_cmds, NULL );
+    g_qsort_with_data ( cmds, num_cmds, sizeof ( FBCmd ), compare_cmds, NULL );
 
-    add_custom_cmds( arr.data, arr.num, pd );
+    add_custom_cmds( cmds, num_cmds, pd );
 
-    g_free ( arr.data );
-}
-
-static gboolean add_cmd ( gpointer key, G_GNUC_UNUSED gpointer value, gpointer data ) {
-    char *cmdstr = key;
-    struct { FBCmd* data; int num; } *arr = data;
-
-    FBCmd *fbcmd = &arr->data[arr->num];
-    fbcmd->cmd = cmdstr;
-    fbcmd->name = NULL;
-    fbcmd->icon_name = NULL;
-    fbcmd->icon = NULL;
-
-    arr->num++;
-    return true;
+    g_free ( cmds );
 }
 
 static gint compare_cmds ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data ) {
