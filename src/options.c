@@ -29,7 +29,7 @@ static char **fb_find_arg_strv ( char* option, FileBrowserModePrivateData *pd );
 static bool fb_find_arg_int ( char* option, int *arg, FileBrowserModePrivateData *pd );
 static bool fb_find_arg ( char* option, FileBrowserModePrivateData *pd );
 
-static void free_arg_list ( gpointer data );
+static const unsigned int FB_LEN = strlen ( "-file-browser-" );
 
 // ================================================================================================================= //
 
@@ -115,7 +115,7 @@ bool set_options ( FileBrowserModePrivateData *pd )
     char ** cmds = fb_find_arg_strv ( "-file-browser-oc-cmd", pd );
     set_open_custom_cmds ( cmds, pd );
     g_strfreev ( cmds );
-    if ( fb_find_arg ( "-file-browser-oc-find-cmds", pd ) ) {
+    if ( fb_find_arg ( "-file-browser-oc-search-path", pd ) ) {
         find_custom_cmds ( pd );
     }
 
@@ -169,12 +169,16 @@ static void read_config_file ( char *config_file, FileBrowserModePrivateData *pd
         char *option = strtok ( buffer, " " );
         char *arg = strtok ( NULL, "" );
 
-        /* Remove quotes. */
-        if ( arg != NULL && ( arg[0] == '"' || arg[0] == '\'' ) ) {
-            int last_char = strlen ( arg ) - 1;
-            if ( arg[last_char] == arg[0] ) {
-                arg[last_char] = '\0';
-                arg++;
+        if ( arg != NULL ) {
+            g_strchug ( arg );
+
+            /* Remove quotes. */
+            if ( arg[0] == '"' || arg[0] == '\'' ) {
+                int last_char = strlen ( arg ) - 1;
+                if ( arg[last_char] == arg[0] ) {
+                    arg[last_char] = '\0';
+                    arg++;
+                }
             }
         }
 
@@ -201,7 +205,7 @@ static bool fb_find_arg ( char* option, FileBrowserModePrivateData *pd )
         return true;
     }
 
-    if ( g_hash_table_contains ( pd->config_table, option ) ) {
+    if ( g_hash_table_contains ( pd->config_table, &option[FB_LEN] ) ) {
         return true;
     }
 
@@ -214,7 +218,7 @@ static bool fb_find_arg_int ( char* option, int *arg, FileBrowserModePrivateData
         return true;
     }
 
-    GSList *list = g_hash_table_lookup ( pd->config_table, option );
+    GSList *list = g_hash_table_lookup ( pd->config_table, &option[FB_LEN] );
 
     if ( list == NULL ) {
         return false;
@@ -237,7 +241,7 @@ static bool fb_find_arg_str ( char* option, char **arg, FileBrowserModePrivateDa
         return true;
     }
 
-    GSList *list = g_hash_table_lookup ( pd->config_table, option );
+    GSList *list = g_hash_table_lookup ( pd->config_table, &option[FB_LEN] );
 
     if ( list == NULL ) {
         return false;
@@ -250,7 +254,7 @@ static bool fb_find_arg_str ( char* option, char **arg, FileBrowserModePrivateDa
 static char **fb_find_arg_strv ( char* option, FileBrowserModePrivateData *pd )
 {
     const char** cli_args = find_arg_strv ( option );
-    GSList *list = g_hash_table_lookup ( pd->config_table, option );
+    GSList *list = g_hash_table_lookup ( pd->config_table, &option[FB_LEN] );
 
     if ( list == NULL ) {
         char ** retv = g_strdupv ( ( char ** ) cli_args );
