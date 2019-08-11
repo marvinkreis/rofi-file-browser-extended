@@ -2,6 +2,7 @@
 #define FILE_BROWSER_TYPES_H
 
 #include <stdbool.h>
+#include <gmodule.h>
 #include <cairo.h>
 #include <nkutils-xdg-theme.h>
 
@@ -107,6 +108,17 @@ typedef struct {
 // ================================================================================================================= //
 
 typedef struct {
+    /* The command. */
+    char *cmd;
+    /* A name to display instead of the command, or a copy of cmd. */
+    char *name;
+    /* Name of the icon, or NULL for no icon. */
+    char *icon_name;
+    /* Cached icon. */
+    cairo_surface_t *icon;
+} OpenCustomCMD;
+
+typedef struct {
     FileBrowserFileData file_data;
     FileBrowserIconData icon_data;
     FileBrowserKeyData key_data;
@@ -135,9 +147,9 @@ typedef struct {
     /* The selected file index to be opened. */
     int open_custom_index;
     /* Custom commands to show in the command prompt. */
-    char **open_custom_commands;
+    OpenCustomCMD *cmds;
     /* Number of custom commands. */
-    int num_open_custom_commands;
+    int num_cmds;
 } FileBrowserModePrivateData;
 
 #endif

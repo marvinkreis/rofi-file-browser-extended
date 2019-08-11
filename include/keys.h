@@ -20,4 +20,15 @@ char *get_name_of_key ( FBKey key );
  */
 FBKey get_key_for_rofi_mretv ( int mretv );
 
+/**
+ * Sets the key bindings from the command line options.
+ * Prints error messages in case of invalid or clashing key bindings.
+ * Missing command line options are passed as NULL.
+ */
+void set_key_bindings (
+        char *open_custom_key_str,
+        char* open_multi_key_str,
+        char* toggle_hidden_key_str,
+        FileBrowserKeyData *kd );
+
 #endif

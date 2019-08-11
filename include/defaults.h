@@ -78,4 +78,8 @@
 /* Key for toggling hidden files. */
 #define TOGGLE_HIDDEN_KEY KB_CUSTOM_12
 
+/* Separators for open-custom commands. */
+#define OPEN_CUSTOM_CMD_NAME_SEP ";name:"
+#define OPEN_CUSTOM_CMD_ICON_SEP ";icon:"
+
 #endif

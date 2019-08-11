@@ -10,18 +10,13 @@
 #include "options.h"
 #include "icons.h"
 #include "keys.h"
+#include "cmds.h"
 
 /**
  * Returns a newly allocated copy of a string command line option if it is specified.
  * Otherwise, returns a newly allocated copy of the given default value.
  */
 static char *get_string_option ( char *name, char *default_val );
-
-/**
- * Sets the key bindings from the command line options.
- * Prints error messages in case of invalid or clashing key bindings.
- */
-static void set_key_bindings ( FileBrowserKeyData *kd );
 
 // ================================================================================================================= //
 
@@ -56,16 +51,6 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
     /* Depth. */
     if ( ! find_arg_int ( "-file-browser-depth", &fd->depth ) ) {
         fd->depth = DEPTH;
-    }
-
-    /* Custom commands for open-custom prompt. */
-    pd->open_custom_commands =  g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-open-custom-cmd" ) );
-    if ( pd->open_custom_commands != NULL ) {
-        int num;
-        for ( num = 0; pd->open_custom_commands[num] != NULL; num++ ) { }
-        pd->num_open_custom_commands = num;
-    } else {
-        pd->num_open_custom_commands = 0;
     }
 
     /* Sorting method. */
@@ -121,7 +106,24 @@ bool set_command_line_options ( FileBrowserModePrivateData *pd )
         }
     }
 
-    set_key_bindings ( &pd->key_data );
+    /* Set commands for open-custom. */
+    char ** cmds = g_strdupv ( ( char ** ) find_arg_strv ( "-file-browser-oc-cmd" ) );
+    if ( cmds != NULL ) {
+        set_open_custom_cmds(cmds, pd);
+    }
+    g_strfreev ( cmds );
+    if ( find_arg ( "-file-browser-oc-find-cmds" ) != -1 ) {
+        find_custom_cmds ( pd );
+    }
+
+    /* Set key bindings. */
+    char *open_custom_key_str = NULL;
+    char *open_multi_key_str = NULL;
+    char *toggle_hidden_key_str = NULL;
+    find_arg_str ( "-file-browser-open-custom-key", &open_custom_key_str );
+    find_arg_str ( "-file-browser-open-multi-key", &open_multi_key_str );
+    find_arg_str ( "-file-browser-toggle-hidden-key", &toggle_hidden_key_str );
+    set_key_bindings ( open_custom_key_str, open_multi_key_str, toggle_hidden_key_str, &pd->key_data );
 
     return true;
 }
@@ -136,44 +138,3 @@ static char* get_string_option ( char *name, char* default_val )
     }
 }
 
-static void set_key_bindings ( FileBrowserKeyData *kd )
-{
-    kd->open_custom_key   = OPEN_CUSTOM_KEY;
-    kd->open_multi_key    = OPEN_MULTI_KEY;
-    kd->toggle_hidden_key = TOGGLE_HIDDEN_KEY;
-
-    FBKey *keys[] = { &kd->open_custom_key,
-                      &kd->open_multi_key,
-                      &kd->toggle_hidden_key };
-    char  *names[] = { "open-custom",
-                       "open-multi",
-                       "toggle-hidden" };
-    char  *options[] = { "-file-browser-open-custom-key",
-                         "-file-browser-open-multi-key",
-                         "-file-browser-toggle-hidden-key" };
-    char  *params[]  = { NULL, NULL, NULL };
-
-    for ( int i = 0; i < 3; i++ ) {
-        if ( find_arg_str ( options[i], &params[i] ) ) {
-            *keys[i] = get_key_for_name ( params[i] );
-            if ( *keys[i] == KEY_NONE ) {
-                print_err ( "Could not match key \"%s\". Disabling key binding for \"%s\". "
-                        "Supported keys are \"kb-accept-alt\" and \"kb-custom-*\".\n", params[i], names[i] );
-            }
-        }
-    }
-
-    for ( int i = 0; i < 3; i++ ) {
-        if ( params[i] != NULL && *keys[i] != KEY_NONE ) {
-            for ( int j = 0; j < 3; j++ ) {
-                if ( i != j && *keys[i] == *keys[j] ) {
-                    *keys[j] = KEY_NONE;
-                    char *key_name = get_name_of_key ( *keys[i] );
-                    print_err ( "Detected key binding clash. Both \"%s\" and \"%s\" use \"%s\". "
-                            "Disabling \"%s\".\n", names[i], names[j], key_name, names[j]);
-                    g_free ( key_name );
-                }
-            }
-        }
-    }
-}

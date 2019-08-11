@@ -11,8 +11,9 @@ include submodules/libnkutils/libnkutils.mk
 plugin_LTLIBRARIES = filebrowser.la
 
 filebrowser_la_SOURCES=\
-        src/filebrowser.c\
+        src/cmds.c\
         src/files.c\
+        src/filebrowser.c\
         src/icons.c\
         src/keys.c\
         src/options.c\

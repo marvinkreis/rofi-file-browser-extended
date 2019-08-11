@@ -8,14 +8,7 @@
 #include "defaults.h"
 #include "types.h"
 #include "util.h"
-
-/**
- * Returns the most specific (i.e. the first existing) icon for an array of icon names and caches it.
- * The cairo surface is destroyed when destroy_icons is called.
- */
-static cairo_surface_t *get_icon_for_names ( FileBrowserIconData *id, char **icon_names, int icon_size );
-
-// ================================================================================================================= //
+#include "icons.h"
 
 void init_icons ( FileBrowserIconData *id ) {
     static const char * const fallback_icon_themes[] = {
@@ -79,7 +72,7 @@ cairo_surface_t *get_icon_for_file ( FBFile *fbfile, int icon_size, FileBrowserI
         }
     }
 
-    cairo_surface_t *icon_surf = get_icon_for_names ( id, icon_names, icon_size );
+    cairo_surface_t *icon_surf = get_icon_for_names ( icon_names, icon_size, id );
     if ( icon_surf == NULL ) {
         print_err ( "Could not find an icon for file \"%s\".", fbfile->name );
     }
@@ -91,7 +84,7 @@ cairo_surface_t *get_icon_for_file ( FBFile *fbfile, int icon_size, FileBrowserI
     return icon_surf;
 }
 
-static cairo_surface_t *get_icon_for_names ( FileBrowserIconData *id, char **icon_names, int icon_size )
+cairo_surface_t *get_icon_for_names ( char **icon_names, int icon_size, FileBrowserIconData *id )
 {
     for (int i = 0; icon_names[i] != NULL; i++) {
         cairo_surface_t *icon_surf = g_hash_table_lookup ( id->icons, icon_names[i] );
