@@ -162,14 +162,16 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
 {
     FileBrowserFileData *fd = global_fd;
 
+    const char *basename = &fpath[ftwbuf->base];
+
     /* Skip the current dir itself. */
     if ( ftwbuf->level == 0 ) {
         return FTW_CONTINUE;
     /* Skip hidden files. */
-    } else if ( ! fd->show_hidden && fpath[ftwbuf->base] == '.' ) {
+    } else if ( ! fd->show_hidden && basename[0] == '.' ) {
         return FTW_SKIP_SUBTREE;
     /* Skip excluded patterns. */
-    } else if ( ! match_glob_patterns( fpath, fd ) ) {
+    } else if ( ! match_glob_patterns ( basename, fd ) ) {
         return FTW_SKIP_SUBTREE;
     }
 
