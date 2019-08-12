@@ -36,8 +36,7 @@ void set_open_custom_cmds ( char** cmd_strs, FileBrowserModePrivateData *pd )
     static int name_sep_len = strlen ( OPEN_CUSTOM_CMD_NAME_SEP );
 
     /* Custom commands for open-custom prompt. */
-    int num_cmds;
-    for ( num_cmds = 0; cmd_strs[num_cmds] != NULL; num_cmds++ ) { }
+    int num_cmds = count_strv ( ( const char ** ) cmd_strs );
     FBCmd *cmds = g_malloc ( num_cmds * sizeof ( FBCmd ) );
 
     for ( int i = 0; i < num_cmds; i++ ) {

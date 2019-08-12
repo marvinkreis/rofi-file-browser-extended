@@ -15,20 +15,47 @@
 #include "cmds.h"
 
 /**
- * Returns a newly allocated copy of a string command line option if it is specified.
- * Otherwise, returns a newly allocated copy of the given default value.
- * // TODO: update
+ * Read the config file at the given path and store it into the private data.
  */
-static char *str_arg_or_default ( char *name, char *default_val, FileBrowserModePrivateData *pd );
-static int int_arg_or_default ( char *name, int default_val, FileBrowserModePrivateData *pd );
-
 static void read_config_file ( char* path, FileBrowserModePrivateData *pd );
 
-static bool fb_find_arg_str ( char* option, char **arg, FileBrowserModePrivateData *pd );
-static char **fb_find_arg_strv ( char* option, FileBrowserModePrivateData *pd );
-static bool fb_find_arg_int ( char* option, int *arg, FileBrowserModePrivateData *pd );
+/**
+ * Returns the int argument for the option if it is specified.
+ * Otherwise, returns the default value.
+ */
+static int int_arg_or_default ( char *name, int default_val, FileBrowserModePrivateData *pd );
+
+/**
+ * Returns a newly allocated copy of a string argument for the option if it is specified.
+ * Otherwise, returns a newly allocated copy of the default value.
+ */
+static char *str_arg_or_default ( char *name, char *default_val, FileBrowserModePrivateData *pd );
+
+/**
+ * Wrapper for find_arg that checks the config file if the option is not specified on the command line.
+ */
 static bool fb_find_arg ( char* option, FileBrowserModePrivateData *pd );
 
+/**
+ * Wrapper for find_arg_int that checks the config file if the option is not specified on the command line.
+ */
+static bool fb_find_arg_int ( char* option, int *arg, FileBrowserModePrivateData *pd );
+
+/**
+ * Wrapper for find_arg_str that checks the config file if the option is not specified on the command line.
+ * Returns a newly allocated copy of the string argument.
+ */
+static bool fb_find_arg_str ( char* option, char **arg, FileBrowserModePrivateData *pd );
+
+/**
+ * Wrapper for find_arg_strv that prepends command line arguments to config-file arguments.
+ * Returns a newly allocated copy of the string arguments.
+ */
+static char **fb_find_arg_strv ( char* option, FileBrowserModePrivateData *pd );
+
+/**
+ * Length of "-file-browser", used to ignore the prefix in the config file.
+ */
 static const unsigned int FB_LEN = strlen ( "-file-browser-" );
 
 // ================================================================================================================= //
@@ -140,18 +167,18 @@ void destroy_options ( FileBrowserModePrivateData *pd ) {
     g_hash_table_destroy ( pd->config_table );
 }
 
-static void read_config_file ( char *config_file, FileBrowserModePrivateData *pd )
+static void read_config_file ( char *path, FileBrowserModePrivateData *pd )
 {
     pd->config_table = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, NULL );
 
-    if ( ! g_file_test ( config_file, G_FILE_TEST_IS_REGULAR ) ) {
-        print_err ( "Could not open config file. \"%s\" does not exist or is not a regular file.\n", config_file );
+    if ( ! g_file_test ( path, G_FILE_TEST_IS_REGULAR ) ) {
+        print_err ( "Could not open config file. \"%s\" does not exist or is not a regular file.\n", path );
         return;
     }
 
-    FILE *file =  g_fopen ( config_file, "r" );
+    FILE *file =  g_fopen ( path, "r" );
     if ( file == NULL ) {
-        print_err ( "Could not open config file \"%s\".\n", config_file );
+        print_err ( "Could not open config file \"%s\".\n", path );
         return;
     }
 
@@ -183,17 +210,8 @@ static void read_config_file ( char *config_file, FileBrowserModePrivateData *pd
         }
 
         GSList* args = g_hash_table_lookup ( pd->config_table, option );
-        if ( arg == NULL ) {
-            if ( args == NULL )  {
-                g_hash_table_insert ( pd->config_table, g_strdup ( option ), NULL );
-            } else {
-                print_err ( "Option \"%s\" was once supplied with an argument, and once without an argument "
-                                "in the config file.\n" );
-            }
-        } else {
-            args = g_slist_append ( args, g_strdup ( arg ) );
-            g_hash_table_insert ( pd->config_table, g_strdup ( option ), args );
-        }
+        args = g_slist_prepend ( args, g_strdup ( arg ) );
+        g_hash_table_insert ( pd->config_table, g_strdup ( option ), args );
     }
 
     g_free ( buffer );
@@ -205,11 +223,21 @@ static bool fb_find_arg ( char* option, FileBrowserModePrivateData *pd )
         return true;
     }
 
-    if ( g_hash_table_contains ( pd->config_table, &option[FB_LEN] ) ) {
-        return true;
+    GSList *list = g_hash_table_lookup ( pd->config_table, &option[FB_LEN] );
+
+    if ( list == NULL ) {
+        return false;
     }
 
-    return false;
+    if ( list->next != NULL ) {
+        print_err ( "Duplicate option \"%s\" (in config file).\n", option );
+    }
+
+    if ( list->data != NULL ) {
+        print_err ( "Option \"%s\" (in config file) does not take an argument, got \"%s\".\n", option, list->data );
+    }
+
+    return true;
 }
 
 static bool fb_find_arg_int ( char* option, int *arg, FileBrowserModePrivateData *pd )
@@ -224,14 +252,24 @@ static bool fb_find_arg_int ( char* option, int *arg, FileBrowserModePrivateData
         return false;
     }
 
-    char* str_arg = list->data, *res;
-    *arg = strtol ( str_arg, &res, 10 );
-    if ( *res == '\0' ) {
-        return true;
-    } else {
-        print_err ( "Invalid argument for option \"%s\" in config file: \"%s\".\n", option, str_arg );
+    if ( list->next != NULL ) {
+        print_err ( "Duplicate option \"%s\" (in config file), using last instance.\n", option );
+    }
+
+    if ( list->data == NULL ) {
+        print_err ( "Missing argument for option \"%s\" (in config file).\n", option );
         return false;
     }
+
+    char* str_arg = list->data, *res;
+    *arg = strtol ( str_arg, &res, 10 );
+
+    if ( *res != '\0' ) {
+        print_err ( "Argument for option \"%s\" (in config file) must be a number, got: \"%s\".\n", option, str_arg );
+        return false;
+    }
+
+    return true;
 }
 
 static bool fb_find_arg_str ( char* option, char **arg, FileBrowserModePrivateData *pd )
@@ -245,10 +283,19 @@ static bool fb_find_arg_str ( char* option, char **arg, FileBrowserModePrivateDa
 
     if ( list == NULL ) {
         return false;
-    } else {
-        *arg = g_strdup ( list->data );
-        return true;
     }
+
+    if ( list->next != NULL ) {
+        print_err ( "Duplicate option \"%s\" (in config file), using last instance.\n", option );
+    }
+
+    if ( list->data == NULL ) {
+        print_err ( "Missing argument for option \"%s\" (in config file).\n", option );
+        return false;
+    }
+
+    *arg = g_strdup ( list->data );
+    return true;
 }
 
 static char **fb_find_arg_strv ( char* option, FileBrowserModePrivateData *pd )
@@ -262,20 +309,28 @@ static char **fb_find_arg_strv ( char* option, FileBrowserModePrivateData *pd )
         return retv;
     }
 
+    list = g_slist_reverse ( list );
+
     int num_cli = count_strv ( cli_args );
     int num_file = g_slist_length ( list );
 
     char **args = g_malloc ( ( num_cli + num_file + 1 ) * sizeof ( char * ) );
-    args[num_cli + num_file] = NULL;
 
-    int i;
-    for ( i = 0; i < num_cli; i++ ) {
+    int i = 0;
+    while ( i < num_cli ) {
         args[i] = g_strdup ( cli_args[i] );
+        i++;
     }
     while ( list != NULL ) {
-        args[i++] = g_strdup ( list->data );
+        if ( list->data == NULL ) {
+            print_err ( "Missing argument for option \"%s\" in config file.\n", option );
+        } else {
+            args[i] = g_strdup ( list->data );
+            i++;
+        }
         list = list->next;
     }
+    args[i] = NULL;
 
     return args;
 }

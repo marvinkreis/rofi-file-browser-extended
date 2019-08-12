@@ -77,6 +77,9 @@ static void file_browser_destroy ( Mode *sw )
     /* Free open-custom commands. */
     destroy_cmds ( pd );
 
+    /* Free config-file options. */
+    destroy_options ( pd );
+
     /* Free the rest. */
     g_free ( pd->cmd );
     g_free ( pd->show_hidden_symbol );
