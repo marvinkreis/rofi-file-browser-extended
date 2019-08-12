@@ -259,6 +259,7 @@ static char *file_browser_get_display_value ( const Mode *sw, unsigned int selec
     if ( !get_entry ) return NULL;
 
     if ( pd->open_custom && pd->show_cmds ) {
+        *state |= 8;
         FBCmd *fbcmd = &pd->cmds[selected_line];
         char* name = fbcmd->name != NULL ? fbcmd->name : fbcmd->cmd;
         return rofi_force_utf8 ( name, strlen ( name ) );
