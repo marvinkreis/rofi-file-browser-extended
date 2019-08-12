@@ -145,6 +145,10 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
     } else if ( key == kd->open_custom_key && selected_line != -1 ) {
         pd->open_custom = true;
         pd->open_custom_index = selected_line;
+        if ( pd->search_path_for_cmds ) {
+            search_path_for_cmds ( pd );
+            pd->search_path_for_cmds = false;
+        }
         retv = RESET_DIALOG;
 
     /* Handle return or open-multi. */

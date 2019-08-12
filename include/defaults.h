@@ -2,7 +2,7 @@
 #define FILE_BROWSER_DEFAULTS_H
 
 /* The starting directory. */
-#define START_DIR g_get_current_dir()
+#define START_DIR g_get_current_dir ()
 
 /* The configuration file. */
 #define CONFIG_FILE g_build_filename ( g_get_user_config_dir(), "rofi", "file-browser", NULL )
@@ -19,11 +19,11 @@
 /* Only show files. */
 #define ONLY_FILES false
 
-/* Treat the parent directory (..) as the current directory when opening it. */
-#define OPEN_PARENT_AS_SELF false
-
 /* Show hidden files by default. */
 #define SHOW_HIDDEN false
+
+/* Treat the parent directory (..) as the current directory when opening it. */
+#define OPEN_PARENT_AS_SELF false
 
 /* Sort file by type: directories first, inaccessible files last. */
 #define SORT_BY_TYPE true
@@ -42,6 +42,9 @@
 
 /* Read paths to display from stdin. */
 #define STDIN_MODE false
+
+/* Add executables from $PATH to the cmds. */
+#define SEARCH_PATH_FOR_CMDS false
 
 /* Use mode keys (kb-mode-next, kb-mode-previous) to toggle hidden files. */
 #define USE_MODE_KEYS true

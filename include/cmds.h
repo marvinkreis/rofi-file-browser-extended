@@ -8,12 +8,12 @@
 /**
  * Sets the commands for open-custom from the command line strings.
  */
-void set_open_custom_cmds ( char** cmd_strs, FileBrowserModePrivateData *pd );
+void set_user_cmds(char **cmd_strs, FileBrowserModePrivateData *pd);
 
 /**
  * Search the PATH environment variable for executables and add them to custom commands.
  */
-void find_custom_cmds ( FileBrowserModePrivateData *pd );
+void search_path_for_cmds(FileBrowserModePrivateData *pd);
 
 
 /**

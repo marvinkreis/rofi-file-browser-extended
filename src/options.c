@@ -75,17 +75,18 @@ bool set_options ( FileBrowserModePrivateData *pd )
     read_config_file ( expanded_config_file, pd );
     g_free ( expanded_config_file );
 
-    fd->show_hidden         = fb_find_arg ( "-file-browser-show-hidden"         , pd ) ? true  : SHOW_HIDDEN;
-    fd->only_dirs           = fb_find_arg ( "-file-browser-only-dirs"           , pd ) ? true  : ONLY_DIRS;
-    fd->only_files          = fb_find_arg ( "-file-browser-only-files"          , pd ) ? true  : ONLY_FILES;
-    fd->hide_parent         = fb_find_arg ( "-file-browser-hide-parent"         , pd ) ? true  : HIDE_PARENT;
-    id->show_icons          = fb_find_arg ( "-file-browser-disable-icons"       , pd ) ? false : SHOW_ICONS;
-    kd->use_mode_keys       = fb_find_arg ( "-file-browser-disable-mode-keys"   , pd ) ? false : USE_MODE_KEYS;
-    pd->dmenu               = fb_find_arg ( "-file-browser-dmenu"               , pd ) ? true  : DMENU;
-    pd->show_status         = fb_find_arg ( "-file-browser-disable-status"      , pd ) ? false : SHOW_STATUS;
-    pd->no_descend          = fb_find_arg ( "-file-browser-no-descend"          , pd ) ? true  : NO_DESCEND;
-    pd->stdin_mode          = fb_find_arg ( "-file-browser-stdin"               , pd ) ? true  : STDIN_MODE;
-    pd->open_parent_as_self = fb_find_arg ( "-file-browser-open-parent-as-self" , pd ) ? true  : OPEN_PARENT_AS_SELF;
+    fd->show_hidden          = fb_find_arg ( "-file-browser-show-hidden"         , pd ) ? true  : SHOW_HIDDEN;
+    fd->only_dirs            = fb_find_arg ( "-file-browser-only-dirs"           , pd ) ? true  : ONLY_DIRS;
+    fd->only_files           = fb_find_arg ( "-file-browser-only-files"          , pd ) ? true  : ONLY_FILES;
+    fd->hide_parent          = fb_find_arg ( "-file-browser-hide-parent"         , pd ) ? true  : HIDE_PARENT;
+    id->show_icons           = fb_find_arg ( "-file-browser-disable-icons"       , pd ) ? false : SHOW_ICONS;
+    kd->use_mode_keys        = fb_find_arg ( "-file-browser-disable-mode-keys"   , pd ) ? false : USE_MODE_KEYS;
+    pd->dmenu                = fb_find_arg ( "-file-browser-dmenu"               , pd ) ? true  : DMENU;
+    pd->show_status          = fb_find_arg ( "-file-browser-disable-status"      , pd ) ? false : SHOW_STATUS;
+    pd->no_descend           = fb_find_arg ( "-file-browser-no-descend"          , pd ) ? true  : NO_DESCEND;
+    pd->stdin_mode           = fb_find_arg ( "-file-browser-stdin"               , pd ) ? true  : STDIN_MODE;
+    pd->open_parent_as_self  = fb_find_arg ( "-file-browser-open-parent-as-self" , pd ) ? true  : OPEN_PARENT_AS_SELF;
+    pd->search_path_for_cmds = fb_find_arg ( "-file-browser-oc-search-path"      , pd ) ? true  : SEARCH_PATH_FOR_CMDS;
 
     fd->up_text             = str_arg_or_default ( "-file-browser-up-text",            UP_TEXT,            pd );
     id->up_icon             = str_arg_or_default ( "-file-browser-up-icon",            UP_ICON,            pd );
@@ -140,11 +141,8 @@ bool set_options ( FileBrowserModePrivateData *pd )
 
     /* Set commands for open-custom. */
     char ** cmds = fb_find_arg_strv ( "-file-browser-oc-cmd", pd );
-    set_open_custom_cmds ( cmds, pd );
+    set_user_cmds(cmds, pd);
     g_strfreev ( cmds );
-    if ( fb_find_arg ( "-file-browser-oc-search-path", pd ) ) {
-        find_custom_cmds ( pd );
-    }
 
     /* Set key bindings. */
     char *open_custom_key_str =   str_arg_or_default ( "-file-browser-open-custom-key",   NULL, pd );

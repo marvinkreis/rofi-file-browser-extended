@@ -9,7 +9,7 @@
 /**
  * Add an array of cmds to the ones currently stored in the private data.
  */
-static void add_custom_cmds ( FBCmd* cmds, int num_cmds, FileBrowserModePrivateData *pd );
+static void add_cmds ( FBCmd *cmds, int num_cmds, FileBrowserModePrivateData *pd );
 
 /**
  * Compares the command strings of two cmds in lexicographic order.
@@ -18,7 +18,7 @@ static gint compare_cmds ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpoin
 
 // ================================================================================================================= //
 
-static void add_custom_cmds ( FBCmd* cmds, int num_cmds, FileBrowserModePrivateData *pd )
+static void add_cmds ( FBCmd *cmds, int num_cmds, FileBrowserModePrivateData *pd )
 {
     pd->cmds = g_realloc ( pd->cmds, ( pd->num_cmds + num_cmds ) * sizeof ( FBCmd ) );
     memcpy ( &pd->cmds[pd->num_cmds], cmds, num_cmds * sizeof ( FBCmd ) );
@@ -26,7 +26,7 @@ static void add_custom_cmds ( FBCmd* cmds, int num_cmds, FileBrowserModePrivateD
     pd->show_cmds = pd->num_cmds > 0;
 }
 
-void set_open_custom_cmds ( char** cmd_strs, FileBrowserModePrivateData *pd )
+void set_user_cmds ( char **cmd_strs, FileBrowserModePrivateData *pd )
 {
     if ( cmd_strs == NULL ) {
         return;
@@ -58,23 +58,12 @@ void set_open_custom_cmds ( char** cmd_strs, FileBrowserModePrivateData *pd )
         fbcmd->icon = NULL;
     }
 
-    add_custom_cmds ( cmds, num_cmds, pd );
+    add_cmds(cmds, num_cmds, pd);
     g_free ( cmds );
 }
 
-void destroy_cmds ( FileBrowserModePrivateData *pd ) {
-    for ( int i = 0; i < pd->num_cmds; i++ ) {
-        g_free( pd->cmds[i].cmd );
-        g_free( pd->cmds[i].icon_name );
-        g_free( pd->cmds[i].name );
-    }
-    g_free ( pd->cmds );
-    pd->cmds = NULL;
-    pd->num_cmds = 0;
-    pd->show_cmds = false;
-}
-
-void find_custom_cmds ( FileBrowserModePrivateData *pd ) {
+void search_path_for_cmds ( FileBrowserModePrivateData *pd )
+{
     char *path = g_strdup ( g_getenv ( "PATH" ) );
     if ( path == NULL ) {
         print_err ( "Could not get $PATH environment variable to search for executables.\n" );
@@ -129,12 +118,26 @@ void find_custom_cmds ( FileBrowserModePrivateData *pd ) {
 
     g_qsort_with_data ( cmds, num_cmds, sizeof ( FBCmd ), compare_cmds, NULL );
 
-    add_custom_cmds( cmds, num_cmds, pd );
+    add_cmds(cmds, num_cmds, pd);
 
     g_free ( cmds );
 }
 
-static gint compare_cmds ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data ) {
+void destroy_cmds ( FileBrowserModePrivateData *pd )
+{
+    for ( int i = 0; i < pd->num_cmds; i++ ) {
+        g_free( pd->cmds[i].cmd );
+        g_free( pd->cmds[i].icon_name );
+        g_free( pd->cmds[i].name );
+    }
+    g_free ( pd->cmds );
+    pd->cmds = NULL;
+    pd->num_cmds = 0;
+    pd->show_cmds = false;
+}
+
+static gint compare_cmds ( gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data )
+{
     const FBCmd *ca = a;
     const FBCmd *cb = b;
     return g_strcmp0 ( ca->cmd, cb->cmd );

@@ -155,6 +155,8 @@ typedef struct {
     int num_cmds;
     /* Show the commands, equal to (num_cmds > 0). */
     bool show_cmds;
+    /* Add executables from $PATH to the cmds the next time they are shown. */
+    bool search_path_for_cmds;
 } FileBrowserModePrivateData;
 
 #endif
