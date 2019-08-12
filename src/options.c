@@ -66,14 +66,19 @@ bool set_options ( FileBrowserModePrivateData *pd )
     FileBrowserIconData *id = &pd->icon_data;
     FileBrowserKeyData  *kd = &pd->key_data;
 
+    pd->config_table = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, NULL );
+
     /* Get the config file path and read the config file. */
-    char *config_file = NULL;
-    if ( ! find_arg_str ( "-file-browser-config", &config_file ) ) {
-        config_file = CONFIG_FILE;
+    const char **config_files = find_arg_strv ( "-file-browser-config" );
+    if ( config_files == NULL ) {
+        read_config_file ( CONFIG_FILE, pd );
+    } else {
+        for ( int i = 0; config_files[i] != NULL; i++ ) {
+            char *expanded_config_file = rofi_expand_path ( config_files[i] );
+            read_config_file ( expanded_config_file, pd );
+            g_free ( expanded_config_file );
+        }
     }
-    char *expanded_config_file = rofi_expand_path ( config_file );
-    read_config_file ( expanded_config_file, pd );
-    g_free ( expanded_config_file );
 
     fd->show_hidden          = fb_find_arg ( "-file-browser-show-hidden"         , pd ) ? true  : SHOW_HIDDEN;
     fd->only_dirs            = fb_find_arg ( "-file-browser-only-dirs"           , pd ) ? true  : ONLY_DIRS;
@@ -156,7 +161,8 @@ bool set_options ( FileBrowserModePrivateData *pd )
     return true;
 }
 
-void destroy_options ( FileBrowserModePrivateData *pd ) {
+void destroy_options ( FileBrowserModePrivateData *pd )
+{
     GList *list = g_hash_table_get_values ( pd->config_table );
     while ( list != NULL ) {
         g_slist_free_full ( list->data, g_free );
@@ -167,8 +173,6 @@ void destroy_options ( FileBrowserModePrivateData *pd ) {
 
 static void read_config_file ( char *path, FileBrowserModePrivateData *pd )
 {
-    pd->config_table = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, NULL );
-
     if ( ! g_file_test ( path, G_FILE_TEST_IS_REGULAR ) ) {
         print_err ( "Could not open config file. \"%s\" does not exist or is not a regular file.\n", path );
         return;
