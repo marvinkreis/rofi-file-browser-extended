@@ -85,7 +85,7 @@ bool set_options ( FileBrowserModePrivateData *pd )
     fd->only_files           = fb_find_arg ( "-file-browser-only-files"          , pd ) ? true  : ONLY_FILES;
     fd->hide_parent          = fb_find_arg ( "-file-browser-hide-parent"         , pd ) ? true  : HIDE_PARENT;
     id->show_icons           = fb_find_arg ( "-file-browser-disable-icons"       , pd ) ? false : SHOW_ICONS;
-    kd->use_mode_keys        = fb_find_arg ( "-file-browser-disable-mode-keys"   , pd ) ? false : USE_MODE_KEYS;
+    kd->use_mode_keys        = fb_find_arg ( "-file-browser-use-mode-keys"       , pd ) ? true  : USE_MODE_KEYS;
     pd->dmenu                = fb_find_arg ( "-file-browser-dmenu"               , pd ) ? true  : DMENU;
     pd->show_status          = fb_find_arg ( "-file-browser-disable-status"      , pd ) ? false : SHOW_STATUS;
     pd->no_descend           = fb_find_arg ( "-file-browser-no-descend"          , pd ) ? true  : NO_DESCEND;

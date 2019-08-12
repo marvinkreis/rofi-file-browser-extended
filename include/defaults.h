@@ -47,7 +47,7 @@
 #define SEARCH_PATH_FOR_CMDS false
 
 /* Use mode keys (kb-mode-next, kb-mode-previous) to toggle hidden files. */
-#define USE_MODE_KEYS true
+#define USE_MODE_KEYS false
 
 /* Show icons. */
 #define SHOW_ICONS true
