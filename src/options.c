@@ -80,6 +80,7 @@ bool set_options ( FileBrowserModePrivateData *pd )
         }
     }
 
+    fd->follow_symlinks      = fb_find_arg ( "-file-browser-follow-symlinks"     , pd ) ? true  : FOLLOW_SYMLINKS;
     fd->show_hidden          = fb_find_arg ( "-file-browser-show-hidden"         , pd ) ? true  : SHOW_HIDDEN;
     fd->only_dirs            = fb_find_arg ( "-file-browser-only-dirs"           , pd ) ? true  : ONLY_DIRS;
     fd->only_files           = fb_find_arg ( "-file-browser-only-files"          , pd ) ? true  : ONLY_FILES;

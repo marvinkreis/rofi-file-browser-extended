@@ -120,7 +120,12 @@ void load_files ( FileBrowserFileData *fd )
 
     /* Load the files. */
     global_fd = fd;
-    nftw ( fd->current_dir, add_file, 16, FTW_ACTIONRETVAL );
+
+    int nftw_flags = fd->follow_symlinks ? FTW_ACTIONRETVAL : ( FTW_ACTIONRETVAL | FTW_PHYS );
+    /* Workaround to make nftw work if the current directory is a symlink. */
+    char *path = g_build_filename ( fd->current_dir, ".", NULL );
+    nftw ( path , add_file, 16, nftw_flags );
+    g_free ( path );
 
     /* Sort all but the parent dir. */
     if ( fd->sort_by_type ) {
@@ -178,6 +183,8 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
     FBFile fbfile;
 
     switch ( typeflag ) {
+
+        /* Regular file. */
         case FTW_F:
             if ( fd->only_dirs ) {
                 return FTW_CONTINUE;
@@ -185,6 +192,8 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
                 fbfile.type = RFILE;
             }
             break;
+
+        /* Regular directory. */
         case FTW_D:
             if ( fd->only_files ) {
                 return FTW_CONTINUE;
@@ -192,11 +201,28 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
                 fbfile.type = DIRECTORY;
             }
             break;
+
+        /* Inaccessible directory. */
         case FTW_DNR:
             fbfile.type = INACCESSIBLE;
             break;
-        default:
+
+        /* Symbolic link. */
+        case FTW_SL:
+            if ( g_file_test ( fpath, G_FILE_TEST_IS_DIR ) ) {
+                fbfile.type = DIRECTORY;
+            } else {
+                fbfile.type = RFILE;
+            }
+            break;
+
+        /* Symbolic link pointing to nonexistent file. */
+        case FTW_SLN:
             fbfile.type = INACCESSIBLE;
+            break;
+
+        default:
+            fbfile.type = UNKNOWN;
             break;
     }
 
@@ -218,10 +244,10 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
 
     insert_file ( &fbfile, fd );
 
-    if ( ( ftwbuf->level < global_fd->depth ) || fd->depth == 0 ) {
-        return FTW_CONTINUE;
-    } else {
+    if ( ftwbuf->level >= global_fd->depth && fd->depth != 0 ) {
         return FTW_SKIP_SUBTREE;
+    } else {
+        return FTW_CONTINUE;
     }
 }
 

@@ -346,21 +346,23 @@ static void open_file ( FBFile* fbfile, char *path, char *cmd, FileBrowserModePr
         used_path = path;
     }
 
+    char *canonical_path = canonicalize_path ( used_path );
+
     if ( pd->dmenu ) {
-        printf( "%s\n", used_path );
+        printf( "%s\n", canonical_path );
 
     } else {
         /* Escape the file path. */
-        char **split = g_strsplit ( used_path, "\"", -1 );
-        used_path = g_strjoinv ( "\\\"", split );
+        char **split = g_strsplit ( canonical_path, "\"", -1 );
+        canonical_path = g_strjoinv ( "\\\"", split );
         g_strfreev ( split );
 
         /* Construct the command. */
         char* complete_cmd = NULL;
         if ( g_strrstr ( cmd, "%s" ) != NULL ) {
-            complete_cmd = g_strdup_printf ( cmd, used_path );
+            complete_cmd = g_strdup_printf ( cmd, canonical_path );
         } else {
-            complete_cmd = g_strconcat ( cmd, " \"", used_path, "\"", NULL );
+            complete_cmd = g_strconcat ( cmd, " \"", canonical_path, "\"", NULL );
         }
 
         helper_execute_command ( pd->file_data.current_dir, complete_cmd, false, NULL );

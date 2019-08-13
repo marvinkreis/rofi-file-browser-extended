@@ -13,7 +13,7 @@ typedef enum FBFileType {
     DIRECTORY,
     RFILE,
     INACCESSIBLE,
-    UNKNOWN // used when reading files from stdin
+    UNKNOWN
 } FBFileType;
 
 typedef struct {
@@ -44,6 +44,8 @@ typedef struct {
     GPatternSpec **exclude_patterns;
     /* Number of exclude glob patters. */
     unsigned int num_exclude_patterns;
+    /* Follow symlinks. */
+    bool follow_symlinks;
     /* Show hidden files. */
     bool show_hidden;
     /* Only show dirs. */

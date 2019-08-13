@@ -19,13 +19,16 @@ char *get_existing_abs_path ( char *path, char *current_dir )
         }
     }
 
-    /* Canonicalize the path. */
-    GFile *file = g_file_new_for_path ( new_path );
-    char *canonical_path = g_file_get_path ( file );
-
-    g_object_unref ( file );
+    char *canonical_path = canonicalize_path ( new_path );
     g_free ( new_path );
 
+    return canonical_path;
+}
+
+char *canonicalize_path ( char* path ) {
+    GFile *file = g_file_new_for_path ( path );
+    char *canonical_path = g_file_get_path ( file );
+    g_object_unref ( file );
     return canonical_path;
 }
 

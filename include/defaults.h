@@ -19,6 +19,9 @@
 /* Only show files. */
 #define ONLY_FILES false
 
+/* Follow symlinks. */
+#define FOLLOW_SYMLINKS false
+
 /* Show hidden files by default. */
 #define SHOW_HIDDEN false
 
