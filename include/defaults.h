@@ -35,7 +35,7 @@
 #define SORT_BY_DEPTH false
 
 /* Print the file path instead of opening the file. */
-#define DMENU false
+#define STDOUT_MODE false
 
 /* Open directories instead of descending into them. */
 #define NO_DESCEND false

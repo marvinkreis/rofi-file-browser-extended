@@ -130,7 +130,7 @@ typedef struct {
     /* Show the status bar. */
     bool show_status;
     /* Print the absolute file path of selected file instead of opening it. */
-    bool dmenu;
+    bool stdout_mode;
     /* Open directories instead of descending into them. */
     bool no_descend;
     /* Treat the parent directory (..) as the current directory when opening it. */

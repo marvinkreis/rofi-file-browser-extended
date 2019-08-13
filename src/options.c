@@ -87,10 +87,10 @@ bool set_options ( FileBrowserModePrivateData *pd )
     fd->hide_parent          = fb_find_arg ( "-file-browser-hide-parent"         , pd ) ? true  : HIDE_PARENT;
     id->show_icons           = fb_find_arg ( "-file-browser-disable-icons"       , pd ) ? false : SHOW_ICONS;
     kd->use_mode_keys        = fb_find_arg ( "-file-browser-use-mode-keys"       , pd ) ? true  : USE_MODE_KEYS;
-    pd->dmenu                = fb_find_arg ( "-file-browser-dmenu"               , pd ) ? true  : DMENU;
+    pd->stdout_mode          = fb_find_arg ( "-file-browser-stdout"              , pd ) ? true  : STDOUT_MODE;
+    pd->stdin_mode           = fb_find_arg ( "-file-browser-stdin"               , pd ) ? true  : STDIN_MODE;
     pd->show_status          = fb_find_arg ( "-file-browser-disable-status"      , pd ) ? false : SHOW_STATUS;
     pd->no_descend           = fb_find_arg ( "-file-browser-no-descend"          , pd ) ? true  : NO_DESCEND;
-    pd->stdin_mode           = fb_find_arg ( "-file-browser-stdin"               , pd ) ? true  : STDIN_MODE;
     pd->open_parent_as_self  = fb_find_arg ( "-file-browser-open-parent-as-self" , pd ) ? true  : OPEN_PARENT_AS_SELF;
     pd->search_path_for_cmds = fb_find_arg ( "-file-browser-oc-search-path"      , pd ) ? true  : SEARCH_PATH_FOR_CMDS;
 

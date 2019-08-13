@@ -22,8 +22,8 @@
 G_MODULE_EXPORT Mode mode;
 
 /**
- * If not in dmenu mode, opens the file at the given path with the given command.
- * If in dmenu mode, prints the absolute path to stdout.
+ * If not in stdout mode, opens the file at the given path with the given command.
+ * If in stdout mode, prints the absolute path to stdout.
  * If fbfile is given, uses the path of fbfile.
  * If fbfile is NULL, uses path.
  */
@@ -347,7 +347,7 @@ static void open_file ( FBFile* fbfile, char *path, char *cmd, FileBrowserModePr
 
     char *canonical_path = get_canonical_abs_path ( used_path, current_dir );
 
-    if ( pd->dmenu ) {
+    if ( pd->stdout_mode ) {
         printf( "%s\n", canonical_path );
         g_free ( canonical_path );
 
