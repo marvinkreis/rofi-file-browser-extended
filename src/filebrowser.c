@@ -157,7 +157,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         case UP:
         case DIRECTORY:
         directory:
-            if ( pd->no_descend ) {
+            if ( pd->no_descend || key == kd->open_multi_key ) {
                 open_file ( entry, NULL, pd->cmd, pd );
                 if ( key != kd->open_multi_key ) {
                     retv = MODE_EXIT;
@@ -185,11 +185,11 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         }
 
     /* Handle custom input or Control+Return. */
-    } else if ( mretv & MENU_CUSTOM_INPUT && key == KEY_UNSUPPORTED ) {
+    } else if ( mretv & MENU_CUSTOM_INPUT ) {
         if ( strlen ( *input ) > 0 ) {
             char *expanded_input = rofi_expand_path ( *input );
-            g_free ( expanded_input );
             char *abs_path = get_canonical_abs_path ( expanded_input, fd->current_dir );
+            g_free ( expanded_input );
 
             if ( ! g_file_test ( abs_path, G_FILE_TEST_EXISTS ) ) {
                 retv = RELOAD_DIALOG;

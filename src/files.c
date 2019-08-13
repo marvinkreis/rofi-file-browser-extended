@@ -193,8 +193,9 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
 
         /* Regular file. */
         case FTW_F:
+        file:
             if ( fd->only_dirs ) {
-                return FTW_CONTINUE;
+                goto skip_file;
             } else {
                 fbfile.type = RFILE;
             }
@@ -202,8 +203,9 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
 
         /* Regular directory. */
         case FTW_D:
+        directory:
             if ( fd->only_files ) {
-                return FTW_CONTINUE;
+                goto skip_file;
             } else {
                 fbfile.type = DIRECTORY;
             }
@@ -217,9 +219,9 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
         /* Symbolic link. */
         case FTW_SL:
             if ( g_file_test ( fpath, G_FILE_TEST_IS_DIR ) ) {
-                fbfile.type = DIRECTORY;
+                goto directory;
             } else {
-                fbfile.type = RFILE;
+                goto file;
             }
             break;
 
@@ -250,6 +252,8 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
     fbfile.icon = NULL;
 
     insert_file ( &fbfile, fd );
+
+skip_file:
 
     if ( ftwbuf->level >= global_fd->depth && fd->depth != 0 ) {
         return FTW_SKIP_SUBTREE;
