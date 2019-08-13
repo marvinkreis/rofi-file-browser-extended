@@ -53,7 +53,7 @@ Example:
 ```
 -file-browser-oc-cmd "gimp"
 -file-browser-oc-cmd "pcmanfm-qt;icon:system-file-manager;name:pcmanfm"
--file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <span alpha='75%%'>(queue)</span>"
+-file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <span alpha='75%'>(queue)</span>"
 
 Format:
 <command>;icon:<icon-name>;name:<name-to-displayed>
@@ -142,6 +142,8 @@ All command line options but `-file-browser-config` itself can be used in the co
 #### -file-browser-follow-symlinks
 > Follow symlinks when listing files recursively.
 > *(default: don't follow symlinks)*
+>
+> When symlinks are followed, no file is reported twice.
 
 #### -file-browser-show-hidden
 > Show hidden files.
@@ -182,15 +184,15 @@ All command line options but `-file-browser-config` itself can be used in the co
 > Paths must either be relative to the starting directory (`-file-browser-dir`) or absolute.
 > It is not checked if the files actually exist.
 > The paths are not sorted or matched to any exclude patters.
-> 
+>
 > Example:
-> 
+>
 > ```
 > fd | rofi -show file-browser -file-browser-stdin
 > fd -a | rofi -show file-browser -file-browser-stdin
 > ls somedir | rofi -show file-browser -file-browser-stdin -file-browser-dir somedir
 > ```
-> 
+>
 > After loading the paths, the plugin behaves no different than usual.
 You may want to use this option with `-file-browser-no-descend` and / or `-file-browser-stdout`.
 
@@ -207,18 +209,18 @@ You may want to use this option with `-file-browser-no-descend` and / or `-file-
 > *(default: none)*
 >
 > Format: `<command>;icon:<icon-name>;name:<name-to-displayed>`
-> 
+>
 > `icon` and `name` are optional.
 > The order of `icon` and `name` does not matter as long as the command comes first.
 > `name` may use pango markup.
-> 
+>
 > Example:
 >
 > ```
 > -file-browser-oc-cmd "gimp"
 > -file-browser-oc-cmd "pcmanfm-qt;icon:system-file-manager;name:pcmanfm"
-> -file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <span alpha='75%%'>(queue)</span>"
-> ``` 
+> -file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <span alpha='75%'>(queue)</span>"
+> ```
 
 #### -file-browser-sort-by-type `<0/1>`
 > Enable / disable sort-by-type (directories first, files second, inaccessible directories last).
