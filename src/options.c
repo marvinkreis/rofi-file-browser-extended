@@ -74,9 +74,9 @@ bool set_options ( FileBrowserModePrivateData *pd )
         read_config_file ( CONFIG_FILE, pd );
     } else {
         for ( int i = 0; config_files[i] != NULL; i++ ) {
-            char *expanded_config_file = rofi_expand_path ( config_files[i] );
-            read_config_file ( expanded_config_file, pd );
-            g_free ( expanded_config_file );
+            char *expanded_path = rofi_expand_path ( config_files[i] );
+            read_config_file ( expanded_path, pd );
+            g_free ( expanded_path );
         }
     }
 
@@ -113,13 +113,18 @@ bool set_options ( FileBrowserModePrivateData *pd )
     if ( ! fb_find_arg_str ( "-file-browser-dir", &start_dir, pd ) ) {
         start_dir = START_DIR;
     }
-    char *abs_path = get_existing_abs_path ( start_dir, g_get_current_dir () );
-    if ( abs_path != NULL ) {
-        fd->current_dir = abs_path;
-    } else {
+    char *expanded_path = rofi_expand_path ( start_dir );
+    char *abs_path = get_canonical_abs_path ( expanded_path, g_get_current_dir () );
+    g_free ( expanded_path );
+    if ( ! g_file_test ( abs_path, G_FILE_TEST_EXISTS ) ) {
         print_err ( "Start directory does not exist: \"%s\".\n", start_dir );
         return false;
     }
+    if ( ! g_file_test ( abs_path, G_FILE_TEST_IS_DIR ) ) {
+        print_err ( "Start directory is not a directory: \"%s\".\n", start_dir );
+        return false;
+    }
+    fd->current_dir = abs_path;
 
     /* Icon theme. */
     char **icon_themes = fb_find_arg_strv ( "-file-browser-icon-theme", pd );

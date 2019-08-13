@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <gmodule.h>
+#include <glib/gstdio.h>
 
 #include "types.h"
 #include "util.h"
@@ -127,29 +127,36 @@ void load_files ( FileBrowserFileData *fd )
     nftw ( path , add_file, 16, nftw_flags );
     g_free ( path );
 
+    /* Exclude the parent dir from sorting. */
+    FBFile *sort_files = fd->files;
+    int num_sort_files = fd->num_files;
+    if ( ! fd->hide_parent ) {
+        sort_files++;
+        num_sort_files--;
+    }
+
     /* Sort all but the parent dir. */
     if ( fd->sort_by_type ) {
         if ( fd->sort_by_depth ) {
-            g_qsort_with_data ( &fd->files[1], fd->num_files - 1, sizeof ( FBFile ), compare_files_depth_type, NULL );
+            g_qsort_with_data ( sort_files, num_sort_files, sizeof ( FBFile ), compare_files_depth_type, NULL );
         } else {
-            g_qsort_with_data ( &fd->files[1], fd->num_files - 1, sizeof ( FBFile ), compare_files_type, NULL );
+            g_qsort_with_data ( sort_files, num_sort_files, sizeof ( FBFile ), compare_files_type, NULL );
         }
     } else {
         if ( fd->sort_by_depth ) {
-            g_qsort_with_data ( &fd->files[1], fd->num_files - 1, sizeof ( FBFile ), compare_files_depth, NULL );
+            g_qsort_with_data ( sort_files, num_sort_files, sizeof ( FBFile ), compare_files_depth, NULL );
         } else {
-            g_qsort_with_data ( &fd->files[1], fd->num_files - 1, sizeof ( FBFile ), compare_files, NULL );
+            g_qsort_with_data ( sort_files, num_sort_files, sizeof ( FBFile ), compare_files, NULL );
         }
     }
 }
 
 void change_dir ( char *path, FileBrowserFileData *pd )
 {
-    char* new_dir = get_existing_abs_path ( path, pd->current_dir );
+    char* new_dir = get_canonical_abs_path ( path, pd->current_dir );
     g_free ( pd->current_dir );
     pd->current_dir = new_dir;
-    chdir ( new_dir );
-    load_files ( pd );
+    g_chdir ( new_dir );
 }
 
 static bool match_glob_patterns ( const char *basename, FileBrowserFileData *fd )
@@ -269,7 +276,7 @@ void load_files_from_stdin ( FileBrowserFileData *fd ) {
         fbfile.icon = NULL;
 
         /* If path is absolute. */
-        if ( buffer[0] == '/' ) {
+        if ( g_path_is_absolute ( buffer ) ) {
             fbfile.path = g_strdup ( buffer );
             fbfile.name = fbfile.path;
         } else {

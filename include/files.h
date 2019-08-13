@@ -23,7 +23,7 @@ void load_files ( FileBrowserFileData *fd );
 void load_files_from_stdin ( FileBrowserFileData *fd );
 
 /**
- * Simplifies the given path (e.g. removes ".."), sets it, and loads the file list for the new path and options.
+ * Simplifies the given path (e.g. removes "..") and changes directory to it.
  */
 void change_dir ( char *path, FileBrowserFileData *fd );
 

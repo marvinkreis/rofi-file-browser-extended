@@ -56,7 +56,7 @@ static int file_browser_init ( Mode *sw )
         if ( pd->stdin_mode ) {
             load_files_from_stdin ( fd );
         } else {
-            change_dir ( fd->current_dir, fd );
+            load_files ( fd );
         }
     }
 
@@ -126,8 +126,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
             } else {
                 cmd = ( *input != NULL && strlen ( *input ) == 0 ) ? pd->cmd : *input;
             }
-            FBFile *fbfile = &fd->files[pd->open_custom_index];
-            open_file ( fbfile, NULL, cmd, pd );
+            open_file ( &fd->files[pd->open_custom_index], NULL, cmd, pd );
             pd->open_custom = false;
             pd->open_custom_index = -1;
             if ( key != kd->open_multi_key ) {
@@ -152,19 +151,20 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         retv = RESET_DIALOG;
 
     /* Handle return or open-multi. */
-    } else if ( key == kd->open_multi_key || mretv & MENU_OK ) {
+    } else if ( ( mretv & MENU_OK || key == kd->open_multi_key ) && selected_line != -1 ) {
         FBFile* entry = &fd->files[selected_line];
         switch ( entry->type ) {
         case UP:
         case DIRECTORY:
         directory:
-            if ( pd->no_descend && key != kd->open_multi_key ) {
+            if ( pd->no_descend ) {
                 open_file ( entry, NULL, pd->cmd, pd );
-                retv = MODE_EXIT;
-            } else if ( key == kd->open_multi_key ) {
-                open_file ( entry, NULL, pd->cmd, pd );
+                if ( key != kd->open_multi_key ) {
+                    retv = MODE_EXIT;
+                }
             } else {
                 change_dir ( entry->path, fd );
+                load_files ( fd );
                 retv = RESET_DIALOG;
             }
             break;
@@ -185,20 +185,17 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         }
 
     /* Handle custom input or Control+Return. */
-    } else if ( mretv & MENU_CUSTOM_INPUT ) {
+    } else if ( mretv & MENU_CUSTOM_INPUT && key == KEY_UNSUPPORTED ) {
         if ( strlen ( *input ) > 0 ) {
             char *expanded_input = rofi_expand_path ( *input );
-
-            char *file = g_filename_from_utf8 ( expanded_input, -1, NULL, NULL, NULL );
             g_free ( expanded_input );
+            char *abs_path = get_canonical_abs_path ( expanded_input, fd->current_dir );
 
-            char *abs_path = get_existing_abs_path ( file, fd->current_dir );
-            g_free ( file );
-
-            if ( abs_path == NULL ) {
+            if ( ! g_file_test ( abs_path, G_FILE_TEST_EXISTS ) ) {
                 retv = RELOAD_DIALOG;
-            } else if ( g_file_test ( abs_path, G_FILE_TEST_IS_DIR ) ){
+            } else if ( ! pd->no_descend && g_file_test ( abs_path, G_FILE_TEST_IS_DIR ) ) {
                 change_dir ( abs_path, fd );
+                load_files ( fd );
                 retv = RESET_DIALOG;
             } else {
                 open_file ( NULL, abs_path, pd->cmd, pd );
@@ -215,7 +212,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         retv = RELOAD_DIALOG;
 
     /* Enable hidden files with Shift+Right. */
-    } else if ( kd->use_mode_keys && ( mretv & MENU_NEXT ) && !fd->show_hidden ) {
+    } else if ( kd->use_mode_keys && ( mretv & MENU_NEXT ) && ! fd->show_hidden ) {
         fd->show_hidden = true;
         load_files ( fd );
         retv = RELOAD_DIALOG;
@@ -335,10 +332,12 @@ static char *file_browser_get_message ( const Mode *sw )
 
 static void open_file ( FBFile* fbfile, char *path, char *cmd, FileBrowserModePrivateData *pd )
 {
+    char* current_dir = pd->file_data.current_dir;
+
     char* used_path;
     if ( fbfile != NULL ) {
         if ( pd->open_parent_as_self && fbfile->type == UP ) {
-            used_path = pd->file_data.current_dir;
+            used_path = current_dir;
         } else {
             used_path = fbfile->path;
         }
@@ -346,27 +345,30 @@ static void open_file ( FBFile* fbfile, char *path, char *cmd, FileBrowserModePr
         used_path = path;
     }
 
-    char *canonical_path = canonicalize_path ( used_path );
+    char *canonical_path = get_canonical_abs_path ( used_path, current_dir );
 
     if ( pd->dmenu ) {
         printf( "%s\n", canonical_path );
+        g_free ( canonical_path );
 
     } else {
         /* Escape the file path. */
         char **split = g_strsplit ( canonical_path, "\"", -1 );
-        canonical_path = g_strjoinv ( "\\\"", split );
-        g_strfreev ( split );
+        char *escaped_path = g_strjoinv ( "\\\"", split );
 
         /* Construct the command. */
         char* complete_cmd = NULL;
         if ( g_strrstr ( cmd, "%s" ) != NULL ) {
-            complete_cmd = g_strdup_printf ( cmd, canonical_path );
+            complete_cmd = g_strdup_printf ( cmd, escaped_path );
         } else {
-            complete_cmd = g_strconcat ( cmd, " \"", canonical_path, "\"", NULL );
+            complete_cmd = g_strconcat ( cmd, " \"", escaped_path, "\"", NULL );
         }
 
-        helper_execute_command ( pd->file_data.current_dir, complete_cmd, false, NULL );
+        helper_execute_command ( current_dir, complete_cmd, false, NULL );
 
+        g_free ( canonical_path );
+        g_strfreev ( split );
+        g_free ( escaped_path );
         g_free ( complete_cmd );
     }
 }
