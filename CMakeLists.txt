@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 project(rofi-file-browser-extended)
 
+
+
+# Plugin
+
 find_package(PkgConfig)
 pkg_search_module(GLIB2 REQUIRED glib-2.0)
 pkg_search_module(CAIRO REQUIRED cairo)
@@ -28,3 +32,15 @@ target_link_libraries(filebrowser
 )
 
 install(TARGETS filebrowser DESTINATION ${ROFI_PLUGINS_DIR})
+
+
+
+# Manpage
+
+add_custom_command(OUTPUT "doc/rofi-file-browser.1.gz"
+                   COMMAND gzip -k "doc/rofi-file-browser.1"
+                   COMMENT "Packing manpage")
+
+add_custom_target(manpage ALL DEPENDS "doc/rofi-file-browser.1.gz")
+
+install(FILES "doc/rofi-file-browser.1.gz" DESTINATION "/usr/share/man/man1")
