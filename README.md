@@ -10,6 +10,7 @@ See also: `man rofi-file-browser`
 
 - [Synopsis](#synopsis)
 - [Description](#description)
+- [Features](#features)
 - [Usage](#usage)
     - [Listing files recursively](#listing-files-recursively)
     - [Opening files with custom commands](#opening-files-with-custom-commands)
@@ -68,7 +69,7 @@ When symlinks are followed, every file is still only reported once.
 Press the `open custom` key (see [Key bindings](#key-bindings)) to enter `open custom` mode on the selected file.
 The plugin will then display a list of commands to open the selected file with.
 
-![Screenshot](https://marvinkreis.github.io/rofi-file-browser-extended/example.png)
+![Screenshot](https://marvinkreis.github.io/rofi-file-browser-extended/open-custom.png)
 
 - All executables in `$PATH` can be added to this list with `-file-browser-oc-search-path`.
 - User-defined commands can be added with `-file-browser-oc-cmd` (multiple by passing the option multiple times).
