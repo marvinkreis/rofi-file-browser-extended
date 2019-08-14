@@ -1,26 +1,45 @@
-# rofi-file-browser-extended
+# rofi-file-browser
 
-Use rofi as a file browser.
+Use rofi to quickly open files.
 
 ![Screenshot](https://marvinkreis.github.io/rofi-file-browser-extended/example.png)
 
 # Index
 
+- [Usage](#usage)
+- [Description](#description)
 - [Features](#features)
-    - [Open custom](#open-custom)
-    - [Stdin mode](#stdin-mode)
+    - [Listing files recursively](#listing-files-recursively)
+    - [Opening files with custom commands](#opening-files-with-custom-commands)
+    - [Reading paths from stdi](#reading-paths-from-stdin)
+- [Configuration](#configuration)
 - [Key bindings](#key-bindings)
 - [Command line options](#command-line-options)
     - [Behaviour](#behaviour)
     - [Key bindings](#key-bindings-1)
     - [Appearance](#appearance)
-- [Configuration](#configuration)
-    - [Config file(s)](#config-files)
 - [Troubleshooting](#troubleshooting)
 - [Installation](#installation)
     - [Arch User Repository](#arch-user-repository)
     - [Dependencies](#dependencies)
     - [Compilation](#compilation)
+
+# Usage
+
+`rofi -modi file-browser -show file-browser [...]`
+
+# Description
+
+**rofi-file-browser** is a highly configurable file browser plugin for rofi.
+It's main use case to to quickly open files without having to open a window to
+navigate to the file.
+
+It can list files like a normal file browser, or list files recursively.
+You can specify a list of commands to choose from when opening
+a file, or use a standard command (like `xdg-open`).
+
+Alternatively, it can also read paths to display from stdin,
+and print paths to stdout instead of opening files.
 
 # Features
 
@@ -35,34 +54,47 @@ Use rofi as a file browser.
 * Output the absolute file path to stdout instead of opening a file (`stdout mode`)
 * Read and show (absolute or relative) file paths from stdin (`stdin mode`)
 
-## Open custom
+## Listing files recursively
+
+By default, the plugin only shows the files in the current directory (depth 1).
+By using the `-file-browser-depth` option, files can be listed recursively up to a certain depth.
+A depth of 0 means files are listed without a depth limit.
+
+Symlinks are not followed by default.
+`-file-browser-follow-symlinks` can be used to follow symlinks when listing files recursively.
+When symlinks are followed, every file is still only reported once.
+
+## Opening files with custom commands
 
 Press the `open custom` key (see [Key bindings](#key-bindings)) to enter `open custom` mode on the selected file.
 When in `open custom` mode, rofi will display a list of commands to open the selected file with.
 
-![Screenshot](https://marvinkreis.github.io/rofi-file-browser-extended/open-custom.png)
+![Screenshot](https://marvinkreis.github.io/rofi-file-browser-extended/example.png)
 
 - A list of all executables in `$PATH` can be added to the list with `-file-browser-oc-search-path`.
 - User-defined commands can be added with `-file-browser-oc-cmd` (multiple by passing the option multiple times).
-- If no commands are specified the file to be opened will be shown.
+- If no commands are specified, the file to be opened will be shown instead of a list of commands.
 
 User-defined commands can optionally specify an icon and a display name (with pango markup).
 
-Example:
+### Example:
 
 ```
 -file-browser-oc-cmd "gimp"
 -file-browser-oc-cmd "pcmanfm-qt;icon:system-file-manager;name:pcmanfm"
--file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <span alpha='75%'>(queue)</span>"
+-file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <i>(queue)</i>"
+```
 
-Format:
+### Format:
+
+```
 <command>;icon:<icon-name>;name:<name-to-displayed>
 ```
 
 `icon` and `name` are optional.
 The order of `icon` and `name` does not matter as long as the command comes first.
 
-## Stdin mode
+## Reading paths from stdin
 
 `-file-browser-stdin` puts the plugin into `stdin mode`.
 In `stdin mode` the displayed paths are read from stdin.
@@ -70,7 +102,11 @@ Paths must either be relative to the starting directory (`-file-browser-dir`) or
 It is not checked if the files actually exist.
 The paths are not sorted or matched to any exclude patters.
 
-Example:
+After reading the paths, the plugin behaves no different than usual.
+You may want to use this option with `-file-browser-no-descend` and / or `-file-browser-stdout`
+to make it more dmenu-like.
+
+### Example:
 
 ```
 fd | rofi -show file-browser -file-browser-stdin
@@ -78,29 +114,10 @@ fd -a | rofi -show file-browser -file-browser-stdin
 ls somedir | rofi -show file-browser -file-browser-stdin -file-browser-dir somedir
 ```
 
-After loading the paths, the plugin behaves no different than usual.
-You may want to use this option with `-file-browser-no-descend` and / or `-file-browser-stdout`.
-
-# Key bindings
-
-Key                                                                              | Action
--------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------
-`kb-accept-alt` <br/> *(default: `Shift+Return`)* <br/> **configurable**         | `open custom`: Open the selected file with a custom command.
-`kb-custom-11` <br/> *(default: `Alt+Shift+1`)* <br/> **configurable**           | `open multi`: Open the selected file without closing rofi. <br/> Can be used in the prompt of `open custom`.
-`kb-custom-12` <br/> *(default: `Alt+Shift+2`)* <br/> **configurable**           | Toggle hidden files.
-`kb-mode-next` <br/> *(default: `Shift+Right`)* <br/> **disabled by default**    | Show hidden files. <br/> Switch to the next rofi-mode if hidden files are already shown. <br/> (Can be disabled with `-file-browser-disable-mode-keys`)
-`kb-mode-previous` <br/> *(default: `Shift+Left`)* <br/> **disabled by default** | Hide hidden files. <br/> Switch to the previous rofi-mode if hidden files are a already hidden. <br/> (Can be disabled with `-file-browser-disable-mode-keys`)
-
-Configurable key bindings can be changed via command line options.
-
 # Configuration
 
-Default options can be set in `include/defaults.h`.
-
-## Config file(s)
-
 The default config file location is `$XDG_USER_CONFIG_DIR/rofi/file-browser` (defaults to `$HOME/config/rofi/file-browser`).
-It consists of newline-separated command line options without the "-file-browser-" prefix.
+The config file consists of newline-separated command line options **without** the **"-file-browser-"** prefix.
 
 Example:
 
@@ -114,13 +131,25 @@ oc-cmd     "gimp;icon:gimp"
 open-parent-as-self
 ```
 
-Options can be commented out with `#`.
+Comments start with `#`.
 Quotes inside string arguments must not be escaped.
 Escape sequences are currently not supported.
 
 Command line options will override the config file (or add to config-file options if the option can be specified multiple times).
 Another config file can be specified with `-file-browser-config` (multiple by passing the option multiple times).
 All command line options but `-file-browser-config` itself can be used in the config file.
+
+# Key bindings
+
+Key                                                                              | Action
+-------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------
+`kb-accept-alt` <br/> *(default: `Shift+Return`)* <br/> **configurable**         | `open custom`: Open the selected file with a custom command.
+`kb-custom-11` <br/> *(default: `Alt+Shift+1`)* <br/> **configurable**           | `open multi`: Open the selected file without closing rofi. <br/> Can be used in `open custom`.
+`kb-custom-12` <br/> *(default: `Alt+Shift+2`)* <br/> **configurable**           | Toggle hidden files.
+`kb-mode-next` <br/> *(default: `Shift+Right`)* <br/> **disabled by default**    | Show hidden files. <br/> Switch to the next rofi-mode if hidden files are already shown. <br/> (Can be enabled with `-file-browser-use-mode-keys`)
+`kb-mode-previous` <br/> *(default: `Shift+Left`)* <br/> **disabled by default** | Hide hidden files. <br/> Switch to the previous rofi-mode if hidden files are a already hidden. <br/> (Can be enabled with `-file-browser-use-mode-keys`)
+
+Configurable key bindings can be changed via command line options (see [Command line options/Key bindings](#key-bindings-1)).
 
 # Command line options
 
@@ -143,7 +172,7 @@ All command line options but `-file-browser-config` itself can be used in the co
 > Follow symlinks when listing files recursively.
 > *(default: don't follow symlinks)*
 >
-> When symlinks are followed, no file is reported twice.
+> When symlinks are followed, every file is still only reported once.
 
 #### -file-browser-show-hidden
 > Show hidden files.
@@ -170,12 +199,6 @@ All command line options but `-file-browser-config` itself can be used in the co
 > *(default: none)*
 >
 > Supports `*` and `?`.
->
-> Example:
-> ```
-> -file-browser-exclude workspace
-> -file-browser-exclude '*.pdf'
-> ```
 
 #### -file-browser-stdin
 > Read paths from stdin.
@@ -184,17 +207,6 @@ All command line options but `-file-browser-config` itself can be used in the co
 > Paths must either be relative to the starting directory (`-file-browser-dir`) or absolute.
 > It is not checked if the files actually exist.
 > The paths are not sorted or matched to any exclude patters.
->
-> Example:
->
-> ```
-> fd | rofi -show file-browser -file-browser-stdin
-> fd -a | rofi -show file-browser -file-browser-stdin
-> ls somedir | rofi -show file-browser -file-browser-stdin -file-browser-dir somedir
-> ```
->
-> After loading the paths, the plugin behaves no different than usual.
-You may want to use this option with `-file-browser-no-descend` and / or `-file-browser-stdout`.
 
 #### -file-browser-stdout
 > Instead of opening files, print absolute paths of selected files to stdout.
@@ -204,32 +216,18 @@ You may want to use this option with `-file-browser-no-descend` and / or `-file-
 > Search `$PATH` for executables and display them in `open custom` mode (after user-defined commands).
 > *(default: disabled)*
 
-#### -file-browser-oc-cmd
+#### -file-browser-oc-cmd `<cmd>`
 > Specify user-defined commands to be displayed in `open custom` mode.
 > *(default: none)*
->
-> Format: `<command>;icon:<icon-name>;name:<name-to-displayed>`
->
-> `icon` and `name` are optional.
-> The order of `icon` and `name` does not matter as long as the command comes first.
-> `name` may use pango markup.
->
-> Example:
->
-> ```
-> -file-browser-oc-cmd "gimp"
-> -file-browser-oc-cmd "pcmanfm-qt;icon:system-file-manager;name:pcmanfm"
-> -file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <span alpha='75%'>(queue)</span>"
-> ```
 
-#### -file-browser-sort-by-type `<0/1>`
+#### -file-browser-sort-by-type, -file-browser-no-sort-by-type
 > Enable / disable sort-by-type (directories first, files second, inaccessible directories last).
-> *(default: 1)*
+> *(default: enabled)*
 
-#### -file-browser-sort-by-depth `<0/1>`
+#### -file-browser-sort-by-depth, -file-browser-no-sort-by-depth
 > Enable / disable sort-by-depth when listing files recursively.
 > Sort-by-type is secondary to sort-by-depth if both are enabled.
-> *(default: 0)*
+> *(default: disabled)*
 
 #### -file-browser-hide-parent
 > Hide the parent directory (`..`).
@@ -267,7 +265,7 @@ Run `rofi -dump-config` or `rofi -dump-xresources` to get a list of available op
 
 ## Appearance
 
-The plugin will load faster when the GTK icon theme is specified.
+The plugin will load slightly faster when the GTK icon theme is specified.
 `gtk3-icon-browser` can be used to search for icon names.
 
 #### -file-browser-icon-theme `<theme-name>`
@@ -313,10 +311,6 @@ The plugin will load faster when the GTK icon theme is specified.
 > Set the icon for inaccessible directories.
 > *(default: `"error"`)*
 
-#### -file-browser-error-icon `<icon-name>`
-> Set the icon used when an error occurs (which should never happen; don't ask me why this option exists).
-> *(default: `"error"`)*
-
 ## Example
 
 ```bash
@@ -333,6 +327,7 @@ rofi -modi file-browser -show file-browser        \
     -file-browser-up-icon "go-previous"           \
     -file-browser-oc-search-path                  \
     -file-browser-oc-cmd "gimp;icon:gimp"         \
+    -file-browser-exclude workspace               \
     -file-browser-exclude '*.pdf'
 ```
 
