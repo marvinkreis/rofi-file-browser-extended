@@ -351,10 +351,6 @@ This plugin can be found in the AUR under [rofi-file-browser-extended-git](https
 
 ## Compilation
 
-This plugin can be compiled with either **CMake** or the **Autotools** build system.
-
-### CMake
-
 Use the following steps to compile the plugin with **CMake**:
 
 ```bash
@@ -362,20 +358,6 @@ git submodule init
 git submodule update
 
 cmake .
-make
-make install # optional: install the plugin
-```
-
-### Autotools
-
-Use the following steps to compile the plugin with the **Autotools** build system:
-
-```bash
-git submodule init
-git submodule update
-
-autoreconf -i
-./configure
 make
 make install # optional: install the plugin
 ```
