@@ -112,7 +112,7 @@ void load_files ( FileBrowserFileData *fd )
         FBFile up;
         up.type = UP;
         up.name = fd->up_text;
-        up.path = g_build_filename(fd->current_dir, "..", NULL);
+        up.path = g_build_filename ( fd->current_dir, "..", NULL );
         up.depth = -1;
         up.icon = NULL;
         insert_file(&up, fd);

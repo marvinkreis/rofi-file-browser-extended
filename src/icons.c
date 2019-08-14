@@ -31,7 +31,6 @@ void destroy_icons ( FileBrowserIconData *id ) {
     g_free ( id->up_icon );
     g_free ( id->inaccessible_icon );
     g_free ( id->fallback_icon );
-    g_free ( id->error_icon );
 }
 
 cairo_surface_t *get_icon_for_file ( FBFile *fbfile, int icon_size, FileBrowserIconData *id )
@@ -49,7 +48,7 @@ cairo_surface_t *get_icon_for_file ( FBFile *fbfile, int icon_size, FileBrowserI
         icon_names = default_icon_names;
 
     } else if ( fbfile->path == NULL ) {
-        default_icon_names[0] = id->error_icon;
+        default_icon_names[0] = ERROR_ICON;
         icon_names = default_icon_names;
 
     } else {
@@ -67,7 +66,7 @@ cairo_surface_t *get_icon_for_file ( FBFile *fbfile, int icon_size, FileBrowserI
         g_object_unref ( file );
 
         if ( icon_names == NULL ) {
-            default_icon_names[0] = id->error_icon;
+            default_icon_names[0] = ERROR_ICON;
             icon_names = default_icon_names;
         }
     }

@@ -79,7 +79,6 @@ typedef struct {
     char *up_icon;
     char *inaccessible_icon;
     char *fallback_icon;
-    char *error_icon;
 } FileBrowserIconData;
 
 // ================================================================================================================= //

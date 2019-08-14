@@ -98,15 +98,29 @@ bool set_options ( FileBrowserModePrivateData *pd )
     id->up_icon             = str_arg_or_default ( "-file-browser-up-icon",            UP_ICON,            pd );
     id->inaccessible_icon   = str_arg_or_default ( "-file-browser-inaccessible-icon",  INACCESSIBLE_ICON,  pd );
     id->fallback_icon       = str_arg_or_default ( "-file-browser-fallback-icon",      FALLBACK_ICON,      pd );
-    id->error_icon          = str_arg_or_default ( "-file-browser-error-icon",         ERROR_ICON,         pd );
     pd->cmd                 = str_arg_or_default ( "-file-browser-cmd",                CMD,                pd );
     pd->show_hidden_symbol  = str_arg_or_default ( "-file-browser-show-hidden-symbol", SHOW_HIDDEN_SYMBOL, pd );
     pd->hide_hidden_symbol  = str_arg_or_default ( "-file-browser-hide-hidden-symbol", HIDE_HIDDEN_SYMBOL, pd );
     pd->path_sep            = str_arg_or_default ( "-file-browser-path-sep",           PATH_SEP,           pd );
 
     fd->depth         = int_arg_or_default ( "-file-browser-depth",         DEPTH,         pd );
-    fd->sort_by_type  = int_arg_or_default ( "-file-browser-sort-by-type",  SORT_BY_TYPE,  pd ) != 0;
-    fd->sort_by_depth = int_arg_or_default ( "-file-browser-sort-by-depth", SORT_BY_DEPTH, pd ) != 0;
+
+    /* Sort options. */
+    /* TODO: make a helper function for "no-..." options and add a "no-..." option for all boolean options. */
+    if ( fb_find_arg ( "-file-browser-sort-by-type", pd ) ) {
+        fd->sort_by_type = true;
+    } else if ( fb_find_arg ( "-file-browser-no-sort-by-type", pd ) ) {
+        fd->sort_by_type = false;
+    } else {
+        fd->sort_by_type = SORT_BY_TYPE;
+    }
+    if ( fb_find_arg ( "-file-browser-sort-by-depth", pd ) ) {
+        fd->sort_by_depth = true;
+    } else if ( fb_find_arg ( "-file-browser-no-sort-by-depth", pd ) ) {
+        fd->sort_by_depth = false;
+    } else {
+        fd->sort_by_depth = SORT_BY_DEPTH;
+    }
 
     /* Start directory. */
     char *start_dir = NULL;
