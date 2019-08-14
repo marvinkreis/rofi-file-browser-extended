@@ -1,0 +1,311 @@
+rofi-file-browser(1) - use rofi to quickly open files
+=====================================================
+
+## SYNOPSIS
+
+`rofi` -modi file-browser -show file-browser [...]
+
+## DESCRIPTION
+
+**rofi-file-browser** is a highly configurable file browser plugin for rofi.
+It's main use case to to quickly open files without having to open a window to
+navigate to the file.
+
+It can list files like a normal file browser, or list files recursively.
+You can specify a list of commands to choose from when opening
+a file, or use a standard command (like `xdg-open`).
+
+Alternatively, it can also read paths to display from stdin,
+and print paths to stdout instead of opening files.
+
+## FEATURES
+
+### Listing files recursively
+
+By default, the plugin only shows the files in the current directory (depth 1).
+By using the `-file-browser-depth` option, files can be listed recursively up to a certain depth.
+A depth of 0 means files are listed without a depth limit.
+
+Symlinks are not followed by default.
+`-file-browser-follow-symlinks` can be used to follow symlinks when listing files recursively.
+When symlinks are followed, every file is still only reported once.
+
+### Opening files with custom commands
+
+Press the `open custom` key (see [Key bindings](#key-bindings)) to enter `open custom` mode on the selected file.
+When in `open custom` mode, rofi will display a list of commands to open the selected file with.
+
+- A list of all executables in `$PATH` can be added to the list with `-file-browser-oc-search-path`.
+- User-defined commands can be added with `-file-browser-oc-cmd` (multiple by passing the option multiple times).
+- If no commands are specified, the file to be opened will be shown instead of a list of commands.
+
+User-defined commands can optionally specify an icon and a display name (with pango markup).
+
+Example:
+
+```
+-file-browser-oc-cmd "gimp"
+-file-browser-oc-cmd "pcmanfm-qt;icon:system-file-manager;name:pcmanfm"
+-file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <i>(queue)</i>"
+```
+
+Format:
+
+```
+<command>;icon:<icon-name>;name:<name-to-displayed>
+```
+
+`icon` and `name` are optional.
+The order of `icon` and `name` does not matter as long as the command comes first.
+
+### Reading paths from stdin
+
+`-file-browser-stdin` puts the plugin into `stdin mode`.
+In `stdin mode` the displayed paths are read from stdin.
+Paths must either be relative to the starting directory (`-file-browser-dir`) or absolute.
+It is not checked if the files actually exist.
+The paths are not sorted or matched to any exclude patters.
+
+After reading the paths, the plugin behaves no different than usual.
+You may want to use this option with `-file-browser-no-descend` and / or `-file-browser-stdout`
+to make it more dmenu-like.
+
+Example:
+
+```
+fd | rofi -show file-browser -file-browser-stdin
+fd -a | rofi -show file-browser -file-browser-stdin
+ls somedir | rofi -show file-browser -file-browser-stdin -file-browser-dir somedir
+```
+
+## CONFIGURATION
+
+The default config file location is `$XDG_USER_CONFIG_DIR/rofi/file-browser` (defaults to `$HOME/config/rofi/file-browser`).
+The config file consists of newline-separated command line options **without** the **"-file-browser-"** prefix.
+
+Example:
+
+```
+icon-theme "Numix-Circle"
+cmd        "exo-open"
+oc-cmd     "evince;icon:evince"
+oc-cmd     "gimp;icon:gimp"
+
+# use-mode-keys
+open-parent-as-self
+```
+
+Options can be commented out with `#`.
+Quotes inside string arguments must not be escaped.
+Escape sequences are currently not supported.
+
+Command line options will override the config file (or add to config-file options if the option can be specified multiple times).
+Another config file can be specified with `-file-browser-config` (multiple by passing the option multiple times).
+All command line options but `-file-browser-config` itself can be used in the config file.
+
+## KEY BINDINGS
+
+* `kb-accept-alt` *(default: Shift+Return)*, configurable
+
+  `open custom`: Open the selected file with a custom command.
+
+* `kb-custom-11` *(default: Alt+Shift+1)*, configurable
+
+  `open multi`: Open the selected file without closing rofi.
+  Can be used in the prompt of `open custom`.
+
+* `kb-custom-12` *(default: Alt+Shift+2)*, configurable
+
+  Toggle hidden files.
+
+* `kb-mode-next` *(default: Shift+Right)*, disabled by default
+
+  Show hidden files.
+
+  Switch to the next rofi-mode if hidden files are already shown.
+  (Can be enabled with `-file-browser-use-mode-keys`)
+
+* `kb-mode-previous` *(default: Shift+Left)*, disabled by default
+
+  Hide hidden files.
+  Switch to the previous rofi-mode if hidden files are a already hidden.
+
+  (Can be enabled with `-file-browser-use-mode-keys`)
+
+Configurable key bindings can be changed via command line options (see [Command line options/Key bindings](#key-bindings-1)).
+
+## OPTIONS
+
+### Behaviour
+
+* `-file-browser-cmd` *<cmd>*:
+  Set the command to open selected files with.
+  **(default: `xdg-open`)**
+
+* `-file-browser-dir` *<path>*:
+  Set the starting directory.
+  **(default: current working directory)**
+
+* `-file-browser-depth` *<depth>*:
+  List files recursively until a depth is reached.
+  A value of 0 means no depth limit.
+  **(default: 1)**
+
+* `-file-browser-follow-symlinks`:
+  Follow symlinks when listing files recursively.
+  **(default: don't follow symlinks)**
+
+  When symlinks are followed, no file is reported twice.
+
+* `-file-browser-show-hidden`:
+  Show hidden files.
+  **(default: hidden)**
+
+* `-file-browser-only-dirs`:
+  Only show directories.
+  **(default: disabled)**
+
+* `-file-browser-only-files`:
+  Only show files.
+  **(default: disabled)**
+
+* `-file-browser-no-descend`:
+  Open directories instead of descending into them.
+  **(default: disabled)**
+
+* `-file-browser-open-parent-as-self`:
+  Treat the parent directory (`..`) as the current directory when opened.
+  **(default: disabled)**
+
+* `-file-browser-exclude`:
+  Exclude paths by matching the basename to glob patterns.
+  **(default: none)**
+
+  Supports `*` and `?`.
+
+* `-file-browser-stdin`:
+  Read paths from stdin.
+  **(default: disabled)**
+
+  Paths must either be relative to the starting directory (`-file-browser-dir`) or absolute.
+  It is not checked if the files actually exist.
+  The paths are not sorted or matched to any exclude patters.
+
+* `-file-browser-stdout`:
+  Instead of opening files, print absolute paths of selected files to stdout.
+  **(default: disabled)**
+
+* `-file-browser-oc-search-path`:
+  Search `$PATH` for executables and display them in `open custom` mode (after user-defined commands).
+  **(default: disabled)**
+
+* `-file-browser-oc-cmd` *<cmd>*:
+  Specify user-defined commands to be displayed in `open custom` mode.
+  **(default: none)**
+
+  Format: `<command>;icon:<icon-name>;name:<name-to-displayed>`
+
+  `icon` and `name` are optional.
+  The order of `icon` and `name` does not matter as long as the command comes first.
+  `name` may use pango markup.
+
+* `-file-browser-sort-by-type`, `-file-browser-no-sort-by-type`:
+  Enable / disable sort-by-type (directories first, files second, inaccessible directories last).
+  **(default: enabled)**
+
+* `-file-browser-sort-by-depth`, `-file-browser-no-sort-by-depth`:
+  Enable / disable sort-by-depth when listing files recursively.
+  Sort-by-type is secondary to sort-by-depth if both are enabled.
+  **(default: disabled)**
+
+* `-file-browser-hide-parent`:
+  Hide the parent directory (`..`).
+  **(default: shown)**
+
+* `-file-browser-config` *<path>*:
+  Load options from the specified config file.
+  **(default: `$XDG_USER_CONFIG_DIR/rofi/file-browser`)**
+
+  Can be used multiple times to load options from multiple config files.
+  When this option is specified, the default config file will not be loaded.
+
+### Key bindings
+
+  Supported key bindings are `kb-accept-alt` and `kb-custom-*`.
+  You can change the actual key bindings that correspond to `kb-accept-alt` and `kb-custom-*` in rofi's options.
+  Run `rofi -show keys` to display rofi's key bindings and what they are bound to.
+  Run `rofi -dump-config` or `rofi -dump-xresources` to get a list of available options.
+
+* `-file-browser-use-mode-keys`:
+  Show / hide hidden files with `kb-mode-next` and `kb-mode-previous`.
+  **(default: disabled)**
+
+* `-file-browser-open-custom-key` *<rofi-key>*:
+  Set the key binding for `open custom`.
+  **(default: `kb-accept-alt`)**
+
+* `-file-browser-open-multi-key` *<rofi-key>*:
+  Set the key binding for `open multi`.
+  **(default: `kb-custom-11`)**
+
+* `-file-browser-open-toggle-hidden` *<rofi-key>*:
+  Set the key binding for toggling hidden files.
+  **(default: `kb-custom-12`)**
+
+### Appearance
+
+The plugin will load faster when the GTK icon theme is specified.
+`gtk3-icon-browser` can be used to search for icon names.
+
+* `-file-browser-icon-theme` *<theme-name>*:
+  Set the GTK icon theme.
+  **(default: system GTK icon theme)**
+
+* `-file-browser-theme` *<theme-name>*:
+  Same as `-file-browser-icon-theme`.
+
+* `-file-browser-disable-icons`:
+  Disable icons.
+  **(default: enabled)**
+
+* `-file-browser-disable-status`:
+  Disable the status line that shows the current path.
+  **(default: enabled)**
+
+* `-file-browser-path-sep` *<string>*:
+  Set the path separator for the status line.
+  **(default: `" / "`)**
+
+* `-file-browser-hide-hidden-symbol` *<string>*:
+  Set the indicator that hidden files are hidden.
+  **(default: `"[-]"`)**
+
+* `-file-browser-show-hidden-symbol` *<string>*:
+  Set the indicator that hidden files are shown.
+  **(default: `"[+]"`)**
+
+* `-file-browser-up-text` *<string>*:
+  Set the text for the parent directory.
+  **(default: `".."`)**.
+
+* `-file-browser-up-icon` *<icon-name>*:
+  Set the icon for the parent directory.
+  **(default: `"go-up"`)**
+
+* `-file-browser-fallback-icon` *<icon-name>*:
+  Set the fallback icon used for files without icons (e.g. block devices).
+  **(default: `"text-x-generic"`)**
+
+* `-file-browser-inaccessible-icon` *<icon-name>*:
+  Set the icon for inaccessible directories.
+  **(default: `"error"`)**
+
+## TROUBLESHOOTING
+
+If you encounter a problem, try running rofi from the command line.
+The plugin prints error messages if things go wrong.
+If that doesn't help, feel free to create a new issue on GitHub.
+
+## SEE ALSO
+
+rofi(1), nftw(3)
