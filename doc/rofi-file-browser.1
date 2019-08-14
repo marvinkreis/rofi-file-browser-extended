@@ -7,30 +7,33 @@
 \fBrofi\-file\-browser\fR \- use rofi to quickly open files
 .
 .SH "SYNOPSIS"
-\fBrofi\fR \-modi file\-browser \-show file\-browser [\.\.\.]
+\fBrofi \-show file\-browser [ \-file\-browser\-dir <dir> ] [ \-file\-browser\-cmd <cmd> ]\fR
+.
+.br
+\fBrofi \-show file\-browser [ \-file\-browser\-depth <depth> ] [ \-file\-browser\-follow\-symlinks ]\fR
+.
+.br
+\fBrofi \-show file\-browser [ \-file\-browser\-oc\-cmd <cmd> ] [ \-file\-browser\-oc\-search\-path ]\fR
+.
+.br
+\fBfd | rofi \-show file\-browser \-file\-browser\-stdin\fR
 .
 .SH "DESCRIPTION"
-\fBrofi\-file\-browser\fR is a highly configurable file browser plugin for rofi\. It\'s main use case to to quickly open files without having to open a window to navigate to the file\.
+\fBrofi\-file\-browser\fR is a configurable file browser plugin for rofi\. It\'s main use case is to quickly open files without having to open a window to navigate to the file\.
 .
-.P
-It can list files like a normal file browser, or list files recursively\. You can specify a list of commands to choose from when opening a file, or use a standard command (like \fBxdg\-open\fR)\.
-.
-.P
-Alternatively, it can also read paths to display from stdin, and print paths to stdout instead of opening files\.
-.
-.SH "FEATURES"
+.SH "USAGE"
 .
 .SS "Listing files recursively"
-By default, the plugin only shows the files in the current directory (depth 1)\. By using the \fB\-file\-browser\-depth\fR option, files can be listed recursively up to a certain depth\. A depth of 0 means files are listed without a depth limit\.
+\fB\-file\-browser\-depth\fR can be used to list files recursively up to a certain depth\. A depth of 0 means files are listed without a depth limit\.
 .
 .P
-Symlinks are not followed by default\. \fB\-file\-browser\-follow\-symlinks\fR can be used to follow symlinks when listing files recursively\. When symlinks are followed, every file is still only reported once\.
+Symlinks are not followed by default\. \fB\-file\-browser\-follow\-symlinks\fR can be used to follow symlinks\. When symlinks are followed, every file is still only reported once\.
 .
 .SS "Opening files with custom commands"
-Press the \fBopen custom\fR key (see \fIKey bindings\fR) to enter \fBopen custom\fR mode on the selected file\. When in \fBopen custom\fR mode, rofi will display a list of commands to open the selected file with\.
+Press the \fBopen custom\fR key (see \fIKey bindings\fR) to enter \fBopen custom\fR mode on the selected file\. The plugin will then display a list of commands to open the selected file with\.
 .
 .IP "\(bu" 4
-A list of all executables in \fB$PATH\fR can be added to the list with \fB\-file\-browser\-oc\-search\-path\fR\.
+All executables in \fB$PATH\fR can be added to this list with \fB\-file\-browser\-oc\-search\-path\fR\.
 .
 .IP "\(bu" 4
 User\-defined commands can be added with \fB\-file\-browser\-oc\-cmd\fR (multiple by passing the option multiple times)\.
@@ -42,21 +45,6 @@ If no commands are specified, the file to be opened will be shown instead of a l
 .
 .P
 User\-defined commands can optionally specify an icon and a display name (with pango markup)\.
-.
-.P
-Example:
-.
-.IP "" 4
-.
-.nf
-
-\-file\-browser\-oc\-cmd "gimp"
-\-file\-browser\-oc\-cmd "pcmanfm\-qt;icon:system\-file\-manager;name:pcmanfm"
-\-file\-browser\-oc\-cmd "deadbeef \-\-queue;icon:deadbeef;name:deadbeef <i>(queue)</i>"
-.
-.fi
-.
-.IP "" 0
 .
 .P
 Format:
@@ -74,8 +62,23 @@ Format:
 .P
 \fBicon\fR and \fBname\fR are optional\. The order of \fBicon\fR and \fBname\fR does not matter as long as the command comes first\.
 .
+.P
+Example:
+.
+.IP "" 4
+.
+.nf
+
+\-file\-browser\-oc\-cmd "gimp"
+\-file\-browser\-oc\-cmd "pcmanfm\-qt;name:pcmanfm;icon:system\-file\-manager"
+\-file\-browser\-oc\-cmd "deadbeef \-\-queue;icon:deadbeef;name:deadbeef <i>(queue)</i>"
+.
+.fi
+.
+.IP "" 0
+.
 .SS "Reading paths from stdin"
-\fB\-file\-browser\-stdin\fR puts the plugin into \fBstdin mode\fR\. In \fBstdin mode\fR the displayed paths are read from stdin\. Paths must either be relative to the starting directory (\fB\-file\-browser\-dir\fR) or absolute\. It is not checked if the files actually exist\. The paths are not sorted or matched to any exclude patters\.
+\fB\-file\-browser\-stdin\fR can be used to read displayed paths from stdin\. Paths must either be relative to the starting directory (\fB\-file\-browser\-dir\fR) or absolute\. It is not checked if the paths actually exist\. The paths are not sorted or matched to any exclude patters\.
 .
 .P
 After reading the paths, the plugin behaves no different than usual\. You may want to use this option with \fB\-file\-browser\-no\-descend\fR and / or \fB\-file\-browser\-stdout\fR to make it more dmenu\-like\.
@@ -109,6 +112,7 @@ icon\-theme "Numix\-Circle"
 cmd        "exo\-open"
 oc\-cmd     "evince;icon:evince"
 oc\-cmd     "gimp;icon:gimp"
+depth      2
 
 # use\-mode\-keys
 open\-parent\-as\-self
@@ -118,47 +122,47 @@ open\-parent\-as\-self
 .IP "" 0
 .
 .P
-Options can be commented out with \fB#\fR\. Quotes inside string arguments must not be escaped\. Escape sequences are currently not supported\.
+Comments start with \fB#\fR\. Quotes inside string arguments must not be escaped\. Escape sequences are currently not supported\.
 .
 .P
-Command line options will override the config file (or add to config\-file options if the option can be specified multiple times)\. Another config file can be specified with \fB\-file\-browser\-config\fR (multiple by passing the option multiple times)\. All command line options but \fB\-file\-browser\-config\fR itself can be used in the config file\.
+Command line options will override the config file (or add to the config file arguments if the option can be specified multiple times)\. A different config file can be specified with \fB\-file\-browser\-config\fR (multiple by passing the option multiple times)\. All command line options but \fB\-file\-browser\-config\fR itself can be used in the config file\.
 .
 .SH "KEY BINDINGS"
 .
 .IP "\(bu" 4
-\fBkb\-accept\-alt\fR \fI(default: Shift+Return)\fR, configurable
+\fBkb\-accept\-alt\fR, \fI(default: Shift+Return)\fR, configurable
 .
 .IP
 \fBopen custom\fR: Open the selected file with a custom command\.
 .
 .IP "\(bu" 4
-\fBkb\-custom\-11\fR \fI(default: Alt+Shift+1)\fR, configurable
+\fBkb\-custom\-11\fR, \fI(default: Alt+Shift+1)\fR, configurable
 .
 .IP
 \fBopen multi\fR: Open the selected file without closing rofi\. Can be used in the prompt of \fBopen custom\fR\.
 .
 .IP "\(bu" 4
-\fBkb\-custom\-12\fR \fI(default: Alt+Shift+2)\fR, configurable
+\fBkb\-custom\-12\fR, \fI(default: Alt+Shift+2)\fR, configurable
 .
 .IP
 Toggle hidden files\.
 .
 .IP "\(bu" 4
-\fBkb\-mode\-next\fR \fI(default: Shift+Right)\fR, disabled by default
+\fBkb\-mode\-next\fR, \fI(default: Shift+Right)\fR, disabled by default
 .
 .IP
-Show hidden files\.
+Show hidden files\. Switch to the next rofi\-mode if hidden files are already shown\.
 .
-.IP
-Switch to the next rofi\-mode if hidden files are already shown\. (Can be enabled with \fB\-file\-browser\-use\-mode\-keys\fR)
+.br
+(Can be enabled with \fB\-file\-browser\-use\-mode\-keys\fR)
 .
 .IP "\(bu" 4
-\fBkb\-mode\-previous\fR \fI(default: Shift+Left)\fR, disabled by default
+\fBkb\-mode\-previous\fR, \fI(default: Shift+Left)\fR, disabled by default
 .
 .IP
 Hide hidden files\. Switch to the previous rofi\-mode if hidden files are a already hidden\.
 .
-.IP
+.br
 (Can be enabled with \fB\-file\-browser\-use\-mode\-keys\fR)
 .
 .IP "" 0
@@ -187,7 +191,7 @@ List files recursively until a depth is reached\. A value of 0 means no depth li
 Follow symlinks when listing files recursively\. \fB(default: don\'t follow symlinks)\fR
 .
 .IP
-When symlinks are followed, no file is reported twice\.
+When symlinks are followed, every file is still only reported once\.
 .
 .TP
 \fB\-file\-browser\-show\-hidden\fR

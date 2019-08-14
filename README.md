@@ -4,14 +4,16 @@ Use rofi to quickly open files.
 
 ![Screenshot](https://marvinkreis.github.io/rofi-file-browser-extended/example.png)
 
+See also: `man rofi-file-browser`
+
 # Index
 
-- [Usage](#usage)
+- [Synopsis](#synopsis)
 - [Description](#description)
-- [Features](#features)
+- [Usage](#usage)
     - [Listing files recursively](#listing-files-recursively)
     - [Opening files with custom commands](#opening-files-with-custom-commands)
-    - [Reading paths from stdi](#reading-paths-from-stdin)
+    - [Reading paths from stdin](#reading-paths-from-stdin)
 - [Configuration](#configuration)
 - [Key bindings](#key-bindings)
 - [Command line options](#command-line-options)
@@ -24,22 +26,18 @@ Use rofi to quickly open files.
     - [Dependencies](#dependencies)
     - [Compilation](#compilation)
 
-# Usage
+# Synopsis
 
-`rofi -modi file-browser -show file-browser [...]`
+`rofi -show file-browser [ -file-browser-dir <dir> ] [ -file-browser-cmd <cmd> ]` <br/>
+`rofi -show file-browser [ -file-browser-depth <depth> ] [ -file-browser-follow-symlinks ]` <br/>
+`rofi -show file-browser [ -file-browser-oc-cmd <cmd> ] [ -file-browser-oc-search-path ]` <br/>
+`fd | rofi -show file-browser -file-browser-stdin`
 
 # Description
 
-**rofi-file-browser** is a highly configurable file browser plugin for rofi.
-It's main use case to to quickly open files without having to open a window to
+**rofi-file-browser** is a configurable file browser plugin for rofi.
+It's main use case is to quickly open files without having to open a window to
 navigate to the file.
-
-It can list files like a normal file browser, or list files recursively.
-You can specify a list of commands to choose from when opening
-a file, or use a standard command (like `xdg-open`).
-
-Alternatively, it can also read paths to display from stdin,
-and print paths to stdout instead of opening files.
 
 # Features
 
@@ -54,36 +52,29 @@ and print paths to stdout instead of opening files.
 * Output the absolute file path to stdout instead of opening a file (`stdout mode`)
 * Read and show (absolute or relative) file paths from stdin (`stdin mode`)
 
+# Usage
+
 ## Listing files recursively
 
-By default, the plugin only shows the files in the current directory (depth 1).
-By using the `-file-browser-depth` option, files can be listed recursively up to a certain depth.
+`-file-browser-depth` can be used to list files recursively up to a certain depth.
 A depth of 0 means files are listed without a depth limit.
 
 Symlinks are not followed by default.
-`-file-browser-follow-symlinks` can be used to follow symlinks when listing files recursively.
+`-file-browser-follow-symlinks` can be used to follow symlinks.
 When symlinks are followed, every file is still only reported once.
 
 ## Opening files with custom commands
 
 Press the `open custom` key (see [Key bindings](#key-bindings)) to enter `open custom` mode on the selected file.
-When in `open custom` mode, rofi will display a list of commands to open the selected file with.
+The plugin will then display a list of commands to open the selected file with.
 
 ![Screenshot](https://marvinkreis.github.io/rofi-file-browser-extended/example.png)
 
-- A list of all executables in `$PATH` can be added to the list with `-file-browser-oc-search-path`.
+- All executables in `$PATH` can be added to this list with `-file-browser-oc-search-path`.
 - User-defined commands can be added with `-file-browser-oc-cmd` (multiple by passing the option multiple times).
 - If no commands are specified, the file to be opened will be shown instead of a list of commands.
 
 User-defined commands can optionally specify an icon and a display name (with pango markup).
-
-### Example:
-
-```
--file-browser-oc-cmd "gimp"
--file-browser-oc-cmd "pcmanfm-qt;icon:system-file-manager;name:pcmanfm"
--file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <i>(queue)</i>"
-```
 
 ### Format:
 
@@ -94,12 +85,19 @@ User-defined commands can optionally specify an icon and a display name (with pa
 `icon` and `name` are optional.
 The order of `icon` and `name` does not matter as long as the command comes first.
 
+### Example:
+
+```
+-file-browser-oc-cmd "gimp"
+-file-browser-oc-cmd "pcmanfm-qt;name:pcmanfm;icon:system-file-manager"
+-file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <i>(queue)</i>"
+```
+
 ## Reading paths from stdin
 
-`-file-browser-stdin` puts the plugin into `stdin mode`.
-In `stdin mode` the displayed paths are read from stdin.
+`-file-browser-stdin` can be used to read displayed paths from stdin.
 Paths must either be relative to the starting directory (`-file-browser-dir`) or absolute.
-It is not checked if the files actually exist.
+It is not checked if the paths actually exist.
 The paths are not sorted or matched to any exclude patters.
 
 After reading the paths, the plugin behaves no different than usual.
@@ -126,6 +124,7 @@ icon-theme "Numix-Circle"
 cmd        "exo-open"
 oc-cmd     "evince;icon:evince"
 oc-cmd     "gimp;icon:gimp"
+depth      2
 
 # use-mode-keys
 open-parent-as-self
@@ -135,8 +134,8 @@ Comments start with `#`.
 Quotes inside string arguments must not be escaped.
 Escape sequences are currently not supported.
 
-Command line options will override the config file (or add to config-file options if the option can be specified multiple times).
-Another config file can be specified with `-file-browser-config` (multiple by passing the option multiple times).
+Command line options will override the config file (or add to the config file arguments if the option can be specified multiple times).
+A different config file can be specified with `-file-browser-config` (multiple by passing the option multiple times).
 All command line options but `-file-browser-config` itself can be used in the config file.
 
 # Key bindings
