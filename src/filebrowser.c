@@ -66,8 +66,10 @@ static int file_browser_init ( Mode *sw )
 static void file_browser_destroy ( Mode *sw )
 {
     FileBrowserModePrivateData *pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
-    if ( ! pd )
+
+    if ( pd == NULL ) {
         return;
+    }
 
     mode_set_private_data ( sw, NULL );
 
