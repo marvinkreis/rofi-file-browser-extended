@@ -1,4 +1,4 @@
-# rofi-file-browser
+# rofi-file-browser-extended
 
 Use rofi to quickly open files.
 
@@ -29,15 +29,15 @@ See also: `man rofi-file-browser`
 
 # Synopsis
 
-`rofi -show file-browser [ -file-browser-dir <dir> ] [ -file-browser-cmd <cmd> ]` <br/>
-`rofi -show file-browser [ -file-browser-depth <depth> ] [ -file-browser-follow-symlinks ]` <br/>
-`rofi -show file-browser [ -file-browser-oc-cmd <cmd> ] [ -file-browser-oc-search-path ]` <br/>
-`fd | rofi -show file-browser -file-browser-stdin`
+`rofi -show file-browser-extended [ -file-browser-dir <dir> ] [ -file-browser-cmd <cmd> ]` <br/>
+`rofi -show file-browser-extended [ -file-browser-depth <depth> ] [ -file-browser-follow-symlinks ]` <br/>
+`rofi -show file-browser-extended [ -file-browser-oc-cmd <cmd> ] [ -file-browser-oc-search-path ]` <br/>
+`fd | rofi -show file-browser-extended -file-browser-stdin`
 
 # Description
 
-**rofi-file-browser** is a configurable file browser plugin for rofi.
-It's main use case is to quickly open files without having to open a window to
+**rofi-file-browser-extended** is a configurable file browser plugin for rofi.
+Its main use case is to quickly open files without having to open a window to
 navigate to the file.
 
 # Features
@@ -108,9 +108,9 @@ to make it more dmenu-like.
 ### Example:
 
 ```
-fd | rofi -show file-browser -file-browser-stdin
-fd -a | rofi -show file-browser -file-browser-stdin
-ls somedir | rofi -show file-browser -file-browser-stdin -file-browser-dir somedir
+fd | rofi -show file-browser-extended -file-browser-stdin
+fd -a | rofi -show file-browser-extended -file-browser-stdin
+ls somedir | rofi -show file-browser-extended -file-browser-stdin -file-browser-dir somedir
 ```
 
 # Configuration

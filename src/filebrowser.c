@@ -383,8 +383,8 @@ static void open_file ( FBFile* fbfile, char *path, char *cmd, FileBrowserModePr
 Mode mode =
 {
     .abi_version        = ABI_VERSION,
-    .name               = "file-browser",
-    .cfg_name_key       = "display-file-browser",
+    .name               = "file-browser-extended",
+    .cfg_name_key       = "display-file-browser-extended",
     ._init              = file_browser_init,
     ._get_num_entries   = file_browser_get_num_entries,
     ._result            = file_browser_result,
