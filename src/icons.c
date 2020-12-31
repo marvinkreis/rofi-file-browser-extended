@@ -43,7 +43,7 @@ void request_icons_for_file ( FBFile *fbfile, int icon_size, FileBrowserIconData
             }
         }
 
-        if ( rofi_icon_fetcher_file_is_image( fbfile->path ) ) {
+        if ( id->show_thumbnails && rofi_icon_fetcher_file_is_image( fbfile->path ) ) {
             g_array_prepend_val ( icon_names, fbfile->path );
         }
     }
