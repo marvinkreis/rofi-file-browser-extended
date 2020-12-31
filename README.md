@@ -265,18 +265,12 @@ Run `rofi -dump-config` or `rofi -dump-xresources` to get a list of available op
 
 ## Appearance
 
-The plugin will load slightly faster when the GTK icon theme is specified.
-`gtk3-icon-browser` can be used to search for icon names.
-
-#### -file-browser-icon-theme `<theme-name>`
-> Set the GTK icon theme.
-> *(default: system GTK icon theme)*
-
-#### -file-browser-theme `<theme-name>`
-> Same as `-file-browser-icon-theme`.
-
 #### -file-browser-disable-icons
 > Disable icons.
+> *(default: enabled)*
+
+#### -file-browser-disable-thumbnails
+> Disable thumbnails for image files.
 > *(default: enabled)*
 
 #### -file-browser-disable-status

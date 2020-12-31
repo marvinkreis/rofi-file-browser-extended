@@ -55,6 +55,9 @@
 /* Show icons. */
 #define SHOW_ICONS true
 
+/* Show thumbnails for images where possible. */
+#define SHOW_THUMBNAILS true
+
 /* Show a status with the current path and mode. */
 #define SHOW_STATUS true
 

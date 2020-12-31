@@ -72,6 +72,8 @@ typedef struct {
 typedef struct {
     /* Show icons in the file browser. */
     bool show_icons;
+    /* Show thumbnails for image files where possible. */
+    bool show_thumbnails;
     /* Icons names. */
     char *up_icon;
     char *inaccessible_icon;
