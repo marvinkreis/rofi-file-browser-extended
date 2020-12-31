@@ -55,7 +55,7 @@ void set_user_cmds ( char **cmd_strs, FileBrowserModePrivateData *pd )
         fbcmd->cmd = g_strdup ( cmd );
         fbcmd->icon_name = icon_name == NULL ? NULL : g_strdup ( &icon_name[icon_sep_len] );
         fbcmd->name = name == NULL ? NULL : g_strdup ( &name[name_sep_len] );
-        fbcmd->icon = NULL;
+        fbcmd->icon_fetcher_request = 0;
     }
 
     add_cmds(cmds, num_cmds, pd);
@@ -108,7 +108,6 @@ void search_path_for_cmds ( FileBrowserModePrivateData *pd )
         fbcmd->cmd = cmdstr;
         fbcmd->name = NULL;
         fbcmd->icon_name = NULL;
-        fbcmd->icon = NULL;
 
         num_cmds++;
     }

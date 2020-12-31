@@ -140,17 +140,6 @@ bool set_options ( FileBrowserModePrivateData *pd )
     }
     fd->current_dir = abs_path;
 
-    /* Icon theme. */
-    char **icon_themes = fb_find_arg_strv ( "-file-browser-icon-theme", pd );
-    if ( icon_themes == NULL ) {
-        icon_themes = fb_find_arg_strv ( "-file-browser-theme", pd );
-    }
-    if ( icon_themes != NULL ) {
-        id->icon_themes = icon_themes;
-    } else {
-        id->icon_themes = get_default_icon_theme ();
-    }
-
     /* Set glob patterns. */
     char **exclude_globs_strs = fb_find_arg_strv ( "-file-browser-exclude", pd );
     if ( exclude_globs_strs == NULL ) {

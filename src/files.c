@@ -114,7 +114,8 @@ void load_files ( FileBrowserFileData *fd )
         up.name = fd->up_text;
         up.path = g_build_filename ( fd->current_dir, "..", NULL );
         up.depth = -1;
-        up.icon = NULL;
+        up.icon_fetcher_requests = NULL;
+        up.num_icon_fetcher_requests = 0;
         insert_file(&up, fd);
     }
 
@@ -249,7 +250,8 @@ static int add_file ( const char *fpath, G_GNUC_UNUSED const struct stat *sb, in
     fbfile.path = g_strdup ( fpath );
     fbfile.name = &fbfile.path[pos];
     fbfile.depth = ftwbuf->level;
-    fbfile.icon = NULL;
+    fbfile.icon_fetcher_requests = NULL;
+    fbfile.num_icon_fetcher_requests = 0;
 
     insert_file ( &fbfile, fd );
 
@@ -277,7 +279,8 @@ void load_files_from_stdin ( FileBrowserFileData *fd ) {
         FBFile fbfile;
         fbfile.type = UNKNOWN;
         fbfile.depth = 1;
-        fbfile.icon = NULL;
+        fbfile.icon_fetcher_requests = NULL;
+        fbfile.num_icon_fetcher_requests = 0;
 
         /* If path is absolute. */
         if ( g_path_is_absolute ( buffer ) ) {

@@ -5,6 +5,7 @@
 #include <gmodule.h>
 #include <cairo.h>
 #include <nkutils-xdg-theme.h>
+#include <stdint.h>
 
 // ================================================================================================================= //
 
@@ -27,8 +28,10 @@ typedef struct {
     enum FBFileType type;
     /* Depth of the file when listing recursively. */
     unsigned int depth;
-    /* Cached icon. */
-    cairo_surface_t *icon;
+
+    /* Rofi icon fetcher request IDs for possible icons. */
+    uint32_t *icon_fetcher_requests;
+    unsigned int num_icon_fetcher_requests;
 } FBFile;
 
 typedef struct {
@@ -69,12 +72,6 @@ typedef struct {
 typedef struct {
     /* Show icons in the file browser. */
     bool show_icons;
-    /* Loaded icons by their names. */
-    GHashTable *icons;
-    /* Icon theme context. */
-    NkXdgThemeContext *xdg_context;
-    /* Icon themes with fallbacks, NULL-terminated. */
-    char **icon_themes;
     /* Icons names. */
     char *up_icon;
     char *inaccessible_icon;
@@ -115,8 +112,9 @@ typedef struct {
     char *name;
     /* Name of the icon, or NULL for no icon. */
     char *icon_name;
-    /* Cached icon. */
-    cairo_surface_t *icon;
+
+    /* Rofi icon fetcher request ID. */
+    uint32_t icon_fetcher_request;
 } FBCmd;
 
 typedef struct {

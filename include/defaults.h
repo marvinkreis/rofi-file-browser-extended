@@ -55,9 +55,6 @@
 /* Show icons. */
 #define SHOW_ICONS true
 
-/* The fallback icon themes. */
-#define FALLBACK_ICON_THEMES "Adwaita", "gnome"
-
 /* Show a status with the current path and mode. */
 #define SHOW_STATUS true
 

@@ -9,6 +9,7 @@
 #include <rofi/mode.h>
 #include <rofi/helper.h>
 #include <rofi/mode-private.h>
+#include <rofi/rofi-icon-fetcher.h>
 
 #include "defaults.h"
 #include "types.h"
@@ -45,12 +46,6 @@ static int file_browser_init ( Mode *sw )
             return false;
         }
 
-        /* Set up icons if enabled. */
-        FileBrowserIconData *id = &pd->icon_data;
-        if ( id->show_icons ) {
-            init_icons ( id );
-        }
-
         /* Load the files. */
         FileBrowserFileData *fd = &pd->file_data;
         if ( pd->stdin_mode ) {
@@ -77,7 +72,7 @@ static void file_browser_destroy ( Mode *sw )
     destroy_files ( &pd->file_data );
 
     /* Free icon themes and icons. */
-    destroy_icons( &pd->icon_data );
+    destroy_icon_data( &pd->icon_data );
 
     /* Free open-custom commands. */
     destroy_cmds ( pd );
@@ -291,18 +286,20 @@ static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int sel
 
     if ( pd->open_custom && pd->show_cmds ) {
         FBCmd *fbcmd = &pd->cmds[selected_line];
-        if ( fbcmd->icon == NULL ) {
-            char* icon_names[2] = { fbcmd->icon_name, NULL };
-            fbcmd->icon = get_icon_for_names ( icon_names, height, id );
+
+        if ( fbcmd->icon_fetcher_request <= 0 ) {
+            fbcmd->icon_fetcher_request = rofi_icon_fetcher_query ( fbcmd->icon_name, height );
         }
-        return fbcmd->icon;
+        return rofi_icon_fetcher_get ( fbcmd->icon_fetcher_request );
+
     } else {
         int index = pd->open_custom ? pd->open_custom_index : selected_line;
         FBFile *fbfile = & fd->files[index];
-        if ( fbfile->icon == NULL ) {
-            fbfile->icon = get_icon_for_file ( fbfile, height, &pd->icon_data );
+
+        if ( fbfile->icon_fetcher_requests == NULL ) {
+            request_icons_for_file ( fbfile, height, id );
         }
-        return fbfile->icon;
+        return fetch_icon_for_file ( fbfile );
     }
 }
 

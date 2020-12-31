@@ -1,39 +1,20 @@
-#include <stdbool.h>
 #include <gmodule.h>
 #include <cairo.h>
-#include <nkutils-xdg-theme.h>
 #include <gtk/gtk.h>
-#include <rofi/helper.h>
+#include <rofi/rofi-icon-fetcher.h>
 
 #include "defaults.h"
 #include "types.h"
-#include "util.h"
 #include "icons.h"
+#include "util.h"
 
-void init_icons ( FileBrowserIconData *id ) {
-    static const char * const fallback_icon_themes[] = {
-        FALLBACK_ICON_THEMES,
-        NULL
-    };
-    id->xdg_context = nk_xdg_theme_context_new ( fallback_icon_themes, NULL );
-    nk_xdg_theme_preload_themes_icon ( id->xdg_context, ( const gchar * const * ) id->icon_themes );
-    id->icons = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, ( void (*) (void *) ) cairo_surface_destroy );
-}
-
-void destroy_icons ( FileBrowserIconData *id ) {
-    if ( id->icons != NULL ) {
-        g_hash_table_destroy ( id->icons );
-    }
-    if ( id->xdg_context != NULL ) {
-        nk_xdg_theme_context_free ( id->xdg_context );
-    }
-    g_strfreev ( id->icon_themes );
+void destroy_icon_data ( FileBrowserIconData *id ) {
     g_free ( id->up_icon );
     g_free ( id->inaccessible_icon );
     g_free ( id->fallback_icon );
 }
 
-cairo_surface_t *get_icon_for_file ( FBFile *fbfile, int icon_size, FileBrowserIconData *id )
+void request_icons_for_file ( FBFile *fbfile, int icon_size, FileBrowserIconData *id )
 {
     char *default_icon_names[] = { NULL, NULL };
     char **icon_names = NULL;
@@ -71,70 +52,26 @@ cairo_surface_t *get_icon_for_file ( FBFile *fbfile, int icon_size, FileBrowserI
         }
     }
 
-    cairo_surface_t *icon_surf = get_icon_for_names ( icon_names, icon_size, id );
-    if ( icon_surf == NULL ) {
-        print_err ( "Could not find an icon for file \"%s\".", fbfile->name );
+    /* Create icon fetcher requests. */
+    fbfile->num_icon_fetcher_requests = count_strv ( ( const char ** ) icon_names );
+    fbfile->icon_fetcher_requests = malloc ( sizeof ( uint32_t ) * fbfile->num_icon_fetcher_requests );
+    for (int i = 0; i < fbfile->num_icon_fetcher_requests; i++) {
+        fbfile->icon_fetcher_requests[i] = rofi_icon_fetcher_query ( icon_names[i], icon_size );
     }
 
     if ( icon != NULL ) {
         g_object_unref ( icon );
     }
-
-    return icon_surf;
 }
 
-cairo_surface_t *get_icon_for_names ( char **icon_names, int icon_size, FileBrowserIconData *id )
+cairo_surface_t *fetch_icon_for_file ( FBFile *fbfile )
 {
-    for (int i = 0; icon_names[i] != NULL; i++) {
-        cairo_surface_t *icon_surf = g_hash_table_lookup ( id->icons, icon_names[i] );
-
-        if ( icon_surf != NULL ) {
-            return icon_surf;
-        }
-
-        char *icon_path = nk_xdg_theme_get_icon ( id->xdg_context, ( const char ** ) id->icon_themes, NULL,
-                                                  icon_names[i], icon_size, 1, true );
-
-        if ( icon_path == NULL ) {
-            continue;
-        }
-
-        if ( g_str_has_suffix ( icon_path, ".png" ) ) {
-            icon_surf = cairo_image_surface_create_from_png ( icon_path );
-        } else if ( g_str_has_suffix ( icon_path, ".svg" ) ) {
-            icon_surf = cairo_image_surface_create_from_svg ( icon_path, icon_size );
-        }
-
-        g_free ( icon_path );
-
-        if ( icon_surf != NULL ) {
-            if ( cairo_surface_status ( icon_surf ) != CAIRO_STATUS_SUCCESS ) {
-                cairo_surface_destroy ( icon_surf );
-            } else {
-                g_hash_table_insert ( id->icons, g_strdup ( icon_names[i] ), icon_surf );
-                return icon_surf;
-            }
+    for ( int i = 0; i < fbfile->num_icon_fetcher_requests; i++ ) {
+        cairo_surface_t *icon = rofi_icon_fetcher_get ( fbfile->icon_fetcher_requests[i] );
+        if ( icon != NULL ) {
+            return icon;
         }
     }
 
     return NULL;
-}
-
-char **get_default_icon_theme ( void )
-{
-    char *default_theme = NULL;
-    gtk_init ( NULL, NULL );
-    g_object_get ( gtk_settings_get_default (), "gtk-icon-theme-name", &default_theme, NULL );
-
-    if ( default_theme == NULL ) {
-        print_err ( "Could not determine GTK icon theme. Maybe try setting a theme with "
-                    "\"-file-browser-icon-theme\".\n" );
-    }
-
-    char *icon_themes[] = {
-        default_theme,
-        NULL
-    };
-
-    return g_strdupv ( icon_themes );
 }
