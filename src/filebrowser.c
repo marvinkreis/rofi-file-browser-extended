@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <gmodule.h>
 #include <cairo.h>
-#include <nkutils-xdg-theme.h>
 #include <rofi/mode.h>
 #include <rofi/helper.h>
 #include <rofi/mode-private.h>

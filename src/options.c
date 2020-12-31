@@ -2,15 +2,12 @@
 #include <stdio.h>
 #include <gmodule.h>
 #include <glib/gstdio.h>
-#include <cairo.h>
-#include <nkutils-xdg-theme.h>
 #include <rofi/helper.h>
 
 #include "defaults.h"
 #include "types.h"
 #include "util.h"
 #include "options.h"
-#include "icons.h"
 #include "keys.h"
 #include "cmds.h"
 

@@ -1,6 +1,5 @@
 #include <gmodule.h>
-#include <cairo.h>
-#include <gtk/gtk.h>
+#include <gio/gio.h>
 #include <rofi/rofi-icon-fetcher.h>
 
 #include "defaults.h"
@@ -56,7 +55,6 @@ void request_icons_for_file ( FBFile *fbfile, int icon_size, FileBrowserIconData
     fbfile->num_icon_fetcher_requests = num_icon_names;
     fbfile->icon_fetcher_requests = malloc ( sizeof ( uint32_t ) * num_icon_names );
     for ( int i = 0; i < num_icon_names; i++ ) {
-        printf("%s\n", icon_names_raw[i]);
         fbfile->icon_fetcher_requests[i] = rofi_icon_fetcher_query ( icon_names_raw[i], icon_size );
     }
 

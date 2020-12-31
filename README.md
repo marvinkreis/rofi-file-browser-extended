@@ -341,17 +341,13 @@ This plugin can be found in the AUR under [rofi-file-browser-extended-git](https
 
 | Dependency | Version |
 | ---------- | ------- |
-| rofi       | 1.4+    |
-| gtk3       | 3.0+    |
+| rofi       | 1.6+    |
 
 ## Compilation
 
 Use the following steps to compile the plugin with **CMake**:
 
 ```bash
-git submodule init
-git submodule update
-
 cmake .
 make
 make install # optional: install the plugin
