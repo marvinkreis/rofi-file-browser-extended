@@ -1,25 +1,25 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "ROFI\-FILE\-BROWSER" "1" "December 2020" "" ""
+.TH "ROFI\-FILE\-BROWSER\-EXTENDED" "1" "December 2020" "" ""
 .
 .SH "NAME"
-\fBrofi\-file\-browser\fR \- use rofi to quickly open files
+\fBrofi\-file\-browser\-extended\fR \- use rofi to quickly open files
 .
 .SH "SYNOPSIS"
-\fBrofi \-show file\-browser [ \-file\-browser\-dir <dir> ] [ \-file\-browser\-cmd <cmd> ]\fR
+\fBrofi \-show file\-browser\-extended [ \-file\-browser\-dir <dir> ] [ \-file\-browser\-cmd <cmd> ]\fR
 .
 .br
-\fBrofi \-show file\-browser [ \-file\-browser\-depth <depth> ] [ \-file\-browser\-follow\-symlinks ]\fR
+\fBrofi \-show file\-browser\-extended [ \-file\-browser\-depth <depth> ] [ \-file\-browser\-follow\-symlinks ]\fR
 .
 .br
-\fBrofi \-show file\-browser [ \-file\-browser\-oc\-cmd <cmd> ] [ \-file\-browser\-oc\-search\-path ]\fR
+\fBrofi \-show file\-browser\-extended [ \-file\-browser\-oc\-cmd <cmd> ] [ \-file\-browser\-oc\-search\-path ]\fR
 .
 .br
-\fBfd | rofi \-show file\-browser \-file\-browser\-stdin\fR
+\fBfd | rofi \-show file\-browser\-extended \-file\-browser\-stdin\fR
 .
 .SH "DESCRIPTION"
-\fBrofi\-file\-browser\fR is a configurable file browser plugin for rofi\. It\'s main use case is to quickly open files without having to open a window to navigate to the file\.
+\fBrofi\-file\-browser\-extended\fR is a configurable file browser plugin for rofi\. It\'s main use case is to quickly open files without having to open a window to navigate to the file\.
 .
 .SH "USAGE"
 .
@@ -90,9 +90,9 @@ Example:
 .
 .nf
 
-fd | rofi \-show file\-browser \-file\-browser\-stdin
-fd \-a | rofi \-show file\-browser \-file\-browser\-stdin
-ls somedir | rofi \-show file\-browser \-file\-browser\-stdin \-file\-browser\-dir somedir
+fd | rofi \-show file\-browser\-extended \-file\-browser\-stdin
+fd \-a | rofi \-show file\-browser\-extended \-file\-browser\-stdin
+ls somedir | rofi \-show file\-browser\-extended \-file\-browser\-stdin \-file\-browser\-dir somedir
 .
 .fi
 .

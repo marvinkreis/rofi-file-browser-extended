@@ -4,7 +4,7 @@ Use rofi to quickly open files.
 
 ![Screenshot](https://marvinkreis.github.io/rofi-file-browser-extended/example.png)
 
-See also: `man rofi-file-browser`
+See also: `man rofi-file-browser-extended`
 
 # Index
 
