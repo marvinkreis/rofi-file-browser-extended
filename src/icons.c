@@ -16,52 +16,60 @@ void destroy_icon_data ( FileBrowserIconData *id ) {
 
 void request_icons_for_file ( FBFile *fbfile, int icon_size, FileBrowserIconData *id )
 {
-    char *default_icon_names[] = { NULL, NULL };
-    char **icon_names = NULL;
+    GArray *icon_names = g_array_new ( false, false, sizeof ( char * ) );
+
+    GFile *file = NULL;
     GIcon *icon = NULL;
+    char *icon_path = NULL;
 
     if ( fbfile->type == UP ) {
-        default_icon_names[0] = id->up_icon;
-        icon_names = default_icon_names;
+        g_array_append_val( icon_names, id->up_icon );
 
     } else if ( fbfile->type == INACCESSIBLE ) {
-        default_icon_names[0] = id->inaccessible_icon;
-        icon_names = default_icon_names;
+        g_array_append_val( icon_names, id->inaccessible_icon );
 
     } else if ( fbfile->path == NULL ) {
-        default_icon_names[0] = ERROR_ICON;
-        icon_names = default_icon_names;
+        g_array_append_val( icon_names, ERROR_ICON );
 
     } else {
-        GFile *file = g_file_new_for_path ( fbfile->path );
+        file = g_file_new_for_path ( fbfile->path );
         GFileInfo *file_info = g_file_query_info ( file, "standard::icon", G_FILE_QUERY_INFO_NONE, NULL, NULL );
 
         if ( file_info != NULL ) {
             icon = g_file_info_get_icon ( file_info );
             if ( G_IS_THEMED_ICON ( icon ) ) {
                 g_themed_icon_append_name ( G_THEMED_ICON ( icon ), id->fallback_icon );
-                icon_names = ( char ** ) g_themed_icon_get_names ( G_THEMED_ICON ( icon ) );
+                char** local_icon_names = ( char ** ) g_themed_icon_get_names( G_THEMED_ICON ( icon ) );
+                g_array_append_vals ( icon_names, local_icon_names, count_strv ( ( const char ** ) local_icon_names ) );
             }
         }
 
-        g_object_unref ( file );
-
-        if ( icon_names == NULL ) {
-            default_icon_names[0] = ERROR_ICON;
-            icon_names = default_icon_names;
+        if ( rofi_icon_fetcher_file_is_image( fbfile->path ) ) {
+            g_array_prepend_val ( icon_names, fbfile->path );
         }
     }
 
+    unsigned long num_icon_names;
+    char** icon_names_raw = g_array_steal ( icon_names, &num_icon_names );
+
     /* Create icon fetcher requests. */
-    fbfile->num_icon_fetcher_requests = count_strv ( ( const char ** ) icon_names );
-    fbfile->icon_fetcher_requests = malloc ( sizeof ( uint32_t ) * fbfile->num_icon_fetcher_requests );
-    for (int i = 0; i < fbfile->num_icon_fetcher_requests; i++) {
-        fbfile->icon_fetcher_requests[i] = rofi_icon_fetcher_query ( icon_names[i], icon_size );
+    fbfile->num_icon_fetcher_requests = num_icon_names;
+    fbfile->icon_fetcher_requests = malloc ( sizeof ( uint32_t ) * num_icon_names );
+    for ( int i = 0; i < num_icon_names; i++ ) {
+        printf("%s\n", icon_names_raw[i]);
+        fbfile->icon_fetcher_requests[i] = rofi_icon_fetcher_query ( icon_names_raw[i], icon_size );
     }
 
+    if ( file != NULL ) {
+        g_object_unref ( file );
+    }
     if ( icon != NULL ) {
         g_object_unref ( icon );
     }
+    if ( icon_path != NULL ) {
+        g_free ( icon_path );
+    }
+    g_array_unref ( icon_names );
 }
 
 cairo_surface_t *fetch_icon_for_file ( FBFile *fbfile )
