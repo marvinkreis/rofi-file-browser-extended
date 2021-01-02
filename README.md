@@ -252,7 +252,7 @@ Run `rofi -dump-config` or `rofi -dump-xresources` to get a list of available op
 > Set the key binding for `open multi`.
 > *(default: `kb-custom-1`)*
 
-#### -file-browser-open-toggle-hidden `<rofi-key>`
+#### -file-browser-toggle-hidden-key `<rofi-key>`
 > Set the key binding for toggling hidden files.
 > *(default: `kb-custom-2`)*
 
