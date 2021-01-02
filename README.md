@@ -127,7 +127,6 @@ oc-cmd     "evince;icon:evince"
 oc-cmd     "gimp;icon:gimp"
 depth      2
 
-# use-mode-keys
 open-parent-as-self
 ```
 
@@ -141,15 +140,13 @@ All command line options but `-file-browser-config` itself can be used in the co
 
 # Key bindings
 
-Key                                                                              | Action
--------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------
-`kb-accept-alt` <br/> *(default: `Shift+Return`)* <br/> **configurable**         | `open custom`: Open the selected file with a custom command.
-`kb-custom-11` <br/> *(default: `Alt+Shift+1`)* <br/> **configurable**           | `open multi`: Open the selected file without closing rofi. <br/> Can be used in `open custom`.
-`kb-custom-12` <br/> *(default: `Alt+Shift+2`)* <br/> **configurable**           | Toggle hidden files.
-`kb-mode-next` <br/> *(default: `Shift+Right`)* <br/> **disabled by default**    | Show hidden files. <br/> Switch to the next rofi-mode if hidden files are already shown. <br/> (Can be enabled with `-file-browser-use-mode-keys`)
-`kb-mode-previous` <br/> *(default: `Shift+Left`)* <br/> **disabled by default** | Hide hidden files. <br/> Switch to the previous rofi-mode if hidden files are a already hidden. <br/> (Can be enabled with `-file-browser-use-mode-keys`)
+Key                                                              | Action
+---------------------------------------------------------------- | ----------------------------------------------------------------------------------
+`kb-accept-alt` <br/> *(default: `Shift+Return`)* <br/>          | `open custom`: Open the selected file with a custom command.
+`kb-custom-1` <br/> *(default: `Alt+1`)* <br/>                   | `open multi`: Open the selected file without closing rofi. <br/> Can be used in `open custom`.
+`kb-custom-2` <br/> *(default: `Alt+2`)* <br/>                   | Toggle hidden files.
 
-Configurable key bindings can be changed via command line options (see [Command line options/Key bindings](#key-bindings-1)).
+Key bindings can be changed via command line options (see [Command line options/Key bindings](#key-bindings-1)).
 
 # Command line options
 
@@ -242,14 +239,10 @@ Configurable key bindings can be changed via command line options (see [Command 
 
 ## Key bindings
 
-Supported key bindings are `kb-accept-alt` and `kb-custom-*`.
-You can change the actual key bindings that correspond to `kb-accept-alt` and `kb-custom-*` in rofi's options.
+Supported key bindings are `kb-accept-alt`, `kb-custom-[0-19]` and `none` (disables the key binding).
+You can change the actual key bindings that correspond to `kb-accept-alt` and `kb-custom-[0-19]` in rofi's options.
 Run `rofi -show keys` to display rofi's key bindings and what they are bound to.
 Run `rofi -dump-config` or `rofi -dump-xresources` to get a list of available options.
-
-#### -file-browser-use-mode-keys
-> Show / hide hidden files with `kb-mode-next` and `kb-mode-previous`.
-> *(default: disabled)*
 
 #### -file-browser-open-custom-key `<rofi-key>`
 > Set the key binding for `open custom`.
@@ -257,11 +250,11 @@ Run `rofi -dump-config` or `rofi -dump-xresources` to get a list of available op
 
 #### -file-browser-open-multi-key `<rofi-key>`
 > Set the key binding for `open multi`.
-> *(default: `kb-custom-11`)*
+> *(default: `kb-custom-1`)*
 
 #### -file-browser-open-toggle-hidden `<rofi-key>`
 > Set the key binding for toggling hidden files.
-> *(default: `kb-custom-12`)*
+> *(default: `kb-custom-2`)*
 
 ## Appearance
 

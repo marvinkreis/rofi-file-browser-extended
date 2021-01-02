@@ -159,7 +159,6 @@ oc-cmd     "evince;icon:evince"
 oc-cmd     "gimp;icon:gimp"
 depth      2
 
-# use-mode-keys
 open-parent-as-self
 </code></pre>
 
@@ -174,30 +173,20 @@ All command line options but <code>-file-browser-config</code> itself can be use
 <h2 id="KEY-BINDINGS">KEY BINDINGS</h2>
 
 <ul>
-<li><p><code>kb-accept-alt</code>, <em>(default: Shift+Return)</em>, configurable</p>
+<li><p><code>kb-accept-alt</code>, <em>(default: Shift+Return)</em></p>
 
 <p><code>open custom</code>: Open the selected file with a custom command.</p></li>
-<li><p><code>kb-custom-11</code>, <em>(default: Alt+Shift+1)</em>, configurable</p>
+<li><p><code>kb-custom-1</code>, <em>(default: Alt+1)</em></p>
 
 <p><code>open multi</code>: Open the selected file without closing rofi.
 Can be used in the prompt of <code>open custom</code>.</p></li>
-<li><p><code>kb-custom-12</code>, <em>(default: Alt+Shift+2)</em>, configurable</p>
+<li><p><code>kb-custom-2</code>, <em>(default: Alt+2)</em></p>
 
 <p>Toggle hidden files.</p></li>
-<li><p><code>kb-mode-next</code>, <em>(default: Shift+Right)</em>, disabled by default</p>
-
-<p>Show hidden files.
-Switch to the next rofi-mode if hidden files are already shown. <br />
-(Can be enabled with <code>-file-browser-use-mode-keys</code>)</p></li>
-<li><p><code>kb-mode-previous</code>, <em>(default: Shift+Left)</em>, disabled by default</p>
-
-<p>Hide hidden files.
-Switch to the previous rofi-mode if hidden files are a already hidden. <br />
-(Can be enabled with <code>-file-browser-use-mode-keys</code>)</p></li>
 </ul>
 
 
-<p>Configurable key bindings can be changed via command line options (see <a href="#key-bindings-1" data-bare-link="true">Command line options/Key bindings</a>).</p>
+<p>Key bindings can be changed via command line options (see <a href="#key-bindings-1" data-bare-link="true">Command line options/Key bindings</a>).</p>
 
 <h2 id="OPTIONS">OPTIONS</h2>
 
@@ -264,20 +253,18 @@ When this option is specified, the default config file will not be loaded.</p></
 
 <h3 id="Key-bindings">Key bindings</h3>
 
-<p>  Supported key bindings are <code>kb-accept-alt</code> and <code>kb-custom-*</code>.
-  You can change the actual key bindings that correspond to <code>kb-accept-alt</code> and <code>kb-custom-*</code> in rofi's options.
-  Run <code>rofi -show keys</code> to display rofi's key bindings and what they are bound to.
-  Run <code>rofi -dump-config</code> or <code>rofi -dump-xresources</code> to get a list of available options.</p>
+<p>Supported key bindings are <code>kb-accept-alt</code>, <code>kb-custom-[0-19]</code> and <code>none</code> (disables the key binding).
+You can change the actual key bindings that correspond to <code>kb-accept-alt</code> and <code>kb-custom-*</code> in rofi's options.
+Run <code>rofi -show keys</code> to display rofi's key bindings and what they are bound to.
+Run <code>rofi -dump-config</code> or <code>rofi -dump-xresources</code> to get a list of available options.</p>
 
 <dl>
-<dt><code>-file-browser-use-mode-keys</code></dt><dd><p>Show / hide hidden files with <code>kb-mode-next</code> and <code>kb-mode-previous</code>.
-<strong>(default: disabled)</strong></p></dd>
 <dt><code>-file-browser-open-custom-key</code> <em><var>rofi-key</var></em></dt><dd><p>Set the key binding for <code>open custom</code>.
 <strong>(default: <code>kb-accept-alt</code>)</strong></p></dd>
 <dt><code>-file-browser-open-multi-key</code> <em><var>rofi-key</var></em></dt><dd><p>Set the key binding for <code>open multi</code>.
-<strong>(default: <code>kb-custom-11</code>)</strong></p></dd>
+<strong>(default: <code>kb-custom-1</code>)</strong></p></dd>
 <dt><code>-file-browser-open-toggle-hidden</code> <em><var>rofi-key</var></em></dt><dd><p>Set the key binding for toggling hidden files.
-<strong>(default: <code>kb-custom-12</code>)</strong></p></dd>
+<strong>(default: <code>kb-custom-2</code>)</strong></p></dd>
 </dl>
 
 
@@ -320,7 +307,7 @@ If that doesn't help, feel free to create a new issue on GitHub.</p>
 
   <ol class='man-decor man-foot man foot'>
     <li class='tl'></li>
-    <li class='tc'>December 2020</li>
+    <li class='tc'>January 2021</li>
     <li class='tr'>rofi-file-browser-extended(1)</li>
   </ol>
 

@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "ROFI\-FILE\-BROWSER\-EXTENDED" "1" "December 2020" "" ""
+.TH "ROFI\-FILE\-BROWSER\-EXTENDED" "1" "January 2021" "" ""
 .
 .SH "NAME"
 \fBrofi\-file\-browser\-extended\fR \- use rofi to quickly open files
@@ -114,7 +114,6 @@ oc\-cmd     "evince;icon:evince"
 oc\-cmd     "gimp;icon:gimp"
 depth      2
 
-# use\-mode\-keys
 open\-parent\-as\-self
 .
 .fi
@@ -130,45 +129,27 @@ Command line options will override the config file (or add to the config file ar
 .SH "KEY BINDINGS"
 .
 .IP "\(bu" 4
-\fBkb\-accept\-alt\fR, \fI(default: Shift+Return)\fR, configurable
+\fBkb\-accept\-alt\fR, \fI(default: Shift+Return)\fR
 .
 .IP
 \fBopen custom\fR: Open the selected file with a custom command\.
 .
 .IP "\(bu" 4
-\fBkb\-custom\-11\fR, \fI(default: Alt+Shift+1)\fR, configurable
+\fBkb\-custom\-1\fR, \fI(default: Alt+1)\fR
 .
 .IP
 \fBopen multi\fR: Open the selected file without closing rofi\. Can be used in the prompt of \fBopen custom\fR\.
 .
 .IP "\(bu" 4
-\fBkb\-custom\-12\fR, \fI(default: Alt+Shift+2)\fR, configurable
+\fBkb\-custom\-2\fR, \fI(default: Alt+2)\fR
 .
 .IP
 Toggle hidden files\.
 .
-.IP "\(bu" 4
-\fBkb\-mode\-next\fR, \fI(default: Shift+Right)\fR, disabled by default
-.
-.IP
-Show hidden files\. Switch to the next rofi\-mode if hidden files are already shown\.
-.
-.br
-(Can be enabled with \fB\-file\-browser\-use\-mode\-keys\fR)
-.
-.IP "\(bu" 4
-\fBkb\-mode\-previous\fR, \fI(default: Shift+Left)\fR, disabled by default
-.
-.IP
-Hide hidden files\. Switch to the previous rofi\-mode if hidden files are a already hidden\.
-.
-.br
-(Can be enabled with \fB\-file\-browser\-use\-mode\-keys\fR)
-.
 .IP "" 0
 .
 .P
-Configurable key bindings can be changed via command line options (see \fICommand line options/Key bindings\fR)\.
+Key bindings can be changed via command line options (see \fICommand line options/Key bindings\fR)\.
 .
 .SH "OPTIONS"
 .
@@ -265,11 +246,7 @@ Load options from the specified config file\. \fB(default: \fB$XDG_USER_CONFIG_D
 Can be used multiple times to load options from multiple config files\. When this option is specified, the default config file will not be loaded\.
 .
 .SS "Key bindings"
-Supported key bindings are \fBkb\-accept\-alt\fR and \fBkb\-custom\-*\fR\. You can change the actual key bindings that correspond to \fBkb\-accept\-alt\fR and \fBkb\-custom\-*\fR in rofi\'s options\. Run \fBrofi \-show keys\fR to display rofi\'s key bindings and what they are bound to\. Run \fBrofi \-dump\-config\fR or \fBrofi \-dump\-xresources\fR to get a list of available options\.
-.
-.TP
-\fB\-file\-browser\-use\-mode\-keys\fR
-Show / hide hidden files with \fBkb\-mode\-next\fR and \fBkb\-mode\-previous\fR\. \fB(default: disabled)\fR
+Supported key bindings are \fBkb\-accept\-alt\fR, \fBkb\-custom\-[0\-19]\fR and \fBnone\fR (disables the key binding)\. You can change the actual key bindings that correspond to \fBkb\-accept\-alt\fR and \fBkb\-custom\-*\fR in rofi\'s options\. Run \fBrofi \-show keys\fR to display rofi\'s key bindings and what they are bound to\. Run \fBrofi \-dump\-config\fR or \fBrofi \-dump\-xresources\fR to get a list of available options\.
 .
 .TP
 \fB\-file\-browser\-open\-custom\-key\fR \fI\fIrofi\-key\fR\fR
@@ -277,11 +254,11 @@ Set the key binding for \fBopen custom\fR\. \fB(default: \fBkb\-accept\-alt\fR)\
 .
 .TP
 \fB\-file\-browser\-open\-multi\-key\fR \fI\fIrofi\-key\fR\fR
-Set the key binding for \fBopen multi\fR\. \fB(default: \fBkb\-custom\-11\fR)\fR
+Set the key binding for \fBopen multi\fR\. \fB(default: \fBkb\-custom\-1\fR)\fR
 .
 .TP
 \fB\-file\-browser\-open\-toggle\-hidden\fR \fI\fIrofi\-key\fR\fR
-Set the key binding for toggling hidden files\. \fB(default: \fBkb\-custom\-12\fR)\fR
+Set the key binding for toggling hidden files\. \fB(default: \fBkb\-custom\-2\fR)\fR
 .
 .SS "Appearance"
 .
