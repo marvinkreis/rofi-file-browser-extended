@@ -49,9 +49,6 @@
 /* Add executables from $PATH to the cmds. */
 #define SEARCH_PATH_FOR_CMDS false
 
-/* Use mode keys (kb-mode-next, kb-mode-previous) to toggle hidden files. */
-#define USE_MODE_KEYS false
-
 /* Show icons. */
 #define SHOW_ICONS true
 
@@ -83,9 +80,9 @@
 /* Key for opening file with custom command. */
 #define OPEN_CUSTOM_KEY KB_ACCEPT_ALT
 /* Key for opening file without closing. */
-#define OPEN_MULTI_KEY KB_CUSTOM_11
+#define OPEN_MULTI_KEY KB_CUSTOM_1
 /* Key for toggling hidden files. */
-#define TOGGLE_HIDDEN_KEY KB_CUSTOM_12
+#define TOGGLE_HIDDEN_KEY KB_CUSTOM_2
 
 /* Separators for open-custom commands. */
 #define OPEN_CUSTOM_CMD_NAME_SEP ";name:"

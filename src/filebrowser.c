@@ -210,18 +210,6 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         load_files ( fd );
         retv = RELOAD_DIALOG;
 
-    /* Enable hidden files with Shift+Right. */
-    } else if ( kd->use_mode_keys && ( mretv & MENU_NEXT ) && ! fd->show_hidden ) {
-        fd->show_hidden = true;
-        load_files ( fd );
-        retv = RELOAD_DIALOG;
-
-    /* Disable hidden files with Shift+Left. */
-    } else if ( kd->use_mode_keys && ( mretv & MENU_PREVIOUS ) && fd->show_hidden ) {
-        fd->show_hidden = false;
-        load_files ( fd );
-        retv = RELOAD_DIALOG;
-
     /* Default actions */
     } else if ( mretv & MENU_CANCEL ) {
         retv = MODE_EXIT;

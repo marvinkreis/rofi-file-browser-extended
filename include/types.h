@@ -85,7 +85,7 @@ typedef enum FBKey {
     KB_CUSTOM_1,  KB_CUSTOM_2,  KB_CUSTOM_3,  KB_CUSTOM_4,  KB_CUSTOM_5,
     KB_CUSTOM_6,  KB_CUSTOM_7,  KB_CUSTOM_8,  KB_CUSTOM_9,  KB_CUSTOM_10,
     KB_CUSTOM_11, KB_CUSTOM_12, KB_CUSTOM_13, KB_CUSTOM_14, KB_CUSTOM_15,
-    KB_CUSTOM_16, KB_CUSTOM_17, KB_CUSTOM_18, KB_CUSTOM_19, KB_CUSTOM_20,
+    KB_CUSTOM_16, KB_CUSTOM_17, KB_CUSTOM_18, KB_CUSTOM_19,
     KB_ACCEPT_ALT,
     KEY_NONE,       // no key is assigned to an action
     KEY_UNSUPPORTED // key is not a supported FBKey
@@ -99,8 +99,6 @@ typedef struct {
     FBKey open_multi_key;
     /* Key for toggling hidden files. */
     FBKey toggle_hidden_key;
-    /* Use kb-mode-previous and kb-mode-next to toggle hidden files. */
-    bool use_mode_keys;
 } FileBrowserKeyData;
 
 // ================================================================================================================= //
