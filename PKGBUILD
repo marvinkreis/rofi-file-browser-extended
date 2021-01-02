@@ -19,12 +19,6 @@ pkgver() {
     git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
-prepare() {
-    cd "${srcdir}/${pkgname%-git}"
-    git submodule init
-    git submodule update
-}
-
 build() {
     cd "${srcdir}/${pkgname%-git}"
     cmake .
