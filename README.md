@@ -301,7 +301,7 @@ Run `rofi -dump-config` or `rofi -dump-xresources` to get a list of available op
 ## Example
 
 ```bash
-rofi -modi file-browser -show file-browser        \
+rofi -modi file-browser-extended -show file-browser-extended \
     -file-browser-cmd "exo-open"                  \
     -file-browser-dir "/"                         \
     -file-browser-depth 2                         \
