@@ -14,6 +14,8 @@
 .SH "DESCRIPTION"
 \fBrofi\-file\-browser\-extended\fR is a configurable file browser plugin for rofi\. It\'s main use case is to quickly open files without having to open a window to navigate to the file\.
 .SH "USAGE"
+.SS "Resuming from the last opened directory"
+Use \fB\-file\-browser\-resume\fR to enable this behaviour\. The plugin will write the current directory to the "resume file" before exiting, and read it on startup\. The default resume file location is \fB$XDG_USER_CONFIG_DIR/rofi/file\-browser\-resume\fR (usually \fB$HOME/config/rofi/file\-browser\-resume\fR)\. A different resume file can be chosen via \fB\-file\-browser\-resume\-file\fR\.
 .SS "Listing files recursively"
 \fB\-file\-browser\-depth\fR can be used to list files recursively up to a certain depth\. A depth of 0 means files are listed without a depth limit\.
 .P
@@ -61,7 +63,7 @@ ls somedir | rofi \-show file\-browser\-extended \-file\-browser\-stdin \-file\-
 .fi
 .IP "" 0
 .SH "CONFIGURATION"
-The default config file location is \fB$XDG_USER_CONFIG_DIR/rofi/file\-browser\fR (defaults to \fB$HOME/config/rofi/file\-browser\fR)\. The config file consists of newline\-separated command line options \fBwithout\fR the \fB"\-file\-browser\-"\fR prefix\.
+The default config file location is \fB$XDG_USER_CONFIG_DIR/rofi/file\-browser\fR (usually to \fB$HOME/config/rofi/file\-browser\fR)\. The config file consists of newline\-separated command line options \fBwithout\fR the \fB"\-file\-browser\-"\fR prefix\.
 .P
 Example:
 .IP "" 4
@@ -102,6 +104,12 @@ Set the command to open selected files with\. \fB(default: \fBxdg\-open\fR)\fR
 .TP
 \fB\-file\-browser\-dir\fR \fI\fIpath\fR\fR
 Set the starting directory\. \fB(default: current working directory)\fR
+.TP
+\fB\-file\-browser\-resume\fR
+Resume from the last opened directory\. \fB(default: disabled)\fR
+.TP
+\fB\-file\-browser\-resume\-file\fR \fI\fIpath\fR\fR
+Set the resume file\. When resuming is enabled, the path of the last opened directory is saved to this file\. \fB(default: \fB$XDG_USER_CONFIG_DIR/rofi/file\-browser\-resume\fR)\fR
 .TP
 \fB\-file\-browser\-depth\fR \fI\fIdepth\fR\fR
 List files recursively until a depth is reached\. A value of 0 means no depth limit\. \fB(default: 1)\fR

@@ -42,7 +42,7 @@ navigate to the file.
 
 # Features
 
-* Icons depending on file type
+* Resume from last opened directory
 * Enter any absolute path to directly switch to it
 * Open files with custom commands (`open custom`)
 * Open multiple files without closing rofi (`open multi`)
@@ -54,6 +54,13 @@ navigate to the file.
 * Read and show (absolute or relative) file paths from stdin (`stdin mode`)
 
 # Usage
+
+## Resuming from the last opened directory
+
+Use `-file-browser-resume` to enable this behaviour.
+The plugin will write the current directory to the "resume file" before exiting, and read it on startup.
+The default resume file location is `$XDG_USER_CONFIG_DIR/rofi/file-browser-resume` (usually `$HOME/config/rofi/file-browser-resume`).
+A different resume file can be chosen via `-file-browser-resume-file`.
 
 ## Listing files recursively
 
@@ -115,7 +122,7 @@ ls somedir | rofi -show file-browser-extended -file-browser-stdin -file-browser-
 
 # Configuration
 
-The default config file location is `$XDG_USER_CONFIG_DIR/rofi/file-browser` (defaults to `$HOME/config/rofi/file-browser`).
+The default config file location is `$XDG_USER_CONFIG_DIR/rofi/file-browser` (usually `$HOME/config/rofi/file-browser`).
 The config file consists of newline-separated command line options **without** the **"-file-browser-"** prefix.
 
 Example:
@@ -158,6 +165,14 @@ Key bindings can be changed via command line options (see [Command line options/
 #### -file-browser-dir `<path>`
 > Set the starting directory.
 > *(default: current working directory)*
+
+#### -file-browser-resume
+> Resume from the last opened directory.
+> *(default: disabled)*
+
+#### -file-browser-resume-file `<path>`
+> Set the resume file. When resuming is enabled, the path of the last opened directory is saved to this file.
+> *(default: `$XDG_USER_CONFIG_DIR/rofi/file-browser-resume`)*
 
 #### -file-browser-depth `<depth>`
 > List files recursively until a depth is reached.
