@@ -18,7 +18,9 @@ bool set_options ( FileBrowserModePrivateData *pd );
  */
 void destroy_options ( FileBrowserModePrivateData *pd );
 
-// TODO
+/**
+ * Writes the current directory to the resume file, if resuming is enabled.
+ */
 bool write_resume_file ( FileBrowserModePrivateData *pd );
 
 #endif

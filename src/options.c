@@ -51,8 +51,15 @@ static bool fb_find_arg_str ( char* option, char **arg, FileBrowserModePrivateDa
  */
 static char **fb_find_arg_strv ( char* option, FileBrowserModePrivateData *pd );
 
-// TODO
+/**
+ * Returns a newly allocated path to the directory to start the file browser in. This checks, in order,
+ * the -file-browser-dir option, the path in the resume file (if resuming is enabled), and the default start path.
+ */
 static char *get_start_dir ( FileBrowserModePrivateData *pd );
+
+/**
+ * Expands a path and returns a newly allocated copy of the canonical absolute path.
+ */
 static char *expand_start_dir ( char *raw_start_dir );
 
 /**
@@ -381,6 +388,7 @@ static char *get_start_dir ( FileBrowserModePrivateData *pd )
              resume_file_contents[ strcspn ( resume_file_contents, "\r\n" ) ] = '\0';
 
              char *start_dir = expand_start_dir ( resume_file_contents );
+             g_free ( resume_file_contents );
              if ( start_dir != NULL ) {
                  return start_dir;
              }
