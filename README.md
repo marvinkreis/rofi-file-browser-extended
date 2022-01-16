@@ -347,7 +347,7 @@ This plugin can be found in the AUR under [rofi-file-browser-extended-git](https
 
 | Dependency | Version |
 | ---------- | ------- |
-| rofi       | 1.6+    |
+| rofi       | 1.6.1+  |
 
 ## Compilation
 
