@@ -129,6 +129,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
             pd->open_custom = false;
             pd->open_custom_index = -1;
             if ( key != kd->open_multi_key ) {
+                write_resume_file ( pd );
                 retv = MODE_EXIT;
             } else {
                 retv = RESET_DIALOG;
@@ -159,6 +160,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
             if ( pd->no_descend || key == kd->open_multi_key ) {
                 open_file ( entry, NULL, pd->cmd, pd );
                 if ( key != kd->open_multi_key ) {
+                    write_resume_file ( pd );
                     retv = MODE_EXIT;
                 }
             } else {
@@ -172,6 +174,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
         file:
             open_file ( entry, NULL, pd->cmd, pd );
             if ( key != kd->open_multi_key ) {
+                write_resume_file ( pd );
                 retv = MODE_EXIT;
             }
             break;
@@ -198,6 +201,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
                 retv = RESET_DIALOG;
             } else {
                 open_file ( NULL, abs_path, pd->cmd, pd );
+                write_resume_file ( pd );
                 retv = MODE_EXIT;
             }
 
@@ -212,6 +216,7 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
 
     /* Default actions */
     } else if ( mretv & MENU_CANCEL ) {
+        write_resume_file ( pd );
         retv = MODE_EXIT;
     } else if ( mretv & MENU_NEXT ) {
         retv = NEXT_DIALOG;

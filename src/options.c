@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 #include <gmodule.h>
 #include <glib/gstdio.h>
 #include <rofi/helper.h>
@@ -50,6 +51,10 @@ static bool fb_find_arg_str ( char* option, char **arg, FileBrowserModePrivateDa
  */
 static char **fb_find_arg_strv ( char* option, FileBrowserModePrivateData *pd );
 
+// TODO
+static char *get_start_dir ( FileBrowserModePrivateData *pd );
+static char *expand_start_dir ( char *raw_start_dir );
+
 /**
  * Length of "-file-browser", used to ignore the prefix in the config file.
  */
@@ -90,6 +95,7 @@ bool set_options ( FileBrowserModePrivateData *pd )
     pd->no_descend           = fb_find_arg ( "-file-browser-no-descend"          , pd ) ? true  : NO_DESCEND;
     pd->open_parent_as_self  = fb_find_arg ( "-file-browser-open-parent-as-self" , pd ) ? true  : OPEN_PARENT_AS_SELF;
     pd->search_path_for_cmds = fb_find_arg ( "-file-browser-oc-search-path"      , pd ) ? true  : SEARCH_PATH_FOR_CMDS;
+    pd->resume               = fb_find_arg ( "-file-browser-resume"              , pd ) ? true  : RESUME;
 
     fd->up_text             = str_arg_or_default ( "-file-browser-up-text",            UP_TEXT,            pd );
     id->up_icon             = str_arg_or_default ( "-file-browser-up-icon",            UP_ICON,            pd );
@@ -99,8 +105,9 @@ bool set_options ( FileBrowserModePrivateData *pd )
     pd->show_hidden_symbol  = str_arg_or_default ( "-file-browser-show-hidden-symbol", SHOW_HIDDEN_SYMBOL, pd );
     pd->hide_hidden_symbol  = str_arg_or_default ( "-file-browser-hide-hidden-symbol", HIDE_HIDDEN_SYMBOL, pd );
     pd->path_sep            = str_arg_or_default ( "-file-browser-path-sep",           PATH_SEP,           pd );
+    pd->resume_file         = str_arg_or_default ( "-file-browser-resume-file",        RESUME_FILE,        pd );
 
-    fd->depth         = int_arg_or_default ( "-file-browser-depth",         DEPTH,         pd );
+    fd->depth = int_arg_or_default ( "-file-browser-depth", DEPTH, pd );
 
     /* Sort options. */
     /* TODO: make a helper function for "no-..." options and add a "no-..." option for all boolean options. */
@@ -120,22 +127,10 @@ bool set_options ( FileBrowserModePrivateData *pd )
     }
 
     /* Start directory. */
-    char *start_dir = NULL;
-    if ( ! fb_find_arg_str ( "-file-browser-dir", &start_dir, pd ) ) {
-        start_dir = START_DIR;
-    }
-    char *expanded_path = rofi_expand_path ( start_dir );
-    char *abs_path = get_canonical_abs_path ( expanded_path, g_get_current_dir () );
-    g_free ( expanded_path );
-    if ( ! g_file_test ( abs_path, G_FILE_TEST_EXISTS ) ) {
-        print_err ( "Start directory does not exist: \"%s\".\n", start_dir );
+    fd->current_dir = get_start_dir( pd );
+    if ( fd->current_dir == NULL ) {
         return false;
     }
-    if ( ! g_file_test ( abs_path, G_FILE_TEST_IS_DIR ) ) {
-        print_err ( "Start directory is not a directory: \"%s\".\n", start_dir );
-        return false;
-    }
-    fd->current_dir = abs_path;
 
     /* Set glob patterns. */
     char **exclude_globs_strs = fb_find_arg_strv ( "-file-browser-exclude", pd );
@@ -361,4 +356,70 @@ static int int_arg_or_default ( char *name, int default_val, FileBrowserModePriv
     } else {
         return default_val;
     }
+}
+
+static char *get_start_dir ( FileBrowserModePrivateData *pd )
+{
+    /* Get start dir from command line option. */
+    char *raw_start_dir = NULL;
+    if ( fb_find_arg_str ( "-file-browser-dir", &raw_start_dir, pd ) ) {
+        char *start_dir = expand_start_dir ( raw_start_dir );
+        if ( start_dir != NULL ) {
+            return start_dir;
+        }
+    }
+
+    /* Get start dir from resume file. */
+     if ( pd->resume ) {
+         char *resume_file_contents = NULL;
+         if ( ! g_file_get_contents ( (const char *) pd->resume_file, &resume_file_contents, NULL, NULL ) ) {
+             print_err ( "Could not open resume file: \"%s\"\n", pd->resume_file );
+         } else {
+             /* Skip initial newlines. */
+             resume_file_contents += strspn ( resume_file_contents, "\r\n" );
+             /* Remove anything after the first actual line. */
+             resume_file_contents[ strcspn ( resume_file_contents, "\r\n" ) ] = '\0';
+
+             char *start_dir = expand_start_dir ( resume_file_contents );
+             if ( start_dir != NULL ) {
+                 return start_dir;
+             }
+         }
+     }
+
+    /* Get the default start dir. */
+    return expand_start_dir ( START_DIR );
+}
+
+static char *expand_start_dir ( char *raw_start_dir )
+{
+    char *expanded_path = rofi_expand_path ( raw_start_dir );
+    char *abs_path = get_canonical_abs_path ( expanded_path, g_get_current_dir () );
+    g_free ( expanded_path );
+
+    if ( ! g_file_test ( abs_path, G_FILE_TEST_EXISTS ) ) {
+        print_err ( "Start directory does not exist: \"%s\".\n", raw_start_dir );
+        return NULL;
+    }
+    if ( ! g_file_test ( abs_path, G_FILE_TEST_IS_DIR ) ) {
+        print_err ( "Start directory is not a directory: \"%s\".\n", raw_start_dir );
+        return NULL;
+    }
+
+    return abs_path;
+}
+
+bool write_resume_file ( FileBrowserModePrivateData *pd )
+{
+    if ( ! pd->resume ) {
+        return true;
+    }
+
+    char* file_content = g_strconcat ( pd->file_data.current_dir, "\n", NULL );
+    if ( ! g_file_set_contents ( pd->resume_file, file_content, -1, NULL ) ) {
+        print_err ( "Could not write new path to the resume file: \"%s\"", pd-> resume_file );
+        return false;
+    }
+    g_free ( file_content );
+    return true;
 }

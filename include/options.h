@@ -18,4 +18,7 @@ bool set_options ( FileBrowserModePrivateData *pd );
  */
 void destroy_options ( FileBrowserModePrivateData *pd );
 
+// TODO
+bool write_resume_file ( FileBrowserModePrivateData *pd );
+
 #endif

@@ -5,7 +5,7 @@
 #define START_DIR g_get_current_dir ()
 
 /* The configuration file. */
-#define CONFIG_FILE g_build_filename ( g_get_user_config_dir(), "rofi", "file-browser", NULL )
+#define CONFIG_FILE g_build_filename ( g_get_user_config_dir (), "rofi", "file-browser", NULL )
 
 /* The default command used to open files. */
 #define CMD "xdg-open \"%s\""
@@ -87,5 +87,10 @@
 /* Separators for open-custom commands. */
 #define OPEN_CUSTOM_CMD_NAME_SEP ";name:"
 #define OPEN_CUSTOM_CMD_ICON_SEP ";icon:"
+
+/* The file containing the path for resuming from the last visited directory. */
+#define RESUME_FILE g_build_filename ( g_get_user_config_dir (), "rofi", "file-browser-resume", NULL )
+/* Whether to resume from the last visited directory by default. */
+#define RESUME false
 
 #endif

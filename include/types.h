@@ -92,7 +92,7 @@ typedef enum FBKey {
 } FBKey;
 
 typedef struct {
-    /* Only KB_CUSTOM_* and KB_ACCEPT_ALT supported. */
+    /* Only KB_ACCEPT, KB_ACCEPT_ALT and KB_CUSTOM_* are supported. */
     /* Key for custom program prompt. */
     FBKey open_custom_key;
     /* Key for opening file without closing. */
@@ -136,6 +136,10 @@ typedef struct {
     char *show_hidden_symbol;
     char *hide_hidden_symbol;
     char *path_sep;
+    /* Absolute path of a file containing a path to resume from. */
+    char *resume_file;
+    /* Whether to resume from the path set in resume_file or not. */
+    bool resume;
 
     /* Table used to save options from the config file. */
     GHashTable *config_table;
