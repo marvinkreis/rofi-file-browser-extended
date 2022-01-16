@@ -121,7 +121,6 @@ The config file consists of newline-separated command line options **without** t
 Example:
 
 ```
-icon-theme "Numix-Circle"
 cmd        "exo-open"
 oc-cmd     "evince;icon:evince"
 oc-cmd     "gimp;icon:gimp"
@@ -307,7 +306,6 @@ rofi -modi file-browser-extended -show file-browser-extended \
     -file-browser-depth 2                         \
     -file-browser-open-multi-key "kb-accept-alt"  \
     -file-browser-open-custom-key "kb-custom-11"  \
-    -file-browser-icon-theme "Adwaita"            \
     -file-browser-hide-hidden-symbol ""           \
     -file-browser-path-sep "/"                    \
     -file-browser-up-text "up"                    \

@@ -38,20 +38,16 @@ User-defined commands can optionally specify an icon and a display name (with pa
 
 Format:
 
-```
-<command>;icon:<icon-name>;name:<name-to-displayed>
-```
+    <command>;icon:<icon-name>;name:<name-to-displayed>
 
 `icon` and `name` are optional.
 The order of `icon` and `name` does not matter as long as the command comes first.
 
 Example:
 
-```
--file-browser-oc-cmd "gimp"
--file-browser-oc-cmd "pcmanfm-qt;name:pcmanfm;icon:system-file-manager"
--file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <i>(queue)</i>"
-```
+    -file-browser-oc-cmd "gimp"
+    -file-browser-oc-cmd "pcmanfm-qt;name:pcmanfm;icon:system-file-manager"
+    -file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <i>(queue)</i>"
 
 ### Reading paths from stdin
 
@@ -66,11 +62,9 @@ to make it more dmenu-like.
 
 Example:
 
-```
-fd | rofi -show file-browser-extended -file-browser-stdin
-fd -a | rofi -show file-browser-extended -file-browser-stdin
-ls somedir | rofi -show file-browser-extended -file-browser-stdin -file-browser-dir somedir
-```
+    fd | rofi -show file-browser-extended -file-browser-stdin
+    fd -a | rofi -show file-browser-extended -file-browser-stdin
+    ls somedir | rofi -show file-browser-extended -file-browser-stdin -file-browser-dir somedir
 
 ## CONFIGURATION
 
@@ -79,15 +73,12 @@ The config file consists of newline-separated command line options **without** t
 
 Example:
 
-```
-icon-theme "Numix-Circle"
-cmd        "exo-open"
-oc-cmd     "evince;icon:evince"
-oc-cmd     "gimp;icon:gimp"
-depth      2
+    cmd        "exo-open"
+    oc-cmd     "evince;icon:evince"
+    oc-cmd     "gimp;icon:gimp"
+    depth      2
 
-open-parent-as-self
-```
+    open-parent-as-self
 
 Comments start with `#`.
 Quotes inside string arguments must not be escaped.
