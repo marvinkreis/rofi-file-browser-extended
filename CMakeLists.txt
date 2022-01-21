@@ -17,7 +17,7 @@ include_directories(
     ${CAIRO_INCLUDE_DIRS}
 )
 
-file(GLOB SRC "src/*.c")
+file(GLOB_RECURSE SRC "src/*.c")
 
 add_library(filebrowser SHARED ${SRC})
 set_target_properties(filebrowser PROPERTIES PREFIX "")

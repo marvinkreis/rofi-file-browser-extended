@@ -9,6 +9,7 @@
 #include "types.h"
 #include "util.h"
 #include "files.h"
+#include "compat/extended_nftw.h"
 
 /**
  * Save file browser data globally so nftw's callback can access it.
@@ -125,7 +126,7 @@ void load_files ( FileBrowserFileData *fd )
     int nftw_flags = fd->follow_symlinks ? FTW_ACTIONRETVAL : ( FTW_ACTIONRETVAL | FTW_PHYS );
     /* Workaround to make nftw work if the current directory is a symlink. */
     char *path = g_build_filename ( fd->current_dir, ".", NULL );
-    nftw ( path , add_file, 16, nftw_flags );
+    extended_nftw ( path , add_file, 16, nftw_flags );
     g_free ( path );
 
     /* Exclude the parent dir from sorting. */
