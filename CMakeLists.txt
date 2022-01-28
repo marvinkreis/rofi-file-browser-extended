@@ -29,6 +29,7 @@ target_link_libraries(filebrowser
 
 install(TARGETS filebrowser DESTINATION ${ROFI_PLUGINS_DIR})
 
+add_compile_definitions(_XOPEN_SOURCE=700)
 
 
 # Manpage

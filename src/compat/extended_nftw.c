@@ -28,7 +28,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ----------------------------------------------------------------------
 */
-#include <ftw.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -80,13 +79,13 @@ static int do_nftw(char *path, int (*fn)(const char *, const struct stat *, int,
 
     if ((flags & FTW_MOUNT) && h && st.st_dev != h->dev)
         return 0;
-    
+
     new.chain = h;
     new.dev = st.st_dev;
     new.ino = st.st_ino;
     new.level = h ? h->level+1 : 0;
     new.base = j+1;
-    
+
     lev.level = new.level;
     if (h) {
         lev.base = h->base;
@@ -172,7 +171,7 @@ int extended_nftw(const char *path, int (*fn)(const char *, const struct stat *,
         return -1;
     }
     memcpy(pathbuf, path, l+1);
-    
+
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
     r = do_nftw(pathbuf, fn, fd_limit, flags, NULL);
     pthread_setcancelstate(cs, 0);

@@ -1,11 +1,6 @@
 #ifndef FILE_BROWSER_FILES_H
 #define FILE_BROWSER_FILES_H
 
-#define _XOPEN_SOURCE 700
-#define _GNU_SOURCE
-
-#include <ftw.h>
-
 #include "types.h"
 
 /**
