@@ -27,6 +27,8 @@ target_link_libraries(filebrowser
     ${CAIRO_LIBRARIES}
 )
 
+add_compile_definitions(_GNU_SOURCE)
+
 install(TARGETS filebrowser DESTINATION ${ROFI_PLUGINS_DIR})
 
 
