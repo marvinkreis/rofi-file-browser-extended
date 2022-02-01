@@ -1,3 +1,5 @@
+include(CheckSymbolExists)
+
 cmake_minimum_required(VERSION 2.8)
 project(rofi-file-browser-extended)
 
@@ -18,6 +20,18 @@ include_directories(
 )
 
 file(GLOB SRC "src/*.c")
+
+# Check if <ftw.h> defines glibc-specific extensions.
+set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+check_symbol_exists(FTW_ACTIONRETVAL "ftw.h" HAVE_FTW_ACTIONRETVAL)
+unset(CMAKE_REQUIRED_DEFINITIONS)
+
+if(HAVE_FTW_ACTIONRETVAL)
+    add_compile_definitions(_GNU_SOURCE HAVE_FTW_ACTIONRETVAL)
+else()
+    add_compile_definitions(_XOPEN_SOURCE=700)
+    list(APPEND SRC "src/posix-compat/extended_nftw.c")
+endif()
 
 add_library(filebrowser SHARED ${SRC})
 set_target_properties(filebrowser PROPERTIES PREFIX "")
