@@ -1,6 +1,6 @@
 .\" generated with Ronn-NG/v0.9.1
 .\" http://github.com/apjanke/ronn-ng/tree/0.9.1
-.TH "ROFI\-FILE\-BROWSER\-EXTENDED" "1" "January 2022" ""
+.TH "ROFI\-FILE\-BROWSER\-EXTENDED" "1" "May 2022" ""
 .SH "NAME"
 \fBrofi\-file\-browser\-extended\fR \- use rofi to quickly open files
 .SH "SYNOPSIS"
@@ -63,7 +63,7 @@ ls somedir | rofi \-show file\-browser\-extended \-file\-browser\-stdin \-file\-
 .fi
 .IP "" 0
 .SH "CONFIGURATION"
-The default config file location is \fB$XDG_USER_CONFIG_DIR/rofi/file\-browser\fR (usually to \fB$HOME/config/rofi/file\-browser\fR)\. The config file consists of newline\-separated command line options \fBwithout\fR the \fB"\-file\-browser\-"\fR prefix\.
+The default config file location is \fB$XDG_USER_CONFIG_DIR/rofi/file\-browser\fR (usually to \fB$HOME/config/rofi/file\-browser\fR)\. The config file consists of newline\-separated command line options \fBwithout\fR the \fB"\-file\-browser\-"\fR prefix\. Each key and value should be separated by one or more space characters\.
 .P
 Example:
 .IP "" 4
@@ -179,7 +179,7 @@ Set the key binding for \fBopen custom\fR\. \fB(default: \fBkb\-accept\-alt\fR)\
 \fB\-file\-browser\-open\-multi\-key\fR \fI\fIrofi\-key\fR\fR
 Set the key binding for \fBopen multi\fR\. \fB(default: \fBkb\-custom\-1\fR)\fR
 .TP
-\fB\-file\-browser\-open\-toggle\-hidden\fR \fI\fIrofi\-key\fR\fR
+\fB\-file\-browser\-toggle\-hidden\-key\fR \fI\fIrofi\-key\fR\fR
 Set the key binding for toggling hidden files\. \fB(default: \fBkb\-custom\-2\fR)\fR
 .SS "Appearance"
 .TP

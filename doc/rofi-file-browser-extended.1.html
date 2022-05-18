@@ -156,7 +156,8 @@ ls somedir | rofi -show file-browser-extended -file-browser-stdin -file-browser-
 <h2 id="CONFIGURATION">CONFIGURATION</h2>
 
 <p>The default config file location is <code>$XDG_USER_CONFIG_DIR/rofi/file-browser</code> (usually to <code>$HOME/config/rofi/file-browser</code>).
-The config file consists of newline-separated command line options <strong>without</strong> the <strong>"-file-browser-"</strong> prefix.</p>
+The config file consists of newline-separated command line options <strong>without</strong> the <strong>"-file-browser-"</strong> prefix. Each key and value should be
+separated by one or more space characters.</p>
 
 <p>Example:</p>
 
@@ -342,7 +343,7 @@ Run <code>rofi -dump-config</code> or <code>rofi -dump-xresources</code> to get 
 <strong>(default: <code>kb-custom-1</code>)</strong>
 </dd>
 <dt>
-<code>-file-browser-open-toggle-hidden</code> <em><var>rofi-key</var></em>
+<code>-file-browser-toggle-hidden-key</code> <em><var>rofi-key</var></em>
 </dt>
 <dd>Set the key binding for toggling hidden files.
 <strong>(default: <code>kb-custom-2</code>)</strong>
@@ -419,7 +420,7 @@ If that doesn't help, feel free to create a new issue on GitHub.</p>
 
   <ol class='man-decor man-foot man foot'>
     <li class='tl'></li>
-    <li class='tc'>January 2022</li>
+    <li class='tc'>May 2022</li>
     <li class='tr'>rofi-file-browser-extended(1)</li>
   </ol>
 

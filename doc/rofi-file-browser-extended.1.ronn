@@ -76,7 +76,8 @@ Example:
 ## CONFIGURATION
 
 The default config file location is `$XDG_USER_CONFIG_DIR/rofi/file-browser` (usually to `$HOME/config/rofi/file-browser`).
-The config file consists of newline-separated command line options **without** the **"-file-browser-"** prefix.
+The config file consists of newline-separated command line options **without** the **"-file-browser-"** prefix. Each key and value should be
+separated by one or more space characters.
 
 Example:
 
@@ -230,7 +231,7 @@ Run `rofi -dump-config` or `rofi -dump-xresources` to get a list of available op
   Set the key binding for `open multi`.
   **(default: `kb-custom-1`)**
 
-* `-file-browser-open-toggle-hidden` *<rofi-key>*:
+* `-file-browser-toggle-hidden-key` *<rofi-key>*:
   Set the key binding for toggling hidden files.
   **(default: `kb-custom-2`)**
 
