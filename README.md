@@ -338,6 +338,14 @@ The plugin prints error messages if things go wrong.
 If that doesn't help, feel free to [create a new issue](#https://github.com/marvinkreis/rofi-file-browser-extended/issues/new).
 
 # Installation
+## NixOS
+```nix
+environment.systemPackages = with pkgs; [
+  (rofi.override {
+    plugins = [ rofi-file-browser ];
+  })
+];
+```
 
 ## Arch User Repository
 
