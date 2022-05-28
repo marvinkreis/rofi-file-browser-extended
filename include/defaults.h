@@ -77,6 +77,8 @@
 #define OPEN_CUSTOM_MESSAGE_FORMAT "Enter command to open '%s' with, or cancel to go back."
 
 /* Keys for custom bindings. Only KB_CUSTOM_* and KB_ACCEPT_ALT supported. See types.h. */
+/* Key for opening bookmarsk. */
+#define OPEN_BOOKMARKS_KEY KB_CUSTOM_3
 /* Key for opening file with custom command. */
 #define OPEN_CUSTOM_KEY KB_ACCEPT_ALT
 /* Key for opening file without closing. */

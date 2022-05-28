@@ -57,22 +57,27 @@ FBKey get_key_for_rofi_mretv ( int mretv ) {
 }
 
 void set_key_bindings (
+        char *open_bookmarks_key_str,
         char *open_custom_key_str,
         char* open_multi_key_str,
         char* toggle_hidden_key_str,
         FileBrowserKeyData *kd )
 {
-    kd->open_custom_key   = OPEN_CUSTOM_KEY;
-    kd->open_multi_key    = OPEN_MULTI_KEY;
-    kd->toggle_hidden_key = TOGGLE_HIDDEN_KEY;
+    kd->open_bookmarks_key = OPEN_BOOKMARKS_KEY;
+    kd->open_custom_key    = OPEN_CUSTOM_KEY;
+    kd->open_multi_key     = OPEN_MULTI_KEY;
+    kd->toggle_hidden_key  = TOGGLE_HIDDEN_KEY;
 
-    FBKey *keys[] = { &kd->open_custom_key,
+    FBKey *keys[] = { &kd->open_bookmarks_key,
+                      &kd->open_custom_key,
                       &kd->open_multi_key,
                       &kd->toggle_hidden_key };
-    char *names[] = { "open-custom",
+    char *names[] = { "open-bookmarks",
+                      "open-custom",
                       "open-multi",
                       "toggle-hidden" };
-    char *params[] = { open_custom_key_str,
+    char *params[] = { open_bookmarks_key_str,
+                       open_custom_key_str,
                        open_multi_key_str,
                        toggle_hidden_key_str };
 

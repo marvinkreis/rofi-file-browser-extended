@@ -152,16 +152,23 @@ bool set_options ( FileBrowserModePrivateData *pd )
         }
     }
 
+    /* Set bookmarks for changing current working directory. */
+    char ** bookmarks = fb_find_arg_strv ( "-file-browser-bookmark", pd );
+    set_user_bookmarks(bookmarks, pd);
+    g_strfreev ( bookmarks );
+
     /* Set commands for open-custom. */
     char ** cmds = fb_find_arg_strv ( "-file-browser-oc-cmd", pd );
     set_user_cmds(cmds, pd);
     g_strfreev ( cmds );
 
     /* Set key bindings. */
-    char *open_custom_key_str =   str_arg_or_default ( "-file-browser-open-custom-key",   NULL, pd );
-    char *open_multi_key_str =    str_arg_or_default ( "-file-browser-open-multi-key",    NULL, pd );
-    char *toggle_hidden_key_str = str_arg_or_default ( "-file-browser-toggle-hidden-key", NULL, pd );
-    set_key_bindings ( open_custom_key_str, open_multi_key_str, toggle_hidden_key_str, &pd->key_data );
+    char *open_bookmarks_key_str = str_arg_or_default ( "-file-browser-open-bookmarks-key", NULL, pd );
+    char *open_custom_key_str    = str_arg_or_default ( "-file-browser-open-custom-key",   NULL, pd );
+    char *open_multi_key_str     = str_arg_or_default ( "-file-browser-open-multi-key",    NULL, pd );
+    char *toggle_hidden_key_str  = str_arg_or_default ( "-file-browser-toggle-hidden-key", NULL, pd );
+    set_key_bindings ( open_bookmarks_key_str, open_custom_key_str, open_multi_key_str, toggle_hidden_key_str, &pd->key_data );
+    g_free ( open_bookmarks_key_str );
     g_free ( open_custom_key_str );
     g_free ( open_multi_key_str );
     g_free ( toggle_hidden_key_str );

@@ -26,6 +26,7 @@ FBKey get_key_for_rofi_mretv ( int mretv );
  * Missing command line options are passed as NULL.
  */
 void set_key_bindings (
+        char *open_bookmarks_key_str,
         char *open_custom_key_str,
         char* open_multi_key_str,
         char* toggle_hidden_key_str,

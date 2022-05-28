@@ -32,6 +32,7 @@ See also: `man rofi-file-browser-extended`
 `rofi -show file-browser-extended [ -file-browser-dir <dir> ] [ -file-browser-cmd <cmd> ]` <br/>
 `rofi -show file-browser-extended [ -file-browser-depth <depth> ] [ -file-browser-follow-symlinks ]` <br/>
 `rofi -show file-browser-extended [ -file-browser-oc-cmd <cmd> ] [ -file-browser-oc-search-path ]` <br/>
+`rofi -show file-browser-extended [ -file-browser-bookmark <bookmark> ]` <br/>
 `fd | rofi -show file-browser-extended -file-browser-stdin`
 
 # Description
@@ -46,6 +47,7 @@ navigate to the file.
 * Enter any absolute path to directly switch to it
 * Open files with custom commands (`open custom`)
 * Open multiple files without closing rofi (`open multi`)
+* Change current working directory using bookmarks (`open bookmarks`)
 * Show / hide hidden files
 * List files recursively (up to a configurable depth)
 * Exclude files through glob patterns
@@ -100,6 +102,35 @@ The order of `icon` and `name` does not matter as long as the command comes firs
 -file-browser-oc-cmd "pcmanfm-qt;name:pcmanfm;icon:system-file-manager"
 -file-browser-oc-cmd "deadbeef --queue;icon:deadbeef;name:deadbeef <i>(queue)</i>"
 ```
+## Changing current working directory with bookmarks
+
+Press the `open bookmark` key (see [Key bindings](#key-bindings)) to enter `open bookmark` mode.
+The plugin will then display a list of bookmarks to change the current working directory to.
+
+![Screenshot](https://marvinkreis.github.io/rofi-file-browser-extended/open-bookmark.png)
+
+- User-defined bookmarks can be added with `-file-browser-bookmark` (multiple by passing the option multiple times).
+- If no bookmarks are specified, the file to be opened will be shown instead of a list of commands.
+- You can also type a custom path and presing `kb-accept-custom-alt` will change the cwd to sepecified path
+
+User-defined commands can optionally specify an icon and a display name (with pango markup).
+
+### Format:
+
+```
+<path>;icon:<icon-name>;name:<name-to-displayed>
+```
+
+`icon` and `name` are optional.
+The order of `icon` and `name` does not matter as long as the command comes first.
+
+### Example:
+
+```
+-file-browser-bookmark "/media/nextcloud"
+-file-browser-bookmark "/home/striker/.config;name:configs;icon:configuration_section"
+```
+
 
 ## Reading paths from stdin
 
@@ -131,6 +162,7 @@ Example:
 cmd        "exo-open"
 oc-cmd     "evince;icon:evince"
 oc-cmd     "gimp;icon:gimp"
+bookmark   "/media/nextcloud;icon:nextcloud;name:nextcloud"
 depth      2
 
 open-parent-as-self
@@ -151,6 +183,7 @@ Key                                                              | Action
 `kb-accept-alt` <br/> *(default: `Shift+Return`)* <br/>          | `open custom`: Open the selected file with a custom command.
 `kb-custom-1` <br/> *(default: `Alt+1`)* <br/>                   | `open multi`: Open the selected file without closing rofi. <br/> Can be used in `open custom`.
 `kb-custom-2` <br/> *(default: `Alt+2`)* <br/>                   | Toggle hidden files.
+`kb-custom-3` <br/> *(default: `Alt+3`)* <br/>                   | `open bookmarks`: Change current working directory
 
 Key bindings can be changed via command line options (see [Command line options/Key bindings](#key-bindings-1)).
 
@@ -258,6 +291,10 @@ You can change the actual key bindings that correspond to `kb-accept-alt` and `k
 Run `rofi -show keys` to display rofi's key bindings and what they are bound to.
 Run `rofi -dump-config` or `rofi -dump-xresources` to get a list of available options.
 
+#### -file-browser-open-bookmarks-key `<rofi-key>`
+> Set the key binding for `open bookmarks`.
+> *(default: `kb-custom-3`)*
+
 #### -file-browser-open-custom-key `<rofi-key>`
 > Set the key binding for `open custom`.
 > *(default: `kb-accept-alt`)*
@@ -316,18 +353,20 @@ Run `rofi -dump-config` or `rofi -dump-xresources` to get a list of available op
 
 ```bash
 rofi -modi file-browser-extended -show file-browser-extended \
-    -file-browser-cmd "exo-open"                  \
-    -file-browser-dir "/"                         \
-    -file-browser-depth 2                         \
-    -file-browser-open-multi-key "kb-accept-alt"  \
-    -file-browser-open-custom-key "kb-custom-11"  \
-    -file-browser-hide-hidden-symbol ""           \
-    -file-browser-path-sep "/"                    \
-    -file-browser-up-text "up"                    \
-    -file-browser-up-icon "go-previous"           \
-    -file-browser-oc-search-path                  \
-    -file-browser-oc-cmd "gimp;icon:gimp"         \
-    -file-browser-exclude workspace               \
+    -file-browser-cmd "exo-open"                                            \
+    -file-browser-dir "/"                                                   \
+    -file-browser-depth 2                                                   \
+    -file-browser-open-multi-key "kb-accept-alt"                            \
+    -file-browser-open-custom-key "kb-custom-11"                            \
+    -file-browser-open-bookmarks-key "kb-custom-7"                          \
+    -file-browser-hide-hidden-symbol ""                                     \
+    -file-browser-path-sep "/"                                              \
+    -file-browser-up-text "up"                                              \
+    -file-browser-up-icon "go-previous"                                     \
+    -file-browser-oc-search-path                                            \
+    -file-browser-oc-cmd "gimp;icon:gimp"                                   \
+    -file-browser-bookmark "/media/nextcloud;icon:nextcloud;name:nextcloud" \
+    -file-browser-exclude workspace                                         \
     -file-browser-exclude '*.pdf'
 ```
 
