@@ -338,6 +338,11 @@ The plugin prints error messages if things go wrong.
 If that doesn't help, feel free to [create a new issue](#https://github.com/marvinkreis/rofi-file-browser-extended/issues/new).
 
 # Installation
+
+## Arch User Repository
+
+This plugin can be found in the AUR under [rofi-file-browser-extended-git](https://aur.archlinux.org/packages/rofi-file-browser-extended-git/).
+
 ## NixOS
 ```nix
 environment.systemPackages = with pkgs; [
@@ -346,10 +351,6 @@ environment.systemPackages = with pkgs; [
   })
 ];
 ```
-
-## Arch User Repository
-
-This plugin can be found in the AUR under [rofi-file-browser-extended-git](https://aur.archlinux.org/packages/rofi-file-browser-extended-git/).
 
 ## Dependencies
 
@@ -366,3 +367,8 @@ cmake .
 make
 make install # optional: install the plugin
 ```
+
+### Manpage
+
+The manpage can be built from `doc/rofi-file-browser-extended.1.ronn` using [ronn](https://github.com/rtomayko/ronn).
+This only matters if you plan to contribute, as the plugin comes with the already-compiled manpage.
