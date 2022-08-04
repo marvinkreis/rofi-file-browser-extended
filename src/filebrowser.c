@@ -34,6 +34,7 @@ static int file_browser_init ( Mode *sw )
         FileBrowserModePrivateData *pd = g_malloc0 ( sizeof ( * pd ) );
         mode_set_private_data ( sw, ( void * ) pd );
 
+        pd->open_bookmarks = false;
         pd->open_custom = false;
         pd->open_custom_index = -1;
         /* Other values are initialized by set_options ( pd ). */
@@ -73,6 +74,9 @@ static void file_browser_destroy ( Mode *sw )
     /* Free open-custom commands. */
     destroy_cmds ( pd );
 
+    /* Free open-bookmarks bookmarks. */
+    destroy_bookmarks ( pd );
+
     /* Free config-file options. */
     destroy_options ( pd );
 
@@ -96,6 +100,12 @@ static unsigned int file_browser_get_num_entries ( const Mode *sw )
     if ( pd->open_custom ) {
         if ( pd->show_cmds ) {
             return pd->num_cmds;
+        } else {
+            return 1;
+        }
+    } else if ( pd->open_bookmarks ) {
+        if ( pd->show_bookmarks ) {
+            return pd->num_bookmarks;
         } else {
             return 1;
         }
@@ -136,6 +146,30 @@ static ModeMode file_browser_result ( Mode *sw,  int mretv, char **input, unsign
             pd->open_custom_index = -1;
             retv = RESET_DIALOG;
         }
+
+    /* Handle bookmarks prompt. */
+    } else if ( pd->open_bookmarks ) {
+        if ( mretv & MENU_OK || mretv & MENU_CUSTOM_INPUT || key == kd->open_bookmarks_key ) {
+            char* bookmark;
+            if ( pd->show_bookmarks && selected_line != -1 ) {
+                bookmark = pd->bookmarks[selected_line].path;
+            } else {
+                /* Change this fallback path from / to home directory */
+                bookmark = ( *input != NULL && strlen ( *input ) == 0 ) ? "/" : *input;
+            }
+            change_dir ( bookmark, fd );
+            load_files ( fd );
+            pd->open_bookmarks = false;
+            retv = RESET_DIALOG;
+        } else if ( mretv & MENU_CANCEL ) {
+            pd->open_bookmarks = false;
+            retv = RESET_DIALOG;
+        }
+
+    /* Handle open-bookmarks key press. */
+    } else if ( key == kd->open_bookmarks_key ) {
+        pd->open_bookmarks = true;
+        retv = RESET_DIALOG;
 
     /* Handle open-custom key press. */
     } else if ( key == kd->open_custom_key && selected_line != -1 ) {
@@ -238,6 +272,13 @@ static int file_browser_token_match ( const Mode *sw, rofi_int_matcher **tokens,
         } else {
             return true;
         }
+    } else if ( pd->open_bookmarks ) {
+        if ( pd->show_bookmarks ) {
+            FBBookmark *fbbookmark = &pd->bookmarks[index];
+            return helper_token_match ( tokens, fbbookmark->name != NULL ? fbbookmark->name : fbbookmark->path);
+        } else {
+            return true;
+        }
     } else {
         return helper_token_match ( tokens, fd->files[index].name );
     }
@@ -255,6 +296,11 @@ static char *file_browser_get_display_value ( const Mode *sw, unsigned int selec
         *state |= 8;
         FBCmd *fbcmd = &pd->cmds[selected_line];
         char* name = fbcmd->name != NULL ? fbcmd->name : fbcmd->cmd;
+        return rofi_force_utf8 ( name, strlen ( name ) );
+    } else if ( pd->open_bookmarks && pd->show_bookmarks ) {
+        *state |= 8;
+        FBBookmark *bookmark = &pd->bookmarks[selected_line];
+        char* name = bookmark->name != NULL ? bookmark->name : bookmark->path;
         return rofi_force_utf8 ( name, strlen ( name ) );
     } else {
         int index = pd->open_custom ? pd->open_custom_index : selected_line;
@@ -280,6 +326,14 @@ static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int sel
             fbcmd->icon_fetcher_request = rofi_icon_fetcher_query ( fbcmd->icon_name, height );
         }
         return rofi_icon_fetcher_get ( fbcmd->icon_fetcher_request );
+
+    } else if ( pd->open_bookmarks && pd->show_bookmarks ) {
+        FBBookmark *fbbookmark = &pd->bookmarks[selected_line];
+
+        if ( fbbookmark->icon_fetcher_request <= 0 ) {
+            fbbookmark->icon_fetcher_request = rofi_icon_fetcher_query ( fbbookmark->icon_name, height );
+        }
+        return rofi_icon_fetcher_get ( fbbookmark->icon_fetcher_request );
 
     } else {
         int index = pd->open_custom ? pd->open_custom_index : selected_line;

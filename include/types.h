@@ -93,6 +93,8 @@ typedef enum FBKey {
 
 typedef struct {
     /* Only KB_ACCEPT, KB_ACCEPT_ALT and KB_CUSTOM_* are supported. */
+    /* Key for bookmarks prompt. */
+    FBKey open_bookmarks_key;
     /* Key for custom program prompt. */
     FBKey open_custom_key;
     /* Key for opening file without closing. */
@@ -102,6 +104,18 @@ typedef struct {
 } FileBrowserKeyData;
 
 // ================================================================================================================= //
+
+typedef struct {
+    /* The path. */
+    char *path;
+    /* A name to display instead of the path, or a copy of path. */
+    char *name;
+    /* Name of the icon, or NULL for no icon. */
+    char *icon_name;
+
+    /* Rofi icon fetcher request ID. */
+    uint32_t icon_fetcher_request;
+} FBBookmark;
 
 typedef struct {
     /* The command. */
@@ -158,6 +172,14 @@ typedef struct {
     bool show_cmds;
     /* Add executables from $PATH to the cmds the next time they are shown. */
     bool search_path_for_cmds;
+    /* This prompts the user for a bookmark to change current working directory. */
+    bool open_bookmarks;
+    /* Bookmarks to show in open-bookmarks. */
+    FBBookmark *bookmarks;
+    /* Number of bookmarks. */
+    int num_bookmarks;
+    /* Show the bookmarks, equal to (num_bookmarks > 0). */
+    bool show_bookmarks;
 } FileBrowserModePrivateData;
 
 #endif

@@ -7,6 +7,11 @@
 
 
 /**
+ * Add an array of bookmakrs to the ones currently stored in the private data.
+ */
+static void add_bookmarks ( FBBookmark *bookmarks, int num_bookmarks, FileBrowserModePrivateData *pd );
+
+/**
  * Add an array of cmds to the ones currently stored in the private data.
  */
 static void add_cmds ( FBCmd *cmds, int num_cmds, FileBrowserModePrivateData *pd );
@@ -60,6 +65,50 @@ void set_user_cmds ( char **cmd_strs, FileBrowserModePrivateData *pd )
 
     add_cmds(cmds, num_cmds, pd);
     g_free ( cmds );
+}
+
+static void add_bookmarks ( FBBookmark *bookmarks, int num_bookmarks, FileBrowserModePrivateData *pd )
+{
+    pd->bookmarks = g_realloc ( pd->bookmarks, ( pd->num_bookmarks + num_bookmarks ) * sizeof ( FBBookmark ) );
+    memcpy ( &pd->bookmarks[pd->num_bookmarks], bookmarks, num_bookmarks * sizeof ( FBBookmark ) );
+    pd->num_bookmarks += num_bookmarks;
+    pd->show_bookmarks = pd->num_bookmarks > 0;
+}
+
+void set_user_bookmarks ( char **bookmark_strs, FileBrowserModePrivateData *pd )
+{
+    if ( bookmark_strs == NULL ) {
+        return;
+    }
+
+    static int icon_sep_len = strlen ( OPEN_CUSTOM_CMD_ICON_SEP );
+    static int name_sep_len = strlen ( OPEN_CUSTOM_CMD_NAME_SEP );
+
+    /* Custom bookmarks for open-bookmarks prompt. */
+    int num_bookmarks = count_strv ( ( const char ** ) bookmark_strs );
+    FBBookmark *bookmarks = g_malloc ( num_bookmarks * sizeof ( FBBookmark ) );
+
+    for ( int i = 0; i < num_bookmarks; i++ ) {
+        char* bookmark = bookmark_strs[i];
+        char* icon_name = g_strrstr ( bookmark, OPEN_CUSTOM_CMD_ICON_SEP );
+        char* name = g_strrstr ( bookmark, OPEN_CUSTOM_CMD_NAME_SEP );
+
+        if ( icon_name != NULL ) {
+            *icon_name = '\0';
+        }
+        if ( name != NULL ) {
+            *name = '\0';
+        }
+
+        FBBookmark *fbbookmark = &bookmarks[i];
+        fbbookmark->path = g_strdup ( bookmark );
+        fbbookmark->icon_name = icon_name == NULL ? NULL : g_strdup ( &icon_name[icon_sep_len] );
+        fbbookmark->name = name == NULL ? NULL : g_strdup ( &name[name_sep_len] );
+        fbbookmark->icon_fetcher_request = 0;
+    }
+
+    add_bookmarks(bookmarks, num_bookmarks, pd);
+    g_free ( bookmarks );
 }
 
 void search_path_for_cmds ( FileBrowserModePrivateData *pd )
@@ -121,6 +170,20 @@ void search_path_for_cmds ( FileBrowserModePrivateData *pd )
 
     g_free ( cmds );
 }
+
+void destroy_bookmarks ( FileBrowserModePrivateData *pd )
+{
+    for ( int i = 0; i < pd->num_bookmarks; i++ ) {
+        g_free( pd->bookmarks[i].path );
+        g_free( pd->bookmarks[i].icon_name );
+        g_free( pd->bookmarks[i].name );
+    }
+    g_free ( pd->bookmarks );
+    pd->bookmarks = NULL;
+    pd->num_bookmarks = 0;
+    pd->show_bookmarks = false;
+}
+
 
 void destroy_cmds ( FileBrowserModePrivateData *pd )
 {
