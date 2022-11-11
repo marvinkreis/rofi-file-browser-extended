@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <gmodule.h>
 #include <cairo.h>
+#include <limits.h>
 #include <rofi/mode.h>
 #include <rofi/helper.h>
 #include <rofi/mode-private.h>
@@ -263,8 +264,15 @@ static char *file_browser_get_display_value ( const Mode *sw, unsigned int selec
     }
 }
 
-static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int selected_line, int height )
+static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int selected_line, unsigned int height )
 {
+    // We receive 'height' as unsinged int but later pass it to
+    // functions that take it as int, so check that the given value
+    // does not exceed INT_MAX.
+    if (height > INT_MAX) {
+        abort();
+    }
+
     FileBrowserModePrivateData *pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
     FileBrowserFileData *fd = &pd->file_data;
     FileBrowserIconData *id = &pd->icon_data;
