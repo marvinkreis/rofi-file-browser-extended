@@ -263,7 +263,7 @@ static char *file_browser_get_display_value ( const Mode *sw, unsigned int selec
     }
 }
 
-static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int selected_line, int height )
+static cairo_surface_t *file_browser_get_icon ( const Mode *sw, unsigned int selected_line, unsigned int height )
 {
     FileBrowserModePrivateData *pd = ( FileBrowserModePrivateData * ) mode_get_private_data ( sw );
     FileBrowserFileData *fd = &pd->file_data;
